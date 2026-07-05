@@ -18,17 +18,19 @@
 		}
 	},
 	"scripts": {
-		"format": "prettier --write .",
-		"format:check": "prettier --check .",
-		"lint": "eslint . --max-warnings=0",
+		"attw": "attw --pack --profile esm-only",
 		"build": "tsup",
-		"prepack": "bun run build",
-		"typecheck": "tsc -p tsconfig.json",
-		"typecheck:examples": "tsc -p tsconfig.examples.json",
-		"test": "vitest run --config vitest.config.ts",
+		"check": "bun run format:check && bun run lint && bun run build && bun run typecheck && bun run typecheck:examples && bun run test && bun run pack:check && bun run publint && bun run attw",
+		"format:check": "prettier --check .",
+		"format:fix": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+		"format": "prettier --write .",
+		"lint": "eslint . --max-warnings=0",
 		"pack:check": "npm pack --dry-run",
+		"prepack": "bun run build",
 		"publint": "publint",
-		"attw": "attw --pack --profile esm-only"
+		"test": "vitest run --config vitest.config.ts",
+		"typecheck:examples": "tsc -p tsconfig.examples.json",
+		"typecheck": "tsc -p tsconfig.json"
 	},
 	"files": [
 		"dist",
