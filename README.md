@@ -1,4 +1,14 @@
-# @swartzrock/byok-runtime
+# BYOK-Runtime
+
+[![Language](https://img.shields.io/badge/language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Package manager](https://img.shields.io/badge/package_manager-bun_1.3.14-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![CI](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/swartzrock/byok-runtime?include_prereleases&label=release)](https://github.com/swartzrock/byok-runtime/releases)
+[![GitHub release date](https://img.shields.io/github/release-date/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/releases)
+[![Last commit](https://img.shields.io/github/last-commit/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/commits/main)
+[![Issues](https://img.shields.io/github/issues/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 
 Function-first text generation, provider runtime, and model discovery for bring-your-own-key AI applications.
 
