@@ -29,9 +29,7 @@ describe("BYOK setup status", () => {
 			"2026-06-27T00:00:00.000Z"
 		);
 
-		expect(providerConnectionStatus["codex-cli"]?.modelId).toBe(
-			CLI_DEFAULT_MODEL_SENTINEL
-		);
+		expect(providerConnectionStatus["codex-cli"]?.modelId).toBe(CLI_DEFAULT_MODEL_SENTINEL);
 		expect(
 			deriveProviderSetupStatus({
 				byok: {

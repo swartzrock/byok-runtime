@@ -1,8 +1,4 @@
-import {
-	ByokProviderError,
-	type ByokHttpClient,
-	type ByokProviderDeps,
-} from "../types";
+import { ByokProviderError, type ByokHttpClient, type ByokProviderDeps } from "../types";
 
 const MAX_DEFAULT_HTTP_RESPONSE_BYTES = 1_000_000;
 export const DEFAULT_OLLAMA_URL = "http://localhost:11434";
@@ -10,7 +6,7 @@ export const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 function globalFetch(): typeof fetch | undefined {
 	const candidate = globalThis.fetch;
 	if (typeof candidate !== "function") return undefined;
-	return candidate.bind(globalThis) as typeof fetch;
+	return candidate.bind(globalThis);
 }
 
 export function normalizeOllamaUrl(url: string = DEFAULT_OLLAMA_URL): string {

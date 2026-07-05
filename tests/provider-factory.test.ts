@@ -1,14 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-	ByokProviderError,
-	type ByokCoreProviderConfig,
-	type ByokHttpClient,
-} from "../src";
+import { ByokProviderError, type ByokCoreProviderConfig, type ByokHttpClient } from "../src";
 import { createByokProvider } from "../src/providers/provider-factory";
-import {
-	createByokNodeProvider,
-	type ByokProviderConfig,
-} from "../src/node";
+import { createByokNodeProvider, type ByokProviderConfig } from "../src/node";
 import { createDefaultHttpClient } from "../src/providers/default-deps";
 
 const http: ByokHttpClient = async () => ({ status: 200, text: "{}", json: {} });
@@ -127,10 +120,7 @@ describe("createByokProvider", () => {
 		"rejects invalid Ollama URL %s",
 		(url) => {
 			expect(() =>
-				createByokProvider(
-					{ provider: "ollama", url, model: "llama3.1:8b" },
-					{ http }
-				)
+				createByokProvider({ provider: "ollama", url, model: "llama3.1:8b" }, { http })
 			).toThrow(ByokProviderError);
 		}
 	);

@@ -27,30 +27,24 @@ function trimValue(value: unknown): string {
 
 function isCliProvider(provider: unknown): boolean {
 	return (
-		isByokProviderId(provider) &&
-		byokProviderDefinition(provider).credentialKind === "command"
+		isByokProviderId(provider) && byokProviderDefinition(provider).credentialKind === "command"
 	);
 }
 
 function isCloudProvider(provider: unknown): boolean {
 	return (
-		isByokProviderId(provider) &&
-		byokProviderDefinition(provider).credentialKind === "api-key"
+		isByokProviderId(provider) && byokProviderDefinition(provider).credentialKind === "api-key"
 	);
 }
 
-function selectedProvider(
-	settings: ProviderSetupStatusSettings
-): ProviderSetupStatusId | null {
+function selectedProvider(settings: ProviderSetupStatusSettings): ProviderSetupStatusId | null {
 	const provider = settings.byok?.selectedProvider;
 	return isByokProviderId(provider) ? provider : null;
 }
 
 function currentCredentialValue(settings: ProviderSetupStatusSettings): string {
 	const provider = selectedProvider(settings);
-	return provider
-		? trimValue(settings.byok.providers?.[provider]?.credential)
-		: "";
+	return provider ? trimValue(settings.byok.providers?.[provider]?.credential) : "";
 }
 
 function currentCredentialSaved(settings: ProviderSetupStatusSettings): boolean {
@@ -67,14 +61,10 @@ function currentModelValue(settings: ProviderSetupStatusSettings): string {
 	return provider ? trimValue(settings.byok.providers?.[provider]?.model) : "";
 }
 
-function currentConnectionVerificationModelValue(
-	settings: ProviderSetupStatusSettings
-): string {
+function currentConnectionVerificationModelValue(settings: ProviderSetupStatusSettings): string {
 	const provider = selectedProvider(settings);
 	const model = currentModelValue(settings);
-	return isCliProvider(provider) && !model
-		? CLI_DEFAULT_MODEL_SENTINEL
-		: model;
+	return isCliProvider(provider) && !model ? CLI_DEFAULT_MODEL_SENTINEL : model;
 }
 
 function djb2Hash(value: string): string {
@@ -85,9 +75,7 @@ function djb2Hash(value: string): string {
 	return (hash >>> 0).toString(16);
 }
 
-export function providerCredentialFingerprint(
-	settings: ProviderSetupStatusSettings
-): string {
+export function providerCredentialFingerprint(settings: ProviderSetupStatusSettings): string {
 	const provider = selectedProvider(settings);
 	if (provider && isCloudProvider(provider)) {
 		const stored = settings.byok.providers?.[provider];
@@ -124,8 +112,7 @@ export function deriveProviderSetupStatus(
 		return { keySaved: false, modelSelected: false, connection: "untested" };
 	}
 	const keySaved = currentCredentialSaved(settings);
-	const modelSelected =
-		isCliProvider(provider) || currentModelValue(settings).length > 0;
+	const modelSelected = isCliProvider(provider) || currentModelValue(settings).length > 0;
 	const snapshot = settings.byok.verification?.[provider];
 	if (!snapshot) {
 		return { keySaved, modelSelected, connection: "untested" };

@@ -36,15 +36,11 @@ export class OpenRouterProvider extends AiSdkProvider {
 			label: "OpenRouter",
 			vendor: "OpenRouter",
 			model: opts.model,
-			generateObject:
-				opts.generator ??
-				defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+			generateObject: opts.generator ?? defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			generateText:
-				opts.textGenerator ??
-				defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+				opts.textGenerator ?? defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			listModels:
-				opts.listModelsImpl ??
-				(() => listOpenRouterModelOptions(opts.apiKey, opts.fetchImpl)),
+				opts.listModelsImpl ?? (() => listOpenRouterModelOptions(opts.apiKey, opts.fetchImpl)),
 		});
 	}
 }
@@ -81,10 +77,7 @@ async function listOpenRouterModelOptions(
 	}
 	const body = (await response.json()) as { data?: OpenRouterRawModel[] };
 	return (body.data ?? [])
-		.filter(
-			(entry) =>
-				typeof entry.id === "string" && entry.id.trim().length > 0
-		)
+		.filter((entry) => typeof entry.id === "string" && entry.id.trim().length > 0)
 		.map(normalizeOpenRouterModel);
 }
 
@@ -100,7 +93,11 @@ function defaultGenerator(
 		name: "openrouter",
 	});
 	const model = openrouter.chat(modelId);
-	return async function generate<T>({ schema, prompt, signal }: {
+	return async function generate<T>({
+		schema,
+		prompt,
+		signal,
+	}: {
 		schema: z.ZodType<T, z.ZodTypeDef, unknown>;
 		prompt: string;
 		signal?: AbortSignal;
@@ -113,7 +110,10 @@ function defaultGenerator(
 			prompt: jsonPrompt,
 			abortSignal: signal,
 		});
-		const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/, "").trim();
+		const cleaned = text
+			.replace(/^```(?:json)?\s*\n?/i, "")
+			.replace(/\n?```\s*$/, "")
+			.trim();
 		return schema.parse(JSON.parse(cleaned));
 	};
 }

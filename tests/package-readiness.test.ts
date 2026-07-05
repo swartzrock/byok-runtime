@@ -3,11 +3,7 @@ import { dirname, join, normalize, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const NODE_BUILTIN_IMPORTS = [
-	"node:child_process",
-	"node:os",
-	"node:stream",
-] as const;
+const NODE_BUILTIN_IMPORTS = ["node:child_process", "node:os", "node:stream"] as const;
 const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 function fromPackage(path: string): string {
@@ -19,17 +15,13 @@ function toPackagePath(path: string): string {
 }
 
 function readJson(path: string): Record<string, unknown> {
-	return JSON.parse(readFileSync(fromPackage(path), "utf8")) as Record<
-		string,
-		unknown
-	>;
+	return JSON.parse(readFileSync(fromPackage(path), "utf8")) as Record<string, unknown>;
 }
 
 function localImports(path: string): string[] {
 	const source = readFileSync(path, "utf8");
 	const imports: string[] = [];
-	const importPattern =
-		/(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
+	const importPattern = /(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g;
 	for (const match of source.matchAll(importPattern)) {
 		const specifier = match[1];
 		if (specifier?.startsWith(".")) imports.push(specifier);
@@ -71,7 +63,7 @@ describe("BYOK package readiness", () => {
 			types: "./dist/index.d.ts",
 			repository: {
 				type: "git",
-				url: "https://github.com/swartzrock/byok-runtime.git",
+				url: "git+https://github.com/swartzrock/byok-runtime.git",
 			},
 			publishConfig: {
 				access: "public",
@@ -104,6 +96,23 @@ describe("BYOK package readiness", () => {
 		expect(existsSync(fromPackage("LICENSE"))).toBe(true);
 		expect(existsSync(fromPackage("CHANGELOG.md"))).toBe(true);
 		expect(existsSync(fromPackage("SECURITY.md"))).toBe(true);
+	});
+
+	it("declares formatting, linting, and package validation gates", () => {
+		const manifest = readJson("package.json");
+		expect(manifest.scripts).toMatchObject({
+			format: "prettier --write .",
+			"format:check": "prettier --check .",
+			lint: "eslint . --max-warnings=0",
+			"pack:check": "npm pack --dry-run",
+			publint: "publint",
+			attw: "attw --pack --profile esm-only",
+		});
+		expect(existsSync(fromPackage(".prettierrc.json"))).toBe(true);
+		expect(existsSync(fromPackage(".prettierignore"))).toBe(true);
+		expect(existsSync(fromPackage("eslint.config.js"))).toBe(true);
+		expect(existsSync(fromPackage(".npmrc"))).toBe(true);
+		expect(existsSync(fromPackage("tsconfig.eslint.json"))).toBe(true);
 	});
 
 	it("declares standalone build and typecheck output", () => {

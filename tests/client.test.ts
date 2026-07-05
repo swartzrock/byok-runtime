@@ -1,13 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-	createByok,
-	generateText,
-	type ByokHttpClient,
-} from "../src";
+import { createByok, generateText, type ByokHttpClient } from "../src";
 
-function ollamaHttp(
-	requests: Array<Parameters<ByokHttpClient>[0]>
-): ByokHttpClient {
+function ollamaHttp(requests: Array<Parameters<ByokHttpClient>[0]>): ByokHttpClient {
 	return async (request) => {
 		requests.push(request);
 		return {
@@ -47,17 +41,14 @@ describe("BYOK client facade", () => {
 		let requestUrl: string | URL | Request | undefined;
 		let requestInit: RequestInit | undefined;
 		const controller = new AbortController();
-		vi.stubGlobal(
-			"fetch",
-			(async (input, init) => {
-				requestUrl = input;
-				requestInit = init;
-				return new Response(JSON.stringify({ response: "Default transport." }), {
-					status: 200,
-					headers: { "content-type": "application/json" },
-				});
-			}) as typeof fetch
-		);
+		vi.stubGlobal("fetch", (async (input, init) => {
+			requestUrl = input;
+			requestInit = init;
+			return new Response(JSON.stringify({ response: "Default transport." }), {
+				status: 200,
+				headers: { "content-type": "application/json" },
+			});
+		}) as typeof fetch);
 
 		const result = await generateText({
 			provider: "ollama",
@@ -135,5 +126,4 @@ describe("BYOK client facade", () => {
 			model: "llama3.1:8b",
 		});
 	});
-
 });

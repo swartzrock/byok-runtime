@@ -1,18 +1,19 @@
-import { z } from "zod/v3";
 import {
 	generateObject as generateAiObject,
 	generateText as generateAiText,
+	type LanguageModel,
+	type Schema,
 	zodSchema,
 } from "ai";
-import type { LanguageModel, Schema } from "ai";
+import { z } from "zod/v3";
 import {
-	AiProvider,
-	ObjectGenerationInput,
+	type AiProvider,
+	type ObjectGenerationInput,
 	ProviderError,
 	ProviderRateLimitError,
-	ProviderStatus,
-	TextGenerationInput,
-	TextGenerationOutput,
+	type ProviderStatus,
+	type TextGenerationInput,
+	type TextGenerationOutput,
 } from "./types";
 import type { ByokModelOption } from "../types";
 
@@ -24,10 +25,7 @@ export type ObjectGenerator = <T>(opts: {
 }) => Promise<T>;
 
 /** Injectable text-generation call so providers can be unit-tested. */
-export type TextGenerator = (opts: {
-	prompt: string;
-	signal?: AbortSignal;
-}) => Promise<string>;
+export type TextGenerator = (opts: { prompt: string; signal?: AbortSignal }) => Promise<string>;
 
 export const DEFAULT_RATE_LIMIT_RETRIES = 2;
 const DEFAULT_RATE_LIMIT_RETRY_MS = 1000;
@@ -165,10 +163,7 @@ export class AiSdkProvider implements AiProvider {
 			} catch (e) {
 				if (!isRateLimitError(e) || attempt === DEFAULT_RATE_LIMIT_RETRIES) {
 					if (isRateLimitError(e)) {
-						throw new ProviderRateLimitError(
-							this.describeError(e),
-							retryAfterMs(e)
-						);
+						throw new ProviderRateLimitError(this.describeError(e), retryAfterMs(e));
 					}
 					throw e;
 				}
@@ -197,10 +192,7 @@ export class AiSdkProvider implements AiProvider {
 			} catch (e) {
 				if (!isRateLimitError(e) || attempt === DEFAULT_RATE_LIMIT_RETRIES) {
 					if (isRateLimitError(e)) {
-						throw new ProviderRateLimitError(
-							this.describeError(e),
-							retryAfterMs(e)
-						);
+						throw new ProviderRateLimitError(this.describeError(e), retryAfterMs(e));
 					}
 					throw e;
 				}
@@ -254,10 +246,7 @@ export class AiSdkProvider implements AiProvider {
 		}
 	}
 
-	async generateObject<T>(
-		input: ObjectGenerationInput<T>,
-		signal?: AbortSignal
-	): Promise<T> {
+	async generateObject<T>(input: ObjectGenerationInput<T>, signal?: AbortSignal): Promise<T> {
 		try {
 			return await this.generateObjectWithRetry({
 				schema: input.schema,
@@ -273,7 +262,11 @@ export class AiSdkProvider implements AiProvider {
 
 /** Build the real AI SDK structured-output caller for a resolved model. */
 export function modelGenerator(model: LanguageModel): ObjectGenerator {
-	return async function generate<T>({ schema, prompt, signal }: {
+	return async function generate<T>({
+		schema,
+		prompt,
+		signal,
+	}: {
 		schema: z.ZodType<T, z.ZodTypeDef, unknown>;
 		prompt: string;
 		signal?: AbortSignal;

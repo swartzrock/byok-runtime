@@ -74,11 +74,7 @@ describe("sortModelOptions", () => {
 
 	it("puts the current model first when specified", () => {
 		const sorted = sortModelOptions(
-			[
-				opt("anthropic/claude-sonnet-4"),
-				opt("openai/gpt-4o"),
-				opt("meta-llama/llama-3-70b"),
-			],
+			[opt("anthropic/claude-sonnet-4"), opt("openai/gpt-4o"), opt("meta-llama/llama-3-70b")],
 			"openai/gpt-4o"
 		);
 		expect(sorted[0].id).toBe("openai/gpt-4o");
@@ -101,10 +97,7 @@ describe("sortModelOptions", () => {
 	});
 
 	it("handles currentModelId not in the list", () => {
-		const sorted = sortModelOptions(
-			[opt("a/x"), opt("b/y")],
-			"c/z"
-		);
+		const sorted = sortModelOptions([opt("a/x"), opt("b/y")], "c/z");
 		expect(sorted.map((o) => o.id)).toEqual(["a/x", "b/y"]);
 	});
 });

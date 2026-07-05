@@ -1,11 +1,11 @@
 import {
-	AiProvider,
-	HttpClient,
-	HttpResponse,
+	type AiProvider,
+	type HttpClient,
+	type HttpResponse,
 	ProviderError,
-	ProviderStatus,
-	TextGenerationInput,
-	TextGenerationOutput,
+	type ProviderStatus,
+	type TextGenerationInput,
+	type TextGenerationOutput,
 } from "./types";
 import { normalizeModelIds, type ModelOption } from "../models/model-options";
 
@@ -21,7 +21,8 @@ function extractServerError(res: HttpResponse): string {
 function describeError(status: number): string {
 	if (status === 404) return " — model not found; run `ollama pull <model>`";
 	if (status === 400) return " — bad request; the model may not support generation";
-	if (status === 500) return " — server error; the model may have failed to load (often out of memory)";
+	if (status === 500)
+		return " — server error; the model may have failed to load (often out of memory)";
 	return "";
 }
 
@@ -30,10 +31,7 @@ function isAbortError(error: unknown): boolean {
 		return error.name === "AbortError";
 	}
 	return (
-		typeof error === "object" &&
-		error !== null &&
-		"name" in error &&
-		error.name === "AbortError"
+		typeof error === "object" && error !== null && "name" in error && error.name === "AbortError"
 	);
 }
 
@@ -130,7 +128,9 @@ export class OllamaProvider implements AiProvider {
 			});
 		} catch (e) {
 			if (signal?.aborted || isAbortError(e)) throw e;
-			throw new ProviderError("Ollama server unreachable. Check the URL and that Ollama is running.");
+			throw new ProviderError(
+				"Ollama server unreachable. Check the URL and that Ollama is running."
+			);
 		}
 		if (res.status < 200 || res.status >= 300) {
 			throw new ProviderError(
@@ -145,13 +145,9 @@ export class OllamaProvider implements AiProvider {
 	}
 
 	private fetchViaHttp(): typeof fetch {
-		return (async (input: RequestInfo | URL, init?: RequestInit) => {
+		return async (input: RequestInfo | URL, init?: RequestInit) => {
 			const url =
-				typeof input === "string"
-					? input
-					: input instanceof URL
-						? input.toString()
-						: input.url;
+				typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 			const headers: Record<string, string> = {};
 			new Headers(init?.headers).forEach((value, key) => {
 				headers[key] = value;
@@ -165,8 +161,11 @@ export class OllamaProvider implements AiProvider {
 			});
 			return new Response(res.text, {
 				status: res.status,
-				headers: res.json && typeof res.json === "object" ? { "content-type": "application/json" } : undefined,
+				headers:
+					res.json && typeof res.json === "object"
+						? { "content-type": "application/json" }
+						: undefined,
 			});
-		}) as typeof fetch;
+		};
 	}
 }

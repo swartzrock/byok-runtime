@@ -31,8 +31,7 @@ export class XaiProvider extends AiSdkProvider {
 			model: opts.model,
 			generateObject: opts.generator ?? defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			generateText:
-				opts.textGenerator ??
-				defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+				opts.textGenerator ?? defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			listModels:
 				opts.listModelsImpl ??
 				(async () => normalizeModelIds(await listXaiModels(opts.apiKey, opts.fetchImpl))),
@@ -40,19 +39,16 @@ export class XaiProvider extends AiSdkProvider {
 	}
 }
 
-async function listXaiModels(
-	apiKey: string,
-	fetchImpl?: FetchFunction
-): Promise<string[]> {
+async function listXaiModels(apiKey: string, fetchImpl?: FetchFunction): Promise<string[]> {
 	const { default: OpenAI } = await import("openai");
 	const client = new OpenAI({
 		apiKey,
 		baseURL: "https://api.x.ai/v1",
-		fetch: fetchImpl as typeof fetch | undefined,
+		fetch: fetchImpl,
 		dangerouslyAllowBrowser: true,
 	});
 	const page = await client.models.list();
-	return (page.data as OpenAIModel[] | undefined ?? [])
+	return ((page.data as OpenAIModel[] | undefined) ?? [])
 		.map((model) => model.id)
 		.filter((id): id is string => typeof id === "string" && id.trim().length > 0);
 }

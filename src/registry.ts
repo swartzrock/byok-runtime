@@ -1,8 +1,4 @@
-import {
-	ByokProvider,
-	type ByokProviderDefinition,
-	type ByokProviderId,
-} from "./types";
+import { ByokProvider, type ByokProviderDefinition, type ByokProviderId } from "./types";
 import { BYOK_PROVIDER_ICONS } from "./provider-icons";
 
 export const BYOK_PROVIDER_IDS = [
@@ -16,10 +12,7 @@ export const BYOK_PROVIDER_IDS = [
 	ByokProvider.ClaudeCli,
 ] as const satisfies readonly ByokProviderId[];
 
-export const BYOK_PROVIDER_DEFINITIONS: Record<
-	ByokProviderId,
-	ByokProviderDefinition
-> = {
+export const BYOK_PROVIDER_DEFINITIONS: Record<ByokProviderId, ByokProviderDefinition> = {
 	[ByokProvider.Ollama]: {
 		id: ByokProvider.Ollama,
 		label: "Ollama",
@@ -245,7 +238,8 @@ export const BYOK_PROVIDER_DEFINITIONS: Record<
 			placeholder: "CLI default",
 			description: "Optional model override.",
 			listModelsLabel: "Claude CLI models",
-			listModelsDescription: "Fetch latest Anthropic models from OpenRouter and use Claude CLI model IDs.",
+			listModelsDescription:
+				"Fetch latest Anthropic models from OpenRouter and use Claude CLI model IDs.",
 			emptyListMessage: "No Anthropic models were returned by OpenRouter.",
 		},
 		requiresNetwork: true,
@@ -255,10 +249,7 @@ export const BYOK_PROVIDER_DEFINITIONS: Record<
 };
 
 export function isByokProviderId(value: unknown): value is ByokProviderId {
-	return (
-		typeof value === "string" &&
-		(BYOK_PROVIDER_IDS as readonly string[]).includes(value)
-	);
+	return typeof value === "string" && (BYOK_PROVIDER_IDS as readonly string[]).includes(value);
 }
 
 export function normalizeProviderId(value: unknown): ByokProviderId {
@@ -268,9 +259,7 @@ export function normalizeProviderId(value: unknown): ByokProviderId {
 	return ByokProvider.Ollama;
 }
 
-export function byokProviderDefinition(
-	id: ByokProviderId
-): ByokProviderDefinition {
+export function byokProviderDefinition(id: ByokProviderId): ByokProviderDefinition {
 	return BYOK_PROVIDER_DEFINITIONS[id];
 }
 

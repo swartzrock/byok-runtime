@@ -5,15 +5,9 @@ import {
 	recordProviderConnectionSuccess,
 	type ProviderSetupStatusSettings,
 } from "../src/setup-status";
-import type {
-	ByokProviderId,
-	ByokProviderStoredSettings,
-} from "../src";
+import type { ByokProviderId, ByokProviderStoredSettings } from "../src";
 
-function providerSettings(
-	credential: string,
-	model: string
-): ByokProviderStoredSettings {
+function providerSettings(credential: string, model: string): ByokProviderStoredSettings {
 	return {
 		credential,
 		model,
@@ -24,10 +18,7 @@ function providerSettings(
 	};
 }
 
-function savedCloudProviderSettings(
-	token: string,
-	model: string
-): ByokProviderStoredSettings {
+function savedCloudProviderSettings(token: string, model: string): ByokProviderStoredSettings {
 	return {
 		credential: "",
 		credentialSaved: true,
@@ -101,10 +92,7 @@ describe("deriveProviderSetupStatus", () => {
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers.anthropic = providerSettings(
-			"sk-ant-test",
-			"claude-haiku-4-5"
-		);
+		settings.byok.providers.anthropic = providerSettings("sk-ant-test", "claude-haiku-4-5");
 		expect(deriveProviderSetupStatus(settings)).toEqual({
 			keySaved: true,
 			modelSelected: true,
@@ -115,20 +103,12 @@ describe("deriveProviderSetupStatus", () => {
 
 	it("marks OpenRouter connection stale when its selected model changes", () => {
 		const settings = baseSettings();
-		selectProvider(
-			settings,
-			"openrouter",
-			"sk-or-test",
-			"anthropic/claude-sonnet-4"
-		);
+		selectProvider(settings, "openrouter", "sk-or-test", "anthropic/claude-sonnet-4");
 		settings.byok.verification = recordProviderConnectionSuccess(
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers.openrouter = providerSettings(
-			"sk-or-test",
-			"openai/gpt-4o"
-		);
+		settings.byok.providers.openrouter = providerSettings("sk-or-test", "openai/gpt-4o");
 		expect(deriveProviderSetupStatus(settings)).toEqual({
 			keySaved: true,
 			modelSelected: true,
@@ -144,10 +124,7 @@ describe("deriveProviderSetupStatus", () => {
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers.ollama = providerSettings(
-			"http://localhost:11434",
-			"llama3.2:latest"
-		);
+		settings.byok.providers.ollama = providerSettings("http://localhost:11434", "llama3.2:latest");
 		expect(deriveProviderSetupStatus(settings)).toEqual({
 			keySaved: true,
 			modelSelected: true,
@@ -162,19 +139,13 @@ describe("deriveProviderSetupStatus", () => {
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers.anthropic = providerSettings(
-			"sk-ant-new",
-			"claude-sonnet-4-6"
-		);
+		settings.byok.providers.anthropic = providerSettings("sk-ant-new", "claude-sonnet-4-6");
 		expect(deriveProviderSetupStatus(settings).connection).toBe("stale");
 	});
 
 	it("uses cloud credential metadata without requiring a plaintext key", () => {
 		const settings = baseSettings();
-		settings.byok.providers.anthropic = savedCloudProviderSettings(
-			"token-1",
-			"claude-sonnet-4-6"
-		);
+		settings.byok.providers.anthropic = savedCloudProviderSettings("token-1", "claude-sonnet-4-6");
 		settings.byok.verification = recordProviderConnectionSuccess(
 			settings,
 			"2026-06-11T00:00:00.000Z"
@@ -194,18 +165,12 @@ describe("deriveProviderSetupStatus", () => {
 
 	it("marks cloud verification stale when the credential token changes", () => {
 		const settings = baseSettings();
-		settings.byok.providers.anthropic = savedCloudProviderSettings(
-			"token-1",
-			"claude-sonnet-4-6"
-		);
+		settings.byok.providers.anthropic = savedCloudProviderSettings("token-1", "claude-sonnet-4-6");
 		settings.byok.verification = recordProviderConnectionSuccess(
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers.anthropic = savedCloudProviderSettings(
-			"token-2",
-			"claude-sonnet-4-6"
-		);
+		settings.byok.providers.anthropic = savedCloudProviderSettings("token-2", "claude-sonnet-4-6");
 
 		expect(deriveProviderSetupStatus(settings)).toMatchObject({
 			keySaved: true,
@@ -252,9 +217,7 @@ describe("deriveProviderSetupStatus", () => {
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		expect(settings.byok.verification["codex-cli"]?.modelId).toBe(
-			CLI_DEFAULT_MODEL_SENTINEL
-		);
+		expect(settings.byok.verification["codex-cli"]?.modelId).toBe(CLI_DEFAULT_MODEL_SENTINEL);
 		expect(deriveProviderSetupStatus(settings)).toEqual({
 			keySaved: true,
 			modelSelected: true,
@@ -270,10 +233,7 @@ describe("deriveProviderSetupStatus", () => {
 			settings,
 			"2026-06-11T00:00:00.000Z"
 		);
-		settings.byok.providers["codex-cli"] = providerSettings(
-			"/opt/homebrew/bin/codex",
-			""
-		);
+		settings.byok.providers["codex-cli"] = providerSettings("/opt/homebrew/bin/codex", "");
 		expect(deriveProviderSetupStatus(settings)).toEqual({
 			keySaved: true,
 			modelSelected: true,

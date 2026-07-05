@@ -31,8 +31,7 @@ export class OpenAIProvider extends AiSdkProvider {
 			model: opts.model,
 			generateObject: opts.generator ?? defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			generateText:
-				opts.textGenerator ??
-				defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+				opts.textGenerator ?? defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			listModels:
 				opts.listModelsImpl ??
 				(async () => normalizeModelIds(await listOpenAiModels(opts.apiKey, opts.fetchImpl))),
@@ -40,10 +39,7 @@ export class OpenAIProvider extends AiSdkProvider {
 	}
 }
 
-async function listOpenAiModels(
-	apiKey: string,
-	fetchImpl?: FetchFunction
-): Promise<string[]> {
+async function listOpenAiModels(apiKey: string, fetchImpl?: FetchFunction): Promise<string[]> {
 	const fetchFn = (fetchImpl ?? globalThis.fetch) as typeof fetch | undefined;
 	if (!fetchFn) {
 		throw new Error("OpenAI model fetch requires a fetch implementation.");

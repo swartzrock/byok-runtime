@@ -1,12 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { ClaudeCliProvider, extractClaudeCliOutput } from "../src/providers/claude-cli-provider";
 import {
-	ClaudeCliProvider,
-	extractClaudeCliOutput,
-} from "../src/providers/claude-cli-provider";
-import { defaultLocalCliCwd } from "../src/providers/local-command-runner";
-import type {
-	LocalCommandRequest,
-	LocalCommandResult,
+	defaultLocalCliCwd,
+	type LocalCommandRequest,
+	type LocalCommandResult,
 } from "../src/providers/local-command-runner";
 import { ProviderError } from "../src/providers/types";
 
@@ -22,14 +19,12 @@ function makeProvider(
 	provider: ClaudeCliProvider;
 	run: ReturnType<typeof vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>>;
 } {
-	const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(
-		async () => {
-			const next = responses.shift();
-			if (!next) throw new Error("unexpected runner call");
-			if (next instanceof Error) throw next;
-			return next;
-		}
-	);
+	const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(async () => {
+		const next = responses.shift();
+		if (!next) throw new Error("unexpected runner call");
+		if (next instanceof Error) throw next;
+		return next;
+	});
 	return {
 		provider: new ClaudeCliProvider({
 			command: "claude",
@@ -46,18 +41,14 @@ function makeProvider(
 describe("extractClaudeCliOutput", () => {
 	it("extracts a string result from Claude JSON output", () => {
 		expect(
-			extractClaudeCliOutput(
-				JSON.stringify({ type: "result", result: "{\"summary\":\"S\"}" })
-			)
-		).toBe("{\"summary\":\"S\"}");
+			extractClaudeCliOutput(JSON.stringify({ type: "result", result: '{"summary":"S"}' }))
+		).toBe('{"summary":"S"}');
 	});
 
 	it("stringifies an object result from structured output", () => {
 		expect(
-			extractClaudeCliOutput(
-				JSON.stringify({ type: "result", result: { summary: "S" } })
-			)
-		).toBe("{\"summary\":\"S\"}");
+			extractClaudeCliOutput(JSON.stringify({ type: "result", result: { summary: "S" } }))
+		).toBe('{"summary":"S"}');
 	});
 
 	it("uses validated structured_output when Claude result text is empty", () => {
@@ -70,15 +61,13 @@ describe("extractClaudeCliOutput", () => {
 					structured_output: { ok: true },
 				})
 			)
-		).toBe("{\"ok\":true}");
+		).toBe('{"ok":true}');
 	});
 
 	it("unwraps single-quoted JSON result strings", () => {
 		expect(
-			extractClaudeCliOutput(
-				JSON.stringify({ type: "result", result: "'{\"ok\":true}'" })
-			)
-		).toBe("{\"ok\":true}");
+			extractClaudeCliOutput(JSON.stringify({ type: "result", result: "'{\"ok\":true}'" }))
+		).toBe('{"ok":true}');
 	});
 });
 
@@ -140,7 +129,7 @@ describe("ClaudeCliProvider", () => {
 			jsonSchema: schema,
 		});
 
-		expect(out).toEqual({ text: "{\"ok\":true}" });
+		expect(out).toEqual({ text: '{"ok":true}' });
 		expect(run.mock.calls[0][0].args).toContain("--json-schema");
 		expect(run.mock.calls[0][0].args).toContain(schema);
 	});
@@ -164,9 +153,9 @@ describe("ClaudeCliProvider", () => {
 	it("throws ProviderError when Claude CLI returns no final text", async () => {
 		const { provider } = makeProvider([result("")]);
 
-		await expect(
-			provider.generateText({ prompt: "Answer plainly." })
-		).rejects.toBeInstanceOf(ProviderError);
+		await expect(provider.generateText({ prompt: "Answer plainly." })).rejects.toBeInstanceOf(
+			ProviderError
+		);
 	});
 
 	it("maps Claude CLI generation auth failures to setup guidance", async () => {
@@ -176,18 +165,14 @@ describe("ClaudeCliProvider", () => {
 			),
 		]);
 
-		await expect(
-			provider.generateText({ prompt: "Hi" })
-		).rejects.toThrow(
+		await expect(provider.generateText({ prompt: "Hi" })).rejects.toThrow(
 			"Claude CLI is not authenticated. Run `claude auth login` in your terminal, then try again."
 		);
 	});
 
 	it("reports command-not-found from the runner during connection checks", async () => {
 		const { provider } = makeProvider([
-			new ProviderError(
-				"claude was not found. Check the command path supplied by the host app."
-			),
+			new ProviderError("claude was not found. Check the command path supplied by the host app."),
 		]);
 
 		const status = await provider.testConnection();
@@ -197,9 +182,7 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("reports unauthenticated Claude CLI status", async () => {
-		const { provider } = makeProvider([
-			new ProviderError("not authenticated"),
-		]);
+		const { provider } = makeProvider([new ProviderError("not authenticated")]);
 
 		const status = await provider.testConnection();
 
@@ -224,9 +207,10 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("reports successful Claude CLI status", async () => {
-		const { provider } = makeProvider([
-			result(JSON.stringify({ type: "result", result: { ok: true } })),
-		], "sonnet");
+		const { provider } = makeProvider(
+			[result(JSON.stringify({ type: "result", result: { ok: true } }))],
+			"sonnet"
+		);
 
 		const status = await provider.testConnection();
 
@@ -310,16 +294,14 @@ describe("ClaudeCliProvider", () => {
 				"--json-schema",
 			])
 		);
-		expect(run.mock.calls[0][0].args).not.toEqual(
-			expect.arrayContaining(["auth", "status"])
-		);
+		expect(run.mock.calls[0][0].args).not.toEqual(expect.arrayContaining(["auth", "status"]));
 		expect(run.mock.calls[0][0].args).not.toContain("--bare");
 		expect(run.mock.calls[0][0].env).not.toHaveProperty("CLAUDE_CODE_SIMPLE");
 	});
 
 	it("uses a neutral temp cwd when no cwd is configured", async () => {
-		const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(
-			async () => result(JSON.stringify({ type: "result", result: { ok: true } }))
+		const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(async () =>
+			result(JSON.stringify({ type: "result", result: { ok: true } }))
 		);
 		const provider = new ClaudeCliProvider({
 			command: "claude",
@@ -332,32 +314,30 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("passes the configured model override and omits it when blank", async () => {
-		const withModel = makeProvider([
-			result(JSON.stringify({ type: "result", result: "ok" })),
-		], "sonnet");
+		const withModel = makeProvider(
+			[result(JSON.stringify({ type: "result", result: "ok" }))],
+			"sonnet"
+		);
 		await withModel.provider.generateText({ prompt: "Hi" });
 		expect(withModel.run.mock.calls[0][0].args).toContain("--model");
 		expect(withModel.run.mock.calls[0][0].args).toContain("sonnet");
 
-		const withoutModel = makeProvider([
-			result(JSON.stringify({ type: "result", result: "ok" })),
-		]);
+		const withoutModel = makeProvider([result(JSON.stringify({ type: "result", result: "ok" }))]);
 		await withoutModel.provider.generateText({ prompt: "Hi" });
 		expect(withoutModel.run.mock.calls[0][0].args).not.toContain("--model");
 	});
 
 	it("normalizes OpenRouter Anthropic model overrides for Claude CLI", async () => {
-		const { provider, run } = makeProvider([
-			result(JSON.stringify({ type: "result", result: "ok" })),
-		], "~anthropic/claude-opus-4.8");
+		const { provider, run } = makeProvider(
+			[result(JSON.stringify({ type: "result", result: "ok" }))],
+			"~anthropic/claude-opus-4.8"
+		);
 
 		await provider.generateText({ prompt: "Hi" });
 
 		expect(run.mock.calls[0][0].args).toContain("--model");
 		expect(run.mock.calls[0][0].args).toContain("claude-opus-4-8");
-		expect(run.mock.calls[0][0].args).not.toContain(
-			"~anthropic/claude-opus-4.8"
-		);
+		expect(run.mock.calls[0][0].args).not.toContain("~anthropic/claude-opus-4.8");
 	});
 
 	it("lists Anthropic models from OpenRouter public models", async () => {
@@ -410,8 +390,8 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("reports OpenRouter model-list failures", async () => {
-		const fetchImpl = vi.fn<typeof fetch>(async () =>
-			new Response("temporarily unavailable", { status: 503 })
+		const fetchImpl = vi.fn<typeof fetch>(
+			async () => new Response("temporarily unavailable", { status: 503 })
 		);
 		const { provider } = makeProvider([], "", fetchImpl);
 

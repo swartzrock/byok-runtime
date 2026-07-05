@@ -63,9 +63,7 @@ function parseAnthropicDiscoveredModelSortKey(label: string): {
 	normalizedLabel: string;
 } {
 	const normalizedLabel = normalizeAnthropicModelLabel(label);
-	const match = normalizedLabel.match(
-		/claude\s+(sonnet|haiku|opus|fable)\s+(\d+(?:\.\d+)*)/
-	);
+	const match = normalizedLabel.match(/claude\s+(sonnet|haiku|opus|fable)\s+(\d+(?:\.\d+)*)/);
 	if (!match) {
 		return {
 			familyIndex: Number.MAX_SAFE_INTEGER,
@@ -89,9 +87,7 @@ function storedModelLabel(model: AnthropicStoredModel): string {
 	return "display_name" in model ? model.display_name : model.label;
 }
 
-export function anthropicModelInfoToByokModelOption(
-	model: ModelInfo
-): ByokModelOption {
+export function anthropicModelInfoToByokModelOption(model: ModelInfo): ByokModelOption {
 	return {
 		id: model.id,
 		label: model.display_name,
@@ -125,10 +121,7 @@ export function buildAnthropicModelOptions(
 		if (leftKey.familyIndex !== rightKey.familyIndex) {
 			return leftKey.familyIndex - rightKey.familyIndex;
 		}
-		const versionComparison = compareAnthropicModelVersions(
-			leftKey.version,
-			rightKey.version
-		);
+		const versionComparison = compareAnthropicModelVersions(leftKey.version, rightKey.version);
 		if (versionComparison !== 0) return versionComparison;
 		return leftKey.normalizedLabel.localeCompare(rightKey.normalizedLabel);
 	});
@@ -139,10 +132,7 @@ function resolveAnthropicModelOption(
 	modelId: string,
 	availableModels: AnthropicStoredModel[] = []
 ): AnthropicModelOption | null {
-	return (
-		buildAnthropicModelOptions(availableModels).find((model) => model.id === modelId) ??
-		null
-	);
+	return buildAnthropicModelOptions(availableModels).find((model) => model.id === modelId) ?? null;
 }
 
 export function isAnthropicCustomModelSelection(settings: {

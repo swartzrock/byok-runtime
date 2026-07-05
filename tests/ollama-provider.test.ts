@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { OllamaProvider } from "../src/providers/ollama-provider";
-import { ProviderError, HttpClient, HttpResponse } from "../src/providers/types";
+import { type HttpClient, type HttpResponse, ProviderError } from "../src/providers/types";
 
 function jsonResponse(body: unknown, status = 200): HttpResponse {
 	return { status, text: JSON.stringify(body), json: body };
@@ -27,9 +27,7 @@ const baseOpts = (http: HttpClient) => ({
 describe("OllamaProvider.testConnection", () => {
 	it("lists locally installed model ids", async () => {
 		const p = new OllamaProvider(baseOpts(generateClient([])));
-		await expect(p.listModels()).resolves.toEqual([
-			{ id: "test-model", label: "test-model" },
-		]);
+		await expect(p.listModels()).resolves.toEqual([{ id: "test-model", label: "test-model" }]);
 	});
 
 	it("reports success when the model is available", async () => {
@@ -40,8 +38,7 @@ describe("OllamaProvider.testConnection", () => {
 	});
 
 	it("reports a missing model clearly", async () => {
-		const http: HttpClient = async () =>
-			jsonResponse({ models: [{ name: "other" }] });
+		const http: HttpClient = async () => jsonResponse({ models: [{ name: "other" }] });
 		const p = new OllamaProvider(baseOpts(http));
 		const status = await p.testConnection();
 		expect(status.ok).toBe(false);
@@ -89,9 +86,7 @@ describe("OllamaProvider.generateText", () => {
 			return jsonResponse({ models: [{ name: "test-model" }] });
 		};
 		const p = new OllamaProvider(baseOpts(http));
-		await expect(
-			p.generateText({ prompt: "Hi" })
-		).rejects.toBeInstanceOf(ProviderError);
+		await expect(p.generateText({ prompt: "Hi" })).rejects.toBeInstanceOf(ProviderError);
 	});
 
 	it("surfaces the server's error body and a status hint on HTTP 500", async () => {
@@ -102,17 +97,16 @@ describe("OllamaProvider.generateText", () => {
 			return jsonResponse({ error: "model requires more system memory" }, 500);
 		};
 		const p = new OllamaProvider(baseOpts(http));
-		await expect(
-			p.generateText({ prompt: "Hi" })
-		).rejects.toThrow(/HTTP 500.*memory.*model requires more system memory/i);
+		await expect(p.generateText({ prompt: "Hi" })).rejects.toThrow(
+			/HTTP 500.*memory.*model requires more system memory/i
+		);
 	});
 
 	it("hints to pull the model on HTTP 404", async () => {
-		const http: HttpClient = async () =>
-			jsonResponse({ error: "model 'x' not found" }, 404);
+		const http: HttpClient = async () => jsonResponse({ error: "model 'x' not found" }, 404);
 		const p = new OllamaProvider(baseOpts(http));
-		await expect(
-			p.generateText({ prompt: "Hi" })
-		).rejects.toThrow(/HTTP 404.*ollama pull.*not found/i);
+		await expect(p.generateText({ prompt: "Hi" })).rejects.toThrow(
+			/HTTP 404.*ollama pull.*not found/i
+		);
 	});
 });

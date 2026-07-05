@@ -4,10 +4,7 @@ import { OpenAIProvider } from "../src/providers/openai-provider";
 import { GoogleProvider } from "../src/providers/google-provider";
 import { XaiProvider } from "../src/providers/xai-provider";
 import { OpenRouterProvider } from "../src/providers/openrouter-provider";
-import type {
-	ObjectGenerator,
-	TextGenerator,
-} from "../src/providers/ai-sdk-provider";
+import type { ObjectGenerator, TextGenerator } from "../src/providers/ai-sdk-provider";
 import { ProviderError, ProviderRateLimitError } from "../src/providers/types";
 import { normalizeStringId, type ModelOption } from "../src/models/model-options";
 
@@ -25,10 +22,7 @@ type Ctor = new (opts: {
 		input: { prompt: string; schema: z.ZodType<T, z.ZodTypeDef, unknown> },
 		signal?: AbortSignal
 	) => Promise<T>;
-	generateText: (
-		input: { prompt: string },
-		signal?: AbortSignal
-	) => Promise<{ text: string }>;
+	generateText: (input: { prompt: string }, signal?: AbortSignal) => Promise<{ text: string }>;
 	testConnection: () => Promise<{ ok: boolean; message: string }>;
 	listModels: () => Promise<ModelOption[]>;
 };
@@ -58,10 +52,28 @@ function fixedTextGenerator(value: string): {
 }
 
 const cases: Array<{ name: string; Ctor: Ctor; id: string; vendor: RegExp; model: string }> = [
-	{ name: "OpenAIProvider", Ctor: OpenAIProvider, id: "openai", vendor: /OpenAI/, model: "gpt-4o-mini" },
-	{ name: "GoogleProvider", Ctor: GoogleProvider, id: "google", vendor: /Google/, model: "gemini-1.5-flash" },
+	{
+		name: "OpenAIProvider",
+		Ctor: OpenAIProvider,
+		id: "openai",
+		vendor: /OpenAI/,
+		model: "gpt-4o-mini",
+	},
+	{
+		name: "GoogleProvider",
+		Ctor: GoogleProvider,
+		id: "google",
+		vendor: /Google/,
+		model: "gemini-1.5-flash",
+	},
 	{ name: "XaiProvider", Ctor: XaiProvider, id: "xai", vendor: /xAI/, model: "grok-2-latest" },
-	{ name: "OpenRouterProvider", Ctor: OpenRouterProvider, id: "openrouter", vendor: /OpenRouter/, model: "anthropic/claude-sonnet-4" },
+	{
+		name: "OpenRouterProvider",
+		Ctor: OpenRouterProvider,
+		id: "openrouter",
+		vendor: /OpenRouter/,
+		model: "anthropic/claude-sonnet-4",
+	},
 ];
 
 for (const c of cases) {

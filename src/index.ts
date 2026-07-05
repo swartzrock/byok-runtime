@@ -44,8 +44,4 @@ export type {
 	ByokVerificationSnapshot,
 	ByokVerificationSnapshotMap,
 } from "./types";
-export {
-	ByokProvider,
-	ByokProviderError,
-	ByokProviderRateLimitError,
-} from "./types";
+export { ByokProvider, ByokProviderError, ByokProviderRateLimitError } from "./types";

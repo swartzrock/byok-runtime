@@ -67,17 +67,12 @@ function findForbiddenByokImports(files: SourceFile[]): string[] {
 			}
 			if (
 				specifier.startsWith(".") &&
-				!resolvedLocalImportPath(file.path, specifier).startsWith(
-					normalize("src/")
-				)
+				!resolvedLocalImportPath(file.path, specifier).startsWith(normalize("src/"))
 			) {
 				violations.push(`${file.path} imports ${specifier} outside src`);
 				continue;
 			}
-			if (
-				specifier.startsWith(".") &&
-				FORBIDDEN_LOCAL_MODULES.has(localModuleName(specifier))
-			) {
+			if (specifier.startsWith(".") && FORBIDDEN_LOCAL_MODULES.has(localModuleName(specifier))) {
 				violations.push(`${file.path} imports ${specifier}`);
 			}
 		}

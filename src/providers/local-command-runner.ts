@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import type { Readable, Writable } from "node:stream";
 import { ProviderError } from "./types";
@@ -43,9 +43,7 @@ export type LocalProcessSpawner = (
 
 type LocalCommandLogger = Pick<Console, "warn">;
 
-export type LoginShellPathLoader = (
-	env: NodeJS.ProcessEnv
-) => string | Promise<string>;
+export type LoginShellPathLoader = (env: NodeJS.ProcessEnv) => string | Promise<string>;
 
 function defaultSpawner(
 	command: string,
@@ -57,7 +55,7 @@ function defaultSpawner(
 		env: options.env,
 		shell: options.shell,
 		stdio: ["pipe", "pipe", "pipe"],
-	}) as ChildProcessWithoutNullStreams;
+	});
 }
 
 function commandLabel(command: string): string {
@@ -118,9 +116,8 @@ function mergePathValues(...paths: string[]): string {
 function parseLoginShellPath(stdout: string): string {
 	const escapedMarker = LOGIN_SHELL_PATH_MARKER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const markerPattern = new RegExp(`${escapedMarker}([\\s\\S]*?)${escapedMarker}`, "g");
-	let match: RegExpExecArray | null = null;
 	let lastMatch = "";
-	while ((match = markerPattern.exec(stdout)) !== null) {
+	for (const match of stdout.matchAll(markerPattern)) {
 		lastMatch = match[1].trim();
 	}
 	return lastMatch;
@@ -141,11 +138,7 @@ function defaultLoginShellPathLoader(env: NodeJS.ProcessEnv): Promise<string> {
 		const shell = env.SHELL?.trim() || defaultLoginShell();
 		const child = spawn(
 			shell,
-			[
-				"-l",
-				"-c",
-				`printf '\\n${LOGIN_SHELL_PATH_MARKER}%s${LOGIN_SHELL_PATH_MARKER}\\n' "$PATH"`,
-			],
+			["-l", "-c", `printf '\\n${LOGIN_SHELL_PATH_MARKER}%s${LOGIN_SHELL_PATH_MARKER}\\n' "$PATH"`],
 			{
 				env,
 				shell: false,
@@ -206,8 +199,7 @@ export class LocalCommandRunner {
 		private readonly spawnProcess: LocalProcessSpawner = defaultSpawner,
 		private readonly env: NodeJS.ProcessEnv = process.env,
 		private readonly logger: LocalCommandLogger = console,
-		private readonly loadLoginShellPath: LoginShellPathLoader =
-			defaultLoginShellPathLoader
+		private readonly loadLoginShellPath: LoginShellPathLoader = defaultLoginShellPathLoader
 	) {}
 
 	run(request: LocalCommandRequest): Promise<LocalCommandResult> {
@@ -219,35 +211,22 @@ export class LocalCommandRunner {
 			...request.env,
 		};
 		if (request.signal?.aborted) {
-			return Promise.reject(
-				new ProviderError(`${commandLabel(request.command)} was cancelled.`)
-			);
+			return Promise.reject(new ProviderError(`${commandLabel(request.command)} was cancelled.`));
 		}
 
 		const pathValue = isBareCommand(request.command)
-			? resolveBareCommandPath(
-					basePath,
-					commandEnv,
-					this.loadLoginShellPath,
-					this.logger
-				)
+			? resolveBareCommandPath(basePath, commandEnv, this.loadLoginShellPath, this.logger)
 			: basePath;
 
 		const runWithPath = (PATH: string): Promise<LocalCommandResult> => {
 			if (request.signal?.aborted) {
-				return Promise.reject(
-					new ProviderError(
-						`${commandLabel(request.command)} was cancelled.`
-					)
-				);
+				return Promise.reject(new ProviderError(`${commandLabel(request.command)} was cancelled.`));
 			}
 			commandEnv.PATH = PATH;
 			return this.runWithEnv(request, args, timeoutMs, commandEnv);
 		};
 
-		return typeof pathValue === "string"
-			? runWithPath(pathValue)
-			: pathValue.then(runWithPath);
+		return typeof pathValue === "string" ? runWithPath(pathValue) : pathValue.then(runWithPath);
 	}
 
 	private runWithEnv(
@@ -267,10 +246,7 @@ export class LocalCommandRunner {
 			let settled = false;
 			let timeout: ReturnType<typeof setTimeout> | null = null;
 
-			const settle = (
-				callback: () => void,
-				removeAbortListener: () => void
-			): void => {
+			const settle = (callback: () => void, removeAbortListener: () => void): void => {
 				if (settled) return;
 				settled = true;
 				if (timeout) clearTimeout(timeout);
@@ -281,19 +257,13 @@ export class LocalCommandRunner {
 			const onAbort = (): void => {
 				child.kill("SIGTERM");
 				settle(
-					() =>
-						reject(
-							new ProviderError(
-								`${commandLabel(request.command)} was cancelled.`
-							)
-						),
+					() => reject(new ProviderError(`${commandLabel(request.command)} was cancelled.`)),
 					() => request.signal?.removeEventListener("abort", onAbort)
 				);
 			};
 
 			request.signal?.addEventListener("abort", onAbort, { once: true });
-			const removeAbortListener = (): void =>
-				request.signal?.removeEventListener("abort", onAbort);
+			const removeAbortListener = (): void => request.signal?.removeEventListener("abort", onAbort);
 
 			child.stdout.on("data", (chunk: Buffer | string) => {
 				stdout += chunk.toString();
@@ -302,33 +272,23 @@ export class LocalCommandRunner {
 				stderr += chunk.toString();
 			});
 			child.once("error", (error) => {
-				settle(
-					() => {
-						this.logger.warn("BYOK local CLI failed to start", {
-							command: request.command,
-							code: error.code,
-							PATH: commandEnv.PATH ?? "",
-						});
-						reject(new ProviderError(errorMessageForSpawn(request.command, error)));
-					},
-					removeAbortListener
-				);
+				settle(() => {
+					this.logger.warn("BYOK local CLI failed to start", {
+						command: request.command,
+						code: error.code,
+						PATH: commandEnv.PATH ?? "",
+					});
+					reject(new ProviderError(errorMessageForSpawn(request.command, error)));
+				}, removeAbortListener);
 			});
 			child.once("close", (code) => {
-				settle(
-					() => {
-						if (code === 0) {
-							resolve({ stdout, stderr, exitCode: 0 });
-							return;
-						}
-						reject(
-							new ProviderError(
-								errorMessageForExit(request.command, code, stderr, stdout)
-							)
-						);
-					},
-					removeAbortListener
-				);
+				settle(() => {
+					if (code === 0) {
+						resolve({ stdout, stderr, exitCode: 0 });
+						return;
+					}
+					reject(new ProviderError(errorMessageForExit(request.command, code, stderr, stdout)));
+				}, removeAbortListener);
 			});
 
 			timeout = setTimeout(() => {
@@ -336,9 +296,7 @@ export class LocalCommandRunner {
 				settle(
 					() =>
 						reject(
-							new ProviderError(
-								`${commandLabel(request.command)} timed out after ${timeoutMs}ms.`
-							)
+							new ProviderError(`${commandLabel(request.command)} timed out after ${timeoutMs}ms.`)
 						),
 					removeAbortListener
 				);

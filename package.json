@@ -18,11 +18,17 @@
 		}
 	},
 	"scripts": {
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "eslint . --max-warnings=0",
 		"build": "tsup",
 		"prepack": "bun run build",
 		"typecheck": "tsc -p tsconfig.json",
 		"typecheck:examples": "tsc -p tsconfig.examples.json",
-		"test": "vitest run --config vitest.config.ts"
+		"test": "vitest run --config vitest.config.ts",
+		"pack:check": "npm pack --dry-run",
+		"publint": "publint",
+		"attw": "attw --pack --profile esm-only"
 	},
 	"files": [
 		"dist",
@@ -42,7 +48,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/swartzrock/byok-runtime.git"
+		"url": "git+https://github.com/swartzrock/byok-runtime.git"
 	},
 	"bugs": {
 		"url": "https://github.com/swartzrock/byok-runtime/issues"
@@ -62,9 +68,15 @@
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.4",
+		"@eslint/js": "^10.0.1",
 		"@types/node": "^24.0.4",
+		"eslint": "^10.6.0",
+		"prettier": "^3.9.4",
+		"publint": "^0.3.21",
 		"tsup": "^8.5.0",
 		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.62.1",
 		"vitest": "^3.2.4"
 	}
 }

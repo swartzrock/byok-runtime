@@ -4,15 +4,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { z } from "zod/v3";
 import * as byok from "../src";
-import {
-	ProviderError,
-	ProviderRateLimitError,
-} from "../src/providers/types";
-import type {
-	ByokProviderConfig,
-	ByokProviderDefinition,
-	ByokProviderRuntime,
-} from "../src";
+import { ProviderError, ProviderRateLimitError } from "../src/providers/types";
+import type { ByokProviderConfig, ByokProviderDefinition, ByokProviderRuntime } from "../src";
 
 const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
@@ -49,18 +42,12 @@ describe("BYOK public contract", () => {
 		}
 
 		const typesSource = readFileSync(join(PACKAGE_ROOT, "src", "types.ts"), "utf8");
-		const modelOptionMatch = typesSource.match(
-			/export interface ByokModelOption \{([\s\S]*?)\n\}/
-		);
-		expect(modelOptionMatch?.[1]).toBe(
-			"\n\tid: string;\n\tlabel: string;"
-		);
+		const modelOptionMatch = typesSource.match(/export interface ByokModelOption \{([\s\S]*?)\n\}/);
+		expect(modelOptionMatch?.[1]).toBe("\n\tid: string;\n\tlabel: string;");
 	});
 
 	it("keeps BYOK free of app and storage imports", () => {
-		const files = walkFiles(join(PACKAGE_ROOT, "src")).filter((path) =>
-			path.endsWith(".ts")
-		);
+		const files = walkFiles(join(PACKAGE_ROOT, "src")).filter((path) => path.endsWith(".ts"));
 		for (const file of files) {
 			const source = readFileSync(file, "utf8");
 			expect(source, file).not.toMatch(/from\s+["'](?:obsidian|electron)["']/);
@@ -70,16 +57,11 @@ describe("BYOK public contract", () => {
 	});
 
 	it("documents examples against the public barrel", () => {
-		const docs = [
-			join(PACKAGE_ROOT, "README.md"),
-			join(PACKAGE_ROOT, "API.md"),
-		];
+		const docs = [join(PACKAGE_ROOT, "README.md"), join(PACKAGE_ROOT, "API.md")];
 		const codeExamples = docs
 			.map((path) => readFileSync(path, "utf8"))
 			.flatMap((doc) =>
-				[...doc.matchAll(/```(?:ts|typescript)\n([\s\S]*?)```/g)].map(
-					(match) => match[1] ?? ""
-				)
+				[...doc.matchAll(/```(?:ts|typescript)\n([\s\S]*?)```/g)].map((match) => match[1] ?? "")
 			)
 			.join("\n");
 
@@ -106,9 +88,7 @@ describe("BYOK public contract", () => {
 			{ provider: "claude-cli", command: "claude", model: "sonnet" },
 		];
 
-		expect(configs.map((config) => config.provider)).toEqual(
-			byok.BYOK_PROVIDER_IDS
-		);
+		expect(configs.map((config) => config.provider)).toEqual(byok.BYOK_PROVIDER_IDS);
 	});
 
 	it("exports a runtime shape with text, object, status, and model hooks", async () => {

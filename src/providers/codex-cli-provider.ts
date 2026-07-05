@@ -1,9 +1,9 @@
 import {
-	AiProvider,
+	type AiProvider,
 	ProviderError,
-	ProviderStatus,
-	TextGenerationInput,
-	TextGenerationOutput,
+	type ProviderStatus,
+	type TextGenerationInput,
+	type TextGenerationOutput,
 } from "./types";
 import type { ByokModelOption } from "../types";
 import {
@@ -26,9 +26,7 @@ export interface CodexCliProviderOptions {
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-	return value && typeof value === "object"
-		? (value as Record<string, unknown>)
-		: null;
+	return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
 
 function textFromContent(value: unknown): string {
@@ -88,10 +86,10 @@ export function extractCodexCliModels(stdout: string): ByokModelOption[] {
 	const trimmed = stdout.trim();
 	if (!trimmed) return [];
 	try {
-		const parsed = JSON.parse(trimmed);
+		const parsed: unknown = JSON.parse(trimmed);
 		const modelList = Array.isArray(parsed)
 			? parsed
-			: asRecord(parsed)?.models ?? asRecord(parsed)?.data;
+			: (asRecord(parsed)?.models ?? asRecord(parsed)?.data);
 		if (!Array.isArray(modelList)) return [];
 		return dedupeModelOptions(
 			modelList
@@ -110,7 +108,8 @@ export function extractCodexCliOutput(stdout: string): string {
 	if (lines.length > 1) {
 		for (let i = lines.length - 1; i >= 0; i--) {
 			try {
-				const text = textFromEvent(JSON.parse(lines[i]));
+				const parsedLine: unknown = JSON.parse(lines[i]);
+				const text = textFromEvent(parsedLine);
 				if (text.trim()) return text;
 			} catch {
 				// Ignore non-JSON log lines.
@@ -118,7 +117,7 @@ export function extractCodexCliOutput(stdout: string): string {
 		}
 	}
 	try {
-		const parsed = JSON.parse(trimmed);
+		const parsed: unknown = JSON.parse(trimmed);
 		const text = textFromEvent(parsed);
 		if (text.trim()) return text;
 	} catch {
@@ -164,9 +163,7 @@ export class CodexCliProvider implements AiProvider {
 			}
 			return {
 				ok: true,
-				message: this.model
-					? `Connected to Codex CLI (${this.model}).`
-					: "Connected to Codex CLI.",
+				message: this.model ? `Connected to Codex CLI (${this.model}).` : "Connected to Codex CLI.",
 			};
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -199,13 +196,7 @@ export class CodexCliProvider implements AiProvider {
 	}
 
 	private commandArgs(): string[] {
-		const args = [
-			"exec",
-			"--skip-git-repo-check",
-			"--sandbox",
-			"read-only",
-			"--json",
-		];
+		const args = ["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--json"];
 		if (this.model) args.push("--model", this.model);
 		return args;
 	}

@@ -86,13 +86,8 @@ export async function generateText(
 	});
 }
 
-export async function listModels(
-	options: ByokListModelsOptions
-): Promise<ByokModelOption[]> {
-	const provider = createByokProvider(
-		providerConfigFromListModelsOptions(options),
-		options.deps
-	);
+export async function listModels(options: ByokListModelsOptions): Promise<ByokModelOption[]> {
+	const provider = createByokProvider(providerConfigFromListModelsOptions(options), options.deps);
 	return provider.listModels();
 }
 

@@ -1,9 +1,9 @@
 import {
-	AiProvider,
+	type AiProvider,
 	ProviderError,
-	ProviderStatus,
-	TextGenerationInput,
-	TextGenerationOutput,
+	type ProviderStatus,
+	type TextGenerationInput,
+	type TextGenerationOutput,
 } from "./types";
 import type { ByokModelOption } from "../types";
 import {
@@ -49,9 +49,7 @@ export interface ClaudeCliProviderOptions {
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-	return value && typeof value === "object"
-		? (value as Record<string, unknown>)
-		: null;
+	return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
 
 function textFromContent(value: unknown): string {
@@ -98,7 +96,7 @@ export function extractClaudeCliOutput(stdout: string): string {
 	const trimmed = stdout.trim();
 	if (!trimmed) return "";
 	try {
-		const parsed = JSON.parse(trimmed);
+		const parsed: unknown = JSON.parse(trimmed);
 		const record = asRecord(parsed);
 		if (!record) return stdout;
 		for (const key of ["structured_output", "structuredOutput"]) {
@@ -141,9 +139,7 @@ function normalizeClaudeCliModelId(model: string): string {
 		.trim()
 		.replace(/^~?anthropic\//, "")
 		.split("-")
-		.map((token) =>
-			/^\d+(?:\.\d+)+$/.test(token) ? token.split(".").join("-") : token
-		)
+		.map((token) => (/^\d+(?:\.\d+)+$/.test(token) ? token.split(".").join("-") : token))
 		.join("-");
 }
 
@@ -155,13 +151,9 @@ function modelOptionFromOpenRouterId(id: string): ByokModelOption | null {
 	const trimmed = id.trim();
 	const markerIndex = trimmed.indexOf("anthropic/");
 	if (markerIndex === -1) return null;
-	const claudeModelId = normalizeClaudeCliModelId(
-		trimmed.slice(markerIndex + "anthropic/".length)
-	);
+	const claudeModelId = normalizeClaudeCliModelId(trimmed.slice(markerIndex + "anthropic/".length));
 	if (claudeModelId.endsWith("-latest")) return null;
-	return claudeModelId
-		? { id: claudeModelId, label: claudeModelId }
-		: null;
+	return claudeModelId ? { id: claudeModelId, label: claudeModelId } : null;
 }
 
 function numericVersionToken(token: string): number[] | null {
@@ -200,14 +192,9 @@ function modelFamilyAndVersion(id: string): {
 	};
 }
 
-function keepLatestClaudeModelVersions(
-	options: ByokModelOption[]
-): ByokModelOption[] {
+function keepLatestClaudeModelVersions(options: ByokModelOption[]): ByokModelOption[] {
 	const order: string[] = [];
-	const bestByFamily = new Map<
-		string,
-		{ option: ByokModelOption; version: number[] }
-	>();
+	const bestByFamily = new Map<string, { option: ByokModelOption; version: number[] }>();
 	for (const option of options) {
 		const model = modelFamilyAndVersion(option.id);
 		const existing = bestByFamily.get(model.family);
@@ -266,7 +253,7 @@ export class ClaudeCliProvider implements AiProvider {
 	async testConnection(): Promise<ProviderStatus> {
 		try {
 			const output = await this.runPrompt(
-				"Return exactly this JSON object to confirm Claude CLI text generation works: {\"ok\":true}",
+				'Return exactly this JSON object to confirm Claude CLI text generation works: {"ok":true}',
 				CONNECTION_JSON_SCHEMA,
 				STATUS_TIMEOUT_MS
 			);
@@ -378,11 +365,7 @@ export class ClaudeCliProvider implements AiProvider {
 		const stdout = extractClaudeCliOutput(result.stdout);
 		const stderr = extractClaudeCliOutput(result.stderr);
 		const output = stdout.trim() ? stdout : stderr;
-		if (
-			isAuthMissing(result.stdout) ||
-			isAuthMissing(result.stderr) ||
-			isAuthMissing(output)
-		) {
+		if (isAuthMissing(result.stdout) || isAuthMissing(result.stderr) || isAuthMissing(output)) {
 			throw new ProviderError(CLAUDE_CLI_AUTH_MESSAGE);
 		}
 		if (!output.trim()) {
@@ -391,11 +374,7 @@ export class ClaudeCliProvider implements AiProvider {
 		return output;
 	}
 
-	private async complete(
-		prompt: string,
-		schema?: string,
-		signal?: AbortSignal
-	): Promise<string> {
+	private async complete(prompt: string, schema?: string, signal?: AbortSignal): Promise<string> {
 		return this.runPrompt(prompt, schema, this.timeoutMs, signal);
 	}
 }

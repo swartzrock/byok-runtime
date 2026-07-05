@@ -4,10 +4,10 @@ import {
 	extractCodexCliModels,
 	extractCodexCliOutput,
 } from "../src/providers/codex-cli-provider";
-import { defaultLocalCliCwd } from "../src/providers/local-command-runner";
-import type {
-	LocalCommandRequest,
-	LocalCommandResult,
+import {
+	defaultLocalCliCwd,
+	type LocalCommandRequest,
+	type LocalCommandResult,
 } from "../src/providers/local-command-runner";
 import { ProviderError } from "../src/providers/types";
 
@@ -22,18 +22,19 @@ function eventOutput(text: string): string {
 	].join("\n");
 }
 
-function makeProvider(responses: Array<LocalCommandResult | Error>, model = ""): {
+function makeProvider(
+	responses: Array<LocalCommandResult | Error>,
+	model = ""
+): {
 	provider: CodexCliProvider;
 	run: ReturnType<typeof vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>>;
 } {
-	const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(
-		async () => {
-			const next = responses.shift();
-			if (!next) throw new Error("unexpected runner call");
-			if (next instanceof Error) throw next;
-			return next;
-		}
-	);
+	const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(async () => {
+		const next = responses.shift();
+		if (!next) throw new Error("unexpected runner call");
+		if (next instanceof Error) throw next;
+		return next;
+	});
 	return {
 		provider: new CodexCliProvider({
 			command: "codex",
@@ -48,9 +49,7 @@ function makeProvider(responses: Array<LocalCommandResult | Error>, model = ""):
 
 describe("extractCodexCliOutput", () => {
 	it("extracts the final text from JSONL event output", () => {
-		expect(extractCodexCliOutput(eventOutput('{"question":"Q?"}'))).toBe(
-			'{"question":"Q?"}'
-		);
+		expect(extractCodexCliOutput(eventOutput('{"question":"Q?"}'))).toBe('{"question":"Q?"}');
 	});
 
 	it("falls back to plain stdout when the CLI prints raw final text", () => {
@@ -95,9 +94,7 @@ describe("extractCodexCliModels", () => {
 
 describe("CodexCliProvider", () => {
 	it("returns generated text from Codex CLI output", async () => {
-		const { provider, run } = makeProvider([
-			result(eventOutput("Plain final answer.")),
-		]);
+		const { provider, run } = makeProvider([result(eventOutput("Plain final answer."))]);
 
 		const out = await provider.generateText({ prompt: "Answer plainly." });
 
@@ -122,24 +119,22 @@ describe("CodexCliProvider", () => {
 	it("throws ProviderError when Codex CLI returns no final text", async () => {
 		const { provider } = makeProvider([result("")]);
 
-		await expect(
-			provider.generateText({ prompt: "Answer plainly." })
-		).rejects.toBeInstanceOf(ProviderError);
+		await expect(provider.generateText({ prompt: "Answer plainly." })).rejects.toBeInstanceOf(
+			ProviderError
+		);
 	});
 
 	it("maps runner failures into ProviderError", async () => {
 		const { provider } = makeProvider([new Error("boom")]);
 
-		await expect(
-			provider.generateText({ prompt: "Answer plainly." })
-		).rejects.toThrow(/Codex CLI request failed: boom/);
+		await expect(provider.generateText({ prompt: "Answer plainly." })).rejects.toThrow(
+			/Codex CLI request failed: boom/
+		);
 	});
 
 	it("reports command-not-found from the runner during connection checks", async () => {
 		const { provider } = makeProvider([
-			new ProviderError(
-				"codex was not found. Check the command path supplied by the host app."
-			),
+			new ProviderError("codex was not found. Check the command path supplied by the host app."),
 		]);
 
 		const status = await provider.testConnection();
@@ -172,16 +167,12 @@ describe("CodexCliProvider", () => {
 		const { provider, run } = makeProvider([
 			result(
 				JSON.stringify({
-					models: [
-						{ slug: "gpt-5.5", display_name: "GPT-5.5" },
-					],
+					models: [{ slug: "gpt-5.5", display_name: "GPT-5.5" }],
 				})
 			),
 		]);
 
-		await expect(provider.listModels()).resolves.toEqual([
-			{ id: "gpt-5.5", label: "gpt-5.5" },
-		]);
+		await expect(provider.listModels()).resolves.toEqual([{ id: "gpt-5.5", label: "gpt-5.5" }]);
 		expect(run).toHaveBeenCalledWith({
 			command: "codex",
 			args: ["debug", "models"],
@@ -193,9 +184,7 @@ describe("CodexCliProvider", () => {
 	it("maps Codex CLI model-list failures into ProviderError", async () => {
 		const { provider } = makeProvider([new Error("boom")]);
 
-		await expect(provider.listModels()).rejects.toThrow(
-			/Codex CLI model fetch failed: boom/
-		);
+		await expect(provider.listModels()).rejects.toThrow(/Codex CLI model fetch failed: boom/);
 	});
 
 	it("passes the configured model override and omits it when blank", async () => {
@@ -210,8 +199,8 @@ describe("CodexCliProvider", () => {
 	});
 
 	it("uses a neutral temp cwd when no cwd is configured", async () => {
-		const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(
-			async () => result("Logged in as user")
+		const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(async () =>
+			result("Logged in as user")
 		);
 		const provider = new CodexCliProvider({
 			command: "codex",
