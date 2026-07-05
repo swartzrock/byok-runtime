@@ -9,7 +9,6 @@
 [![Issues](https://img.shields.io/github/issues/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-
 Function-first text generation, provider runtime, and model discovery for bring-your-own-key AI applications.
 
 `@swartzrock/byok-runtime` lets a TypeScript app run against user-supplied AI accounts without owning provider-specific generation code. For first success, call `generateText` with an explicit provider, credential, model, and prompt. For setup flows, call `listModels` before a model is selected. When an app needs connection testing, structured output, or custom runtime methods, BYOK also exposes the lower-level provider runtime.
