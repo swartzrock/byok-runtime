@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod/v3";
 import type { ModelInfo } from "@anthropic-ai/sdk/resources/models";
-import {
-	AnthropicProvider,
-	type ObjectGenerator,
-} from "../src/providers/anthropic-provider";
+import { AnthropicProvider, type ObjectGenerator } from "../src/providers/anthropic-provider";
 import type { TextGenerator } from "../src/providers/ai-sdk-provider";
 import { ProviderError } from "../src/providers/types";
 
@@ -141,8 +138,6 @@ describe("AnthropicProvider.listModels", () => {
 			fetchImpl: fetchMock as never,
 		});
 		const listed = await p.listModels();
-		expect(listed).toEqual([
-			{ id: "claude-account-123", label: "Claude Account 123" },
-		]);
+		expect(listed).toEqual([{ id: "claude-account-123", label: "Claude Account 123" }]);
 	});
 });

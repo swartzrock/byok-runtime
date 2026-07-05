@@ -32,8 +32,7 @@ export class AnthropicProvider extends AiSdkProvider {
 			model: opts.model,
 			generateObject: opts.generator ?? defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			generateText:
-				opts.textGenerator ??
-				defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+				opts.textGenerator ?? defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			listModels: () => listAnthropicModelOptions(opts.apiKey, opts.fetchImpl),
 		});
 	}
@@ -49,7 +48,7 @@ async function listAnthropicModelOptions(
 		dangerouslyAllowBrowser: true,
 	});
 	const models: ByokModelOption[] = [];
-	// eslint-disable-next-line @typescript-eslint/await-thenable -- PagePromise implements AsyncIterable.
+
 	for await (const model of client.models.list()) {
 		models.push(anthropicModelInfoToByokModelOption(model));
 	}

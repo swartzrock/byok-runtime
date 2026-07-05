@@ -1,4 +1,13 @@
-# @swartzrock/byok-runtime
+# BYOK-Runtime
+
+[![Language](https://img.shields.io/badge/language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Package manager](https://img.shields.io/badge/package_manager-bun_1.3.14-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![CI](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/swartzrock/byok-runtime?include_prereleases&label=release)](https://github.com/swartzrock/byok-runtime/releases)
+[![GitHub release date](https://img.shields.io/github/release-date/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/releases)
+[![Last commit](https://img.shields.io/github/last-commit/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/commits/main)
+[![Issues](https://img.shields.io/github/issues/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Function-first text generation, provider runtime, and model discovery for bring-your-own-key AI applications.
 
@@ -23,15 +32,15 @@ The API is shaped for backend, desktop backend, Electron main-process, and other
 
 ## Provider Support
 
-| Provider ID | Credential | Entry point | Model listing | Generation |
-| --- | --- | --- | --- | --- |
-| `anthropic` | API key + model | `@swartzrock/byok-runtime` | Anthropic account models | Text and object |
-| `openai` | API key + model | `@swartzrock/byok-runtime` | OpenAI model IDs | Text and object |
-| `google` | API key + model | `@swartzrock/byok-runtime` | Gemini model IDs | Text and object |
-| `xai` | API key + model | `@swartzrock/byok-runtime` | xAI model IDs | Text and object |
-| `openrouter` | API key + model | `@swartzrock/byok-runtime` | Portable model options | Text and object-like JSON parsing |
-| `ollama` | URL + model | `@swartzrock/byok-runtime` | Installed local models | Text |
-| `codex-cli` | Local command, optional model | `@swartzrock/byok-runtime/node` | Codex CLI model IDs | Text |
+| Provider ID  | Credential                    | Entry point                     | Model listing                                                    | Generation                                          |
+| ------------ | ----------------------------- | ------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `anthropic`  | API key + model               | `@swartzrock/byok-runtime`      | Anthropic account models                                         | Text and object                                     |
+| `openai`     | API key + model               | `@swartzrock/byok-runtime`      | OpenAI model IDs                                                 | Text and object                                     |
+| `google`     | API key + model               | `@swartzrock/byok-runtime`      | Gemini model IDs                                                 | Text and object                                     |
+| `xai`        | API key + model               | `@swartzrock/byok-runtime`      | xAI model IDs                                                    | Text and object                                     |
+| `openrouter` | API key + model               | `@swartzrock/byok-runtime`      | Portable model options                                           | Text and object-like JSON parsing                   |
+| `ollama`     | URL + model                   | `@swartzrock/byok-runtime`      | Installed local models                                           | Text                                                |
+| `codex-cli`  | Local command, optional model | `@swartzrock/byok-runtime/node` | Codex CLI model IDs                                              | Text                                                |
 | `claude-cli` | Local command, optional model | `@swartzrock/byok-runtime/node` | Anthropic model IDs from OpenRouter, without the provider prefix | Text, with JSON-schema hints through `generateText` |
 
 The main entrypoint avoids Node-only process APIs, but it is still intended for trusted host runtimes that can safely receive provider credentials. Use `@swartzrock/byok-runtime/node` only from trusted Node or desktop backends that are allowed to spawn local commands.
@@ -336,10 +345,15 @@ From the repository root:
 
 ```sh
 bun install
+bun run format:check
+bun run lint
 bun run build
 bun run typecheck
 bun run typecheck:examples
 bun run test
+bun run pack:check
+bun run publint
+bun run attw
 ```
 
 ## Package Boundaries

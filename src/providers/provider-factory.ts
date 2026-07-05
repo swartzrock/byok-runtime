@@ -4,16 +4,8 @@ import { OllamaProvider } from "./ollama-provider";
 import { OpenAIProvider } from "./openai-provider";
 import { OpenRouterProvider } from "./openrouter-provider";
 import { XaiProvider } from "./xai-provider";
-import {
-	normalizeOllamaUrl,
-	resolveByokFetchDeps,
-	resolveOllamaDeps,
-} from "./default-deps";
-import type {
-	ByokCoreProviderConfig,
-	ByokProviderDeps,
-	ByokProviderRuntime,
-} from "../types";
+import { normalizeOllamaUrl, resolveByokFetchDeps, resolveOllamaDeps } from "./default-deps";
+import type { ByokCoreProviderConfig, ByokProviderDeps, ByokProviderRuntime } from "../types";
 
 export function createByokProvider(
 	config: ByokCoreProviderConfig,
@@ -66,7 +58,7 @@ export function createByokProvider(
 				url: normalizeOllamaUrl(config.url),
 				model: config.model,
 				http,
-			}) as unknown as ByokProviderRuntime;
+			});
 		}
 	}
 }

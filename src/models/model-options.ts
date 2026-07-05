@@ -21,11 +21,11 @@ export function normalizeModelIds(ids: string[]): ModelOption[] {
 export function isModelOption(value: unknown): value is ModelOption {
 	return (
 		typeof value === "object" &&
-			value !== null &&
-			"id" in value &&
-			"label" in value &&
-			typeof (value as ModelOption).id === "string" &&
-			typeof (value as ModelOption).label === "string"
+		value !== null &&
+		"id" in value &&
+		"label" in value &&
+		typeof (value as ModelOption).id === "string" &&
+		typeof (value as ModelOption).label === "string"
 	);
 }
 
@@ -34,10 +34,7 @@ export function isModelOption(value: unknown): value is ModelOption {
  * Uses the same natural collation as {@link compareFetchedModelIds} for the
  * trailing sort so IDs stay consistent with the existing fetched-model dropdown.
  */
-export function sortModelOptions(
-	options: ModelOption[],
-	currentModelId?: string
-): ModelOption[] {
+export function sortModelOptions(options: ModelOption[], currentModelId?: string): ModelOption[] {
 	return [...options].sort((a, b) => {
 		if (currentModelId) {
 			if (a.id === currentModelId && b.id !== currentModelId) return -1;

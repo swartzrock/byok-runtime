@@ -57,12 +57,6 @@ export interface AiProvider {
 	sectionConcurrencyLimit?: number;
 	testConnection(): Promise<ProviderStatus>;
 	listModels(): Promise<ByokModelOption[]>;
-	generateText(
-		input: TextGenerationInput,
-		signal?: AbortSignal
-	): Promise<TextGenerationOutput>;
-	generateObject?<T>(
-		input: ObjectGenerationInput<T>,
-		signal?: AbortSignal
-	): Promise<T>;
+	generateText(input: TextGenerationInput, signal?: AbortSignal): Promise<TextGenerationOutput>;
+	generateObject?<T>(input: ObjectGenerationInput<T>, signal?: AbortSignal): Promise<T>;
 }

@@ -30,8 +30,7 @@ export class GoogleProvider extends AiSdkProvider {
 			model: opts.model,
 			generateObject: opts.generator ?? defaultGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			generateText:
-				opts.textGenerator ??
-				defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
+				opts.textGenerator ?? defaultTextGenerator(opts.apiKey, opts.model, opts.fetchImpl),
 			listModels:
 				opts.listModelsImpl ??
 				(async () => normalizeModelIds(await listGoogleModels(opts.apiKey, opts.fetchImpl))),
@@ -39,12 +38,9 @@ export class GoogleProvider extends AiSdkProvider {
 	}
 }
 
-async function listGoogleModels(
-	apiKey: string,
-	fetchImpl?: FetchFunction
-): Promise<string[]> {
+async function listGoogleModels(apiKey: string, fetchImpl?: FetchFunction): Promise<string[]> {
 	const originalFetch = globalThis.fetch;
-	if (fetchImpl) globalThis.fetch = fetchImpl as typeof fetch;
+	if (fetchImpl) globalThis.fetch = fetchImpl;
 	try {
 		const { GoogleGenAI } = await import("@google/genai/web");
 		const client = new GoogleGenAI({ apiKey });

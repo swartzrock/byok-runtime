@@ -48,9 +48,7 @@ describe("isAnthropicCustomModelSelection", () => {
 			isAnthropicCustomModelSelection({
 				anthropicModel: "claude-sonnet-4-6",
 				anthropicModelSelection: "claude-sonnet-4-6",
-				anthropicAvailableModels: [
-					modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6"),
-				],
+				anthropicAvailableModels: [modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6")],
 			})
 		).toBe(false);
 	});
@@ -68,9 +66,7 @@ describe("Anthropic picker defaults", () => {
 	it("preserves saved fetched Anthropic model IDs on load", () => {
 		const settings = {
 			anthropicModel: "claude-sonnet-4-6",
-			anthropicAvailableModels: [
-				modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6"),
-			],
+			anthropicAvailableModels: [modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6")],
 		};
 		normalizeAnthropicModelSelection(settings);
 		expect(settings.anthropicModelSelection).toBe("claude-sonnet-4-6");
@@ -87,9 +83,7 @@ describe("Anthropic picker defaults", () => {
 	it("keeps a refreshed Anthropic account-specific model in catalog mode", () => {
 		const settings = {
 			anthropicModel: "claude-account-123",
-			anthropicAvailableModels: [
-				modelInfo("claude-account-123", "Claude Account 123"),
-			],
+			anthropicAvailableModels: [modelInfo("claude-account-123", "Claude Account 123")],
 		};
 		normalizeAnthropicModelSelection(settings);
 		expect(settings.anthropicModelSelection).toBe("claude-account-123");
@@ -97,9 +91,7 @@ describe("Anthropic picker defaults", () => {
 			isAnthropicCustomModelSelection({
 				anthropicModel: "claude-account-123",
 				anthropicModelSelection: "claude-account-123",
-				anthropicAvailableModels: [
-					modelInfo("claude-account-123", "Claude Account 123"),
-				],
+				anthropicAvailableModels: [modelInfo("claude-account-123", "Claude Account 123")],
 			})
 		).toBe(false);
 	});
@@ -177,15 +169,9 @@ describe("Anthropic model refresh", () => {
 	it("returns fetched Anthropic models with their provider display names", async () => {
 		const refreshed = await refreshAnthropicModelOptions({
 			listModels: async () => [
-				anthropicModelInfoToByokModelOption(
-					modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6")
-				),
-				anthropicModelInfoToByokModelOption(
-					modelInfo("claude-account-123", "Claude Account 123")
-				),
-				anthropicModelInfoToByokModelOption(
-					modelInfo("claude-haiku-4-5", "Claude Haiku 4.5")
-				),
+				anthropicModelInfoToByokModelOption(modelInfo("claude-sonnet-4-6", "Claude Sonnet 4.6")),
+				anthropicModelInfoToByokModelOption(modelInfo("claude-account-123", "Claude Account 123")),
+				anthropicModelInfoToByokModelOption(modelInfo("claude-haiku-4-5", "Claude Haiku 4.5")),
 			],
 		});
 		expect(refreshed.availableModels).toHaveLength(3);

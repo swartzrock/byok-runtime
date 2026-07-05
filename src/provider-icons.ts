@@ -1,7 +1,6 @@
 import type { ByokProviderIconDefinition, ByokProviderId } from "./types";
 
-const SVGL_LIBRARY =
-	"https://github.com/pheralb/svgl/blob/main/static/library";
+const SVGL_LIBRARY = "https://github.com/pheralb/svgl/blob/main/static/library";
 
 export const BYOK_PROVIDER_ICONS = {
 	ollama: {

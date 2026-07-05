@@ -125,12 +125,12 @@ describe("LocalCommandRunner", () => {
 		const { runner } = makeRunner(process);
 		const result = runner.run({ command: "codex", args: ["exec"] });
 
-		process.stdout.write("{\"ok\":true}");
+		process.stdout.write('{"ok":true}');
 		process.stderr.write("warning");
 		process.close(0);
 
 		await expect(result).resolves.toEqual({
-			stdout: "{\"ok\":true}",
+			stdout: '{"ok":true}',
 			stderr: "warning",
 			exitCode: 0,
 		});
@@ -144,9 +144,7 @@ describe("LocalCommandRunner", () => {
 		process.stderr.write("authentication failed because the session expired");
 		process.close(2);
 
-		await expect(result).rejects.toThrow(
-			/claude exited with code 2: authentication failed/
-		);
+		await expect(result).rejects.toThrow(/claude exited with code 2: authentication failed/);
 		await expect(result).rejects.toBeInstanceOf(ProviderError);
 	});
 
@@ -158,9 +156,7 @@ describe("LocalCommandRunner", () => {
 		process.stdout.write("Login required: run claude auth login");
 		process.close(1);
 
-		await expect(result).rejects.toThrow(
-			/claude exited with code 1: Login required/
-		);
+		await expect(result).rejects.toThrow(/claude exited with code 1: Login required/);
 	});
 
 	it("kills the process and reports cancellation when aborted", async () => {
@@ -185,9 +181,9 @@ describe("LocalCommandRunner", () => {
 		const controller = new AbortController();
 		controller.abort();
 
-		await expect(
-			runner.run({ command: "codex", signal: controller.signal })
-		).rejects.toThrow(/codex was cancelled/);
+		await expect(runner.run({ command: "codex", signal: controller.signal })).rejects.toThrow(
+			/codex was cancelled/
+		);
 		expect(calls).toHaveLength(0);
 	});
 
@@ -240,12 +236,7 @@ describe("LocalCommandRunner", () => {
 			calls.push([command, args, options]);
 			return process;
 		};
-		const runner = new LocalCommandRunner(
-			spawner,
-			{ PATH: "/usr/bin" },
-			{ warn },
-			() => ""
-		);
+		const runner = new LocalCommandRunner(spawner, { PATH: "/usr/bin" }, { warn }, () => "");
 		const result = runner.run({ command: "missing-codex" });
 
 		process.fail(
@@ -254,9 +245,7 @@ describe("LocalCommandRunner", () => {
 			})
 		);
 
-		await expect(result).rejects.toThrow(
-			/missing-codex was not found.*command path/i
-		);
+		await expect(result).rejects.toThrow(/missing-codex was not found.*command path/i);
 		expect(warn).toHaveBeenCalledWith(
 			"BYOK local CLI failed to start",
 			expect.objectContaining({

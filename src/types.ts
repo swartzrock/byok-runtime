@@ -13,12 +13,7 @@ export enum ByokProvider {
 
 export type ByokProviderId = `${ByokProvider}`;
 
-export type ByokCloudProviderId =
-	| "anthropic"
-	| "openai"
-	| "google"
-	| "xai"
-	| "openrouter";
+export type ByokCloudProviderId = "anthropic" | "openai" | "google" | "xai" | "openrouter";
 
 export type ByokOllamaProviderId = "ollama";
 
@@ -90,13 +85,9 @@ export interface ByokCliProviderConfig {
 }
 
 export type ByokProviderConfig =
-	| ByokCloudProviderConfig
-	| ByokOllamaProviderConfig
-	| ByokCliProviderConfig;
+	ByokCloudProviderConfig | ByokOllamaProviderConfig | ByokCliProviderConfig;
 
-export type ByokCoreProviderConfig =
-	| ByokCloudProviderConfig
-	| ByokOllamaProviderConfig;
+export type ByokCoreProviderConfig = ByokCloudProviderConfig | ByokOllamaProviderConfig;
 
 export interface ByokHttpRequest {
 	url: string;
@@ -112,9 +103,7 @@ export interface ByokHttpResponse {
 	json: unknown;
 }
 
-export type ByokHttpClient = (
-	request: ByokHttpRequest
-) => Promise<ByokHttpResponse>;
+export type ByokHttpClient = (request: ByokHttpRequest) => Promise<ByokHttpResponse>;
 
 export interface ByokProviderDeps {
 	fetchImpl: typeof fetch;
@@ -138,9 +127,7 @@ export interface ByokVerificationSnapshot {
 	testedAt: string;
 }
 
-export type ByokVerificationSnapshotMap = Partial<
-	Record<ByokProviderId, ByokVerificationSnapshot>
->;
+export type ByokVerificationSnapshotMap = Partial<Record<ByokProviderId, ByokVerificationSnapshot>>;
 
 export interface ByokSetupStatus {
 	keySaved: boolean;
@@ -226,9 +213,7 @@ export interface ByokClientTextGenerationInput {
 }
 
 export interface ByokClient {
-	generateText(
-		input: ByokClientTextGenerationInput
-	): Promise<ByokTextGenerationOutput>;
+	generateText(input: ByokClientTextGenerationInput): Promise<ByokTextGenerationOutput>;
 }
 
 export interface ByokObjectGenerationInput<T> {
@@ -248,10 +233,7 @@ export interface ByokProviderRuntime {
 		input: ByokTextGenerationInput,
 		signal?: AbortSignal
 	): Promise<ByokTextGenerationOutput>;
-	generateObject?<T>(
-		input: ByokObjectGenerationInput<T>,
-		signal?: AbortSignal
-	): Promise<T>;
+	generateObject?<T>(input: ByokObjectGenerationInput<T>, signal?: AbortSignal): Promise<T>;
 }
 
 export class ByokProviderError extends Error {

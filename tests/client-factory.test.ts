@@ -17,8 +17,7 @@ let generateText: typeof generateTextType;
 let listModels: typeof listModelsType;
 
 const fetchImpl = (async () => new Response("{}")) as typeof fetch;
-const describeForVitest =
-	"Bun" in globalThis ? describe.skip : describe;
+const describeForVitest = "Bun" in globalThis ? describe.skip : describe;
 
 function mockRuntime(id = "openai"): ByokProviderRuntime {
 	return {
@@ -40,9 +39,7 @@ describeForVitest("BYOK cloud client facade", () => {
 		mocks.listModels.mockReset();
 		mocks.createByokProvider.mockReturnValue(mockRuntime());
 		mocks.generateText.mockResolvedValue({ text: "Cloud response." });
-		mocks.listModels.mockResolvedValue([
-			{ id: "gpt-4o-mini", label: "gpt-4o-mini" },
-		]);
+		mocks.listModels.mockResolvedValue([{ id: "gpt-4o-mini", label: "gpt-4o-mini" }]);
 		vi.doMock("../src/providers/provider-factory", () => ({
 			createByokProvider: mocks.createByokProvider,
 		}));
