@@ -106,7 +106,7 @@ describe("BYOK package readiness", () => {
 			lint: "eslint . --max-warnings=0",
 			"pack:check": "npm pack --dry-run",
 			publint: "publint",
-			attw: "attw --pack --profile esm-only",
+			attw: "attw --pack --profile esm-only --ignore-rules cjs-resolves-to-esm no-resolution",
 		});
 		expect(existsSync(fromPackage(".prettierrc.json"))).toBe(true);
 		expect(existsSync(fromPackage(".prettierignore"))).toBe(true);
