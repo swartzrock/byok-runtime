@@ -12,6 +12,7 @@ const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
 describe("BYOK public contract", () => {
 	it("exports only the intentional main-entry public API", () => {
 		expect(Object.keys(byok).sort()).toEqual([
+			"BYOK_PROVIDER_API_KEY_ENV_VARS",
 			"BYOK_PROVIDER_IDS",
 			"ByokProvider",
 			"ByokProviderError",
@@ -23,6 +24,7 @@ describe("BYOK public contract", () => {
 			"isByokProviderId",
 			"listModels",
 			"normalizeProviderId",
+			"resolveByokEnvCredential",
 		]);
 		expect("createByokNodeProvider" in byok).toBe(false);
 		expect("createByokProvider" in byok).toBe(false);

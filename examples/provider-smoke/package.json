@@ -1,0 +1,8 @@
+{
+	"name": "@swartzrock/byok-runtime-provider-smoke",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"provider-smoke": "bun run src/cli.ts"
+	}
+}

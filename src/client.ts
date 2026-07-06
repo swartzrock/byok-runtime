@@ -1,4 +1,5 @@
 import { createByokProvider } from "./providers/provider-factory";
+import { resolveByokCloudProviderConfig } from "./credentials";
 import type {
 	ByokClient,
 	ByokClientConfig,
@@ -23,11 +24,7 @@ function providerConfigFromGenerateTextOptions(
 			model: options.model,
 		};
 	}
-	return {
-		provider: options.provider,
-		apiKey: options.apiKey,
-		model: options.model,
-	};
+	return resolveByokCloudProviderConfig(options);
 }
 
 function providerConfigFromClientInput(
@@ -41,11 +38,7 @@ function providerConfigFromClientInput(
 			model: input.model,
 		};
 	}
-	return {
-		provider: config.provider,
-		apiKey: config.apiKey,
-		model: input.model,
-	};
+	return resolveByokCloudProviderConfig({ ...config, model: input.model });
 }
 
 function providerConfigFromListModelsOptions(
@@ -58,11 +51,7 @@ function providerConfigFromListModelsOptions(
 			model: MODEL_NOT_REQUIRED_FOR_LISTING,
 		};
 	}
-	return {
-		provider: options.provider,
-		apiKey: options.apiKey,
-		model: MODEL_NOT_REQUIRED_FOR_LISTING,
-	};
+	return resolveByokCloudProviderConfig({ ...options, model: MODEL_NOT_REQUIRED_FOR_LISTING });
 }
 
 async function generateTextForConfig(

@@ -26,6 +26,7 @@
 		"lint": "eslint . --max-warnings=0",
 		"pack:check": "npm pack --dry-run",
 		"prepack": "bun run build",
+		"provider-smoke": "bun run examples/provider-smoke/src/cli.ts",
 		"publint": "publint",
 		"test": "vitest run --config vitest.config.ts",
 		"typecheck:examples": "tsc -p tsconfig.examples.json",
