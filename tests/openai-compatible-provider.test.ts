@@ -103,10 +103,9 @@ describe("OpenAiCompatibleProvider", () => {
 
 		expect(out).toEqual({ text: "plain reply" });
 		expect(calls[0]?.url).toBe("https://example.test/v1/chat/completions");
-		expect(calls[0]?.init?.headers).toMatchObject({
-			Authorization: "Bearer k",
-			"Content-Type": "application/json",
-		});
+		const headers = new Headers(calls[0]?.init?.headers);
+		expect(headers.get("authorization")).toBe("Bearer k");
+		expect(headers.get("content-type")).toBe("application/json");
 		expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({
 			model: "gpt-4o-mini",
 			messages: [{ role: "user", content: "Write plainly." }],

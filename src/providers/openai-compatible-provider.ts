@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+import type { ChatCompletion } from "openai/resources/chat/completions";
 import { z } from "zod/v3";
 import {
 	type AiProvider,
@@ -39,14 +41,6 @@ export interface OpenAiCompatibleModel {
 	id?: string;
 	name?: string;
 	display_name?: string;
-}
-
-interface ChatCompletionResponse {
-	choices?: Array<{
-		message?: {
-			content?: string | Array<{ type?: string; text?: string }>;
-		};
-	}>;
 }
 
 const DEFAULT_RATE_LIMIT_RETRIES = 2;
@@ -114,18 +108,6 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 	});
 }
 
-function joinUrl(baseURL: string, path: string): string {
-	return `${baseURL.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
-}
-
-async function readErrorDetail(response: Response): Promise<string> {
-	try {
-		return (await response.text()).trim();
-	} catch {
-		return "";
-	}
-}
-
 function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
 	if (schema instanceof z.ZodObject) {
 		const shape = schema.shape as Record<string, z.ZodType>;
@@ -162,12 +144,14 @@ function parseObjectResponse<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, tex
 	return schema.parse(JSON.parse(stripJsonFence(text)));
 }
 
-function extractText(body: ChatCompletionResponse): string {
-	const content = body.choices?.[0]?.message?.content;
+function extractText(body: ChatCompletion): string {
+	const content: unknown = body.choices?.[0]?.message?.content;
 	if (typeof content === "string") return content;
 	if (Array.isArray(content)) {
 		return content
-			.map((part) => (part.type === "text" && typeof part.text === "string" ? part.text : ""))
+			.map((part: { type?: string; text?: unknown }) =>
+				part.type === "text" && typeof part.text === "string" ? part.text : ""
+			)
 			.join("");
 	}
 	throw new Error("OpenAI-compatible response did not include message content.");
@@ -189,10 +173,8 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	readonly requiresDownload = false;
 
 	private readonly vendor: string;
-	private readonly apiKey: string;
 	private readonly model: string;
-	private readonly baseURL: string;
-	private readonly fetchImpl: typeof fetch;
+	private readonly client: OpenAI;
 	private readonly objectGenerator?: CloudObjectGenerator;
 	private readonly textGenerator?: CloudTextGenerator;
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
@@ -202,10 +184,14 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.id = config.id;
 		this.label = config.label;
 		this.vendor = config.vendor;
-		this.apiKey = config.apiKey;
 		this.model = config.model;
-		this.baseURL = config.baseURL;
-		this.fetchImpl = config.fetchImpl;
+		this.client = new OpenAI({
+			apiKey: config.apiKey,
+			baseURL: config.baseURL,
+			fetch: config.fetchImpl,
+			maxRetries: 0,
+			dangerouslyAllowBrowser: true,
+		});
 		this.objectGenerator = config.generator;
 		this.textGenerator = config.textGenerator;
 		this.listModelsImpl = config.listModelsImpl;
@@ -224,33 +210,6 @@ export class OpenAiCompatibleProvider implements AiProvider {
 			return `Could not reach ${this.vendor}. Check your connection.`;
 		}
 		return `${this.vendor} request failed: ${msg}`;
-	}
-
-	private async requestJson<T>(
-		path: string,
-		init: { method: "GET" | "POST"; body?: unknown; signal?: AbortSignal }
-	): Promise<T> {
-		const response = await this.fetchImpl(joinUrl(this.baseURL, path), {
-			method: init.method,
-			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
-				"Content-Type": "application/json",
-			},
-			body: init.body ? JSON.stringify(init.body) : undefined,
-			signal: init.signal,
-		});
-		if (!response.ok) {
-			const detail = await readErrorDetail(response);
-			const error = new Error(
-				detail
-					? `HTTP ${response.status}: ${detail}`
-					: `HTTP ${response.status} from ${this.vendor}.`
-			) as Error & { status: number; headers: Headers };
-			error.status = response.status;
-			error.headers = response.headers;
-			throw error;
-		}
-		return (await response.json()) as T;
 	}
 
 	private async runWithRetry<T>(
@@ -286,14 +245,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		if (this.textGenerator) {
 			return this.textGenerator({ ...input, signal });
 		}
-		const body = await this.requestJson<ChatCompletionResponse>("/chat/completions", {
-			method: "POST",
-			signal,
-			body: {
+		const body = await this.client.chat.completions.create(
+			{
 				model: this.model,
 				messages: [{ role: "user", content: input.prompt }],
 			},
-		});
+			{ signal }
+		);
 		return extractText(body);
 	}
 
@@ -314,10 +272,9 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
 	async listModels(): Promise<ByokModelOption[]> {
 		if (this.listModelsImpl) return this.listModelsImpl();
-		const body = await this.requestJson<{ data?: OpenAiCompatibleModel[] }>("/models", {
-			method: "GET",
-		});
+		const body = await this.client.models.list();
 		return (body.data ?? [])
+			.map((entry) => entry as OpenAiCompatibleModel)
 			.map((entry) => this.normalizeModel(entry))
 			.filter((entry): entry is ByokModelOption => entry !== null);
 	}
