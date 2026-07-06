@@ -13,13 +13,13 @@ execution: code
 
 ## Goal Capsule
 
-| Field | Value |
-| --- | --- |
-| Objective | Add explicit env-backed credential support for standard API-key providers and use it from a provider smoke CLI. |
+| Field             | Value                                                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Objective         | Add explicit env-backed credential support for standard API-key providers and use it from a provider smoke CLI.                                                                  |
 | Product authority | User request on 2026-07-06, the provider smoke harness ideation artifact, the current public facade, and the BYOK boundary that credentials flow through trusted runtime inputs. |
-| Execution profile | LFG pipeline, single implementation branch, code plus docs and tests. |
-| Stop conditions | Stop if implementation would require `.env` parsing, browser secret handling, provider model semantics changes, or custom env variable naming. |
-| Tail ownership | LFG owns implementation, simplification, review, browser-test applicability, commit, push, PR creation, and CI watch. |
+| Execution profile | LFG pipeline, single implementation branch, code plus docs and tests.                                                                                                            |
+| Stop conditions   | Stop if implementation would require `.env` parsing, browser secret handling, provider model semantics changes, or custom env variable naming.                                   |
+| Tail ownership    | LFG owns implementation, simplification, review, browser-test applicability, commit, push, PR creation, and CI watch.                                                            |
 
 ---
 
@@ -231,12 +231,12 @@ The smoke CLI help and README should include copyable commands for env-backed ge
 
 ## Verification Contract
 
-| Gate | Applies to | Done signal |
-| --- | --- | --- |
-| `bun run test -- tests/env-credentials.test.ts tests/client-factory.test.ts tests/provider-smoke-cli.test.ts` | U1, U2, U3 | Focused behavior and CLI delegation tests pass. |
-| `bun run typecheck:examples` | U1, U2, U4 | Public TypeScript fixture compiles with explicit-key and env-backed examples. |
-| `bun run test -- tests/public-contract.test.ts tests/provider-factory.test.ts` | U1, U2, U4 | Public export surface and provider factory behavior remain intentional. |
-| `bun run check` | Whole plan | Formatting, lint, build, typecheck, package readiness, publint, attw, and full tests pass. |
+| Gate                                                                                                          | Applies to | Done signal                                                                                |
+| ------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| `bun run test -- tests/env-credentials.test.ts tests/client-factory.test.ts tests/provider-smoke-cli.test.ts` | U1, U2, U3 | Focused behavior and CLI delegation tests pass.                                            |
+| `bun run typecheck:examples`                                                                                  | U1, U2, U4 | Public TypeScript fixture compiles with explicit-key and env-backed examples.              |
+| `bun run test -- tests/public-contract.test.ts tests/provider-factory.test.ts`                                | U1, U2, U4 | Public export surface and provider factory behavior remain intentional.                    |
+| `bun run check`                                                                                               | Whole plan | Formatting, lint, build, typecheck, package readiness, publint, attw, and full tests pass. |
 
 Manual provider smoke commands are optional because they require live API keys or a local Ollama daemon.
 
