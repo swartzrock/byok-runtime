@@ -52,6 +52,7 @@ interface ChatCompletionResponse {
 const DEFAULT_RATE_LIMIT_RETRIES = 2;
 const DEFAULT_RATE_LIMIT_RETRY_MS = 1000;
 const MAX_RATE_LIMIT_RETRY_MS = 10_000;
+const SCHEMA_REPAIR_ATTEMPTS = 1;
 
 function errorMessage(e: unknown): string {
 	return e instanceof Error ? e.message : String(e);
@@ -155,6 +156,10 @@ function stripJsonFence(text: string): string {
 		.replace(/^```(?:json)?\s*\n?/i, "")
 		.replace(/\n?```\s*$/, "")
 		.trim();
+}
+
+function parseObjectResponse<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, text: string): T {
+	return schema.parse(JSON.parse(stripJsonFence(text)));
 }
 
 function extractText(body: ChatCompletionResponse): string {
@@ -351,15 +356,25 @@ export class OpenAiCompatibleProvider implements AiProvider {
 					});
 				}
 				const schemaJson = JSON.stringify(zodToJsonSchema(input.schema));
-				const text = await this.complete(
-					{
-						prompt:
-							`${input.prompt}\n\nRespond with ONLY a valid JSON object matching this schema ` +
-							`(no markdown fences, no extra text):\n${schemaJson}`,
-					},
-					runSignal
-				);
-				return input.schema.parse(JSON.parse(stripJsonFence(text)));
+				const basePrompt =
+					`${input.prompt}\n\nRespond with ONLY a valid JSON object matching this schema ` +
+					`(no markdown fences, no extra text). Include every required property; use null only ` +
+					`when the schema allows nullable:\n${schemaJson}`;
+				let prompt = basePrompt;
+				let lastError: unknown = null;
+				for (let attempt = 0; attempt <= SCHEMA_REPAIR_ATTEMPTS; attempt++) {
+					const text = await this.complete({ prompt }, runSignal);
+					try {
+						return parseObjectResponse(input.schema, text);
+					} catch (e) {
+						lastError = e;
+						prompt =
+							`${basePrompt}\n\nYour previous response did not match the schema. ` +
+							`Validation error: ${errorMessage(e)}\nPrevious response:\n${text}\n\n` +
+							`Return ONLY a corrected JSON object.`;
+					}
+				}
+				throw lastError;
 			}, signal);
 		} catch (e) {
 			if (e instanceof ProviderRateLimitError) throw e;
