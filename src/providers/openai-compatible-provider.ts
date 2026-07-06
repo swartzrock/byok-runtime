@@ -18,7 +18,6 @@ export type CloudObjectGenerator = <T>(opts: {
 
 export type CloudTextGenerator = (opts: {
 	prompt: string;
-	responseFormat?: "text" | "json";
 	signal?: AbortSignal;
 }) => Promise<string>;
 
@@ -278,13 +277,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		);
 	}
 
-	private async complete(
-		input: {
-			prompt: string;
-			responseFormat?: "text" | "json";
-		},
-		signal?: AbortSignal
-	): Promise<string> {
+	private async complete(input: { prompt: string }, signal?: AbortSignal): Promise<string> {
 		if (this.textGenerator) {
 			return this.textGenerator({ ...input, signal });
 		}
@@ -294,7 +287,6 @@ export class OpenAiCompatibleProvider implements AiProvider {
 			body: {
 				model: this.model,
 				messages: [{ role: "user", content: input.prompt }],
-				...(input.responseFormat === "json" ? { response_format: { type: "json_object" } } : {}),
 			},
 		});
 		return extractText(body);
@@ -336,7 +328,6 @@ export class OpenAiCompatibleProvider implements AiProvider {
 						this.complete(
 							{
 								prompt: input.prompt,
-								responseFormat: input.responseFormat,
 							},
 							runSignal
 						),
@@ -365,7 +356,6 @@ export class OpenAiCompatibleProvider implements AiProvider {
 						prompt:
 							`${input.prompt}\n\nRespond with ONLY a valid JSON object matching this schema ` +
 							`(no markdown fences, no extra text):\n${schemaJson}`,
-						responseFormat: "json",
 					},
 					runSignal
 				);
