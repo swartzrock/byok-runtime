@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { ModelInfo } from "@anthropic-ai/sdk/resources/models";
 import {
 	ANTHROPIC_CUSTOM_MODEL_ID,
+	type AnthropicApiModel,
 	anthropicModelInfoToByokModelOption,
 	buildAnthropicModelOptions,
 	describeAnthropicModel,
@@ -13,16 +13,11 @@ import {
 	refreshAnthropicModelOptions,
 } from "../src/models/anthropic-models";
 
-function modelInfo(id: string, display_name: string): ModelInfo {
+function modelInfo(id: string, display_name: string): AnthropicApiModel {
 	return {
 		id,
 		display_name,
-		type: "model",
-		created_at: "2026-01-01T00:00:00Z",
-		max_input_tokens: null,
-		max_tokens: null,
-		capabilities: null,
-	} as ModelInfo;
+	};
 }
 
 describe("isAnthropicCustomModelSelection", () => {

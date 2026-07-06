@@ -1,4 +1,3 @@
-import type { ModelInfo } from "@anthropic-ai/sdk/resources/models";
 import type { ByokModelOption } from "../types";
 
 export interface AnthropicModelOption {
@@ -28,7 +27,12 @@ export interface AnthropicModelRefreshResult {
 
 export const ANTHROPIC_CUSTOM_MODEL_ID = "__custom__";
 
-type AnthropicStoredModel = ModelInfo | ByokModelOption;
+export interface AnthropicApiModel {
+	id: string;
+	display_name: string;
+}
+
+type AnthropicStoredModel = AnthropicApiModel | ByokModelOption;
 
 const GENERIC_ANTHROPIC_MODEL_HINT: AnthropicModelHint = {
 	quality: "Varies",
@@ -87,7 +91,7 @@ function storedModelLabel(model: AnthropicStoredModel): string {
 	return "display_name" in model ? model.display_name : model.label;
 }
 
-export function anthropicModelInfoToByokModelOption(model: ModelInfo): ByokModelOption {
+export function anthropicModelInfoToByokModelOption(model: AnthropicApiModel): ByokModelOption {
 	return {
 		id: model.id,
 		label: model.display_name,
