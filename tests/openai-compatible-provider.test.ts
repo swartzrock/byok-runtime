@@ -139,6 +139,52 @@ describe("OpenAiCompatibleProvider", () => {
 		expect(body.messages[0].content).toContain("Respond with ONLY a valid JSON object");
 	});
 
+	it("reprompts once when object JSON misses required schema fields", async () => {
+		const calls: FetchCall[] = [];
+		const replies = [
+			{ choices: [{ message: { content: '{"heading":"Product Promise"}' } }] },
+			{
+				choices: [
+					{
+						message: {
+							content: '{"heading":"Product Promise","rationale":"Clear value promise."}',
+						},
+					},
+				],
+			},
+		];
+		const p = provider({
+			id: "anthropic",
+			vendor: "Anthropic",
+			fetchImpl: (async (input, init) => {
+				calls.push({ url: input.toString(), init });
+				return new Response(JSON.stringify(replies.shift()), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			}) as typeof fetch,
+		});
+
+		await expect(
+			p.generateObject({
+				prompt: "Analyze this section.",
+				schema: z.object({
+					heading: z.string(),
+					rationale: z.string(),
+				}),
+			})
+		).resolves.toEqual({
+			heading: "Product Promise",
+			rationale: "Clear value promise.",
+		});
+
+		expect(calls).toHaveLength(2);
+		const retryBody = JSON.parse(calls[1]?.init?.body as string);
+		expect(retryBody.messages[0].content).toContain("Validation error");
+		expect(retryBody.messages[0].content).toContain("rationale");
+		expect(retryBody.messages[0].content).toContain("Return ONLY a corrected JSON object");
+	});
+
 	it("uses injected object and text generators for focused tests", async () => {
 		const schema = z.object({ answer: z.string() });
 		const { generator, prompts: objectPrompts } = fixedObjectGenerator({ answer: "42" });
