@@ -157,6 +157,52 @@ describe("createByokProvider", () => {
 		expect(typeof provider.listModels).toBe("function");
 	});
 
+	it.each([
+		[
+			"anthropic",
+			"https://api.anthropic.com/v1/models",
+			"claude-account-123",
+			"Claude Account 123",
+		],
+		["openai", "https://api.openai.com/v1/models", "gpt-4o-mini", "gpt-4o-mini"],
+		[
+			"google",
+			"https://generativelanguage.googleapis.com/v1beta/openai/models",
+			"gemini-1.5-flash",
+			"gemini-1.5-flash",
+		],
+		["xai", "https://api.x.ai/v1/models", "grok-2-latest", "grok-2-latest"],
+		[
+			"openrouter",
+			"https://openrouter.ai/api/v1/models",
+			"anthropic/claude-sonnet-4",
+			"Anthropic: Claude Sonnet 4",
+		],
+	] as const)(
+		"lists %s models through its OpenAI-compatible base URL",
+		async (provider, expectedUrl, modelId, modelLabel) => {
+			const urls: string[] = [];
+			const runtime = createByokProvider(
+				{ provider, apiKey: "key", model: modelId },
+				{
+					fetchImpl: (async (input) => {
+						urls.push(input.toString());
+						return new Response(
+							JSON.stringify({
+								data: [{ id: modelId, name: modelLabel, display_name: modelLabel }],
+							}),
+							{ status: 200, headers: { "content-type": "application/json" } }
+						);
+					}) as typeof fetch,
+					http,
+				}
+			);
+
+			await expect(runtime.listModels()).resolves.toEqual([{ id: modelId, label: modelLabel }]);
+			expect(urls).toEqual([expectedUrl]);
+		}
+	);
+
 	it("keeps CLI model overrides optional on the Node subpath", () => {
 		const config: ByokProviderConfig = { provider: "codex-cli", command: "codex" };
 		const provider = createByokNodeProvider(config, { fetchImpl, http });
