@@ -135,7 +135,7 @@ describe("OpenAiCompatibleProvider", () => {
 		).resolves.toEqual({ answer: "42" });
 
 		const body = JSON.parse(calls[0]?.init?.body as string);
-		expect(body.response_format).toEqual({ type: "json_object" });
+		expect(body.response_format).toBeUndefined();
 		expect(body.messages[0].content).toContain("Respond with ONLY a valid JSON object");
 	});
 
