@@ -5,7 +5,13 @@ This reference documents the public API exported by `@swartzrock/byok-runtime` a
 Use only the public entrypoints:
 
 ```ts
-import { ByokProvider, createByok, generateText, listModels } from "@swartzrock/byok-runtime";
+import {
+	ByokProvider,
+	createByok,
+	generateText,
+	listModels,
+	resolveByokEnvCredential,
+} from "@swartzrock/byok-runtime";
 import { createByokNodeProvider } from "@swartzrock/byok-runtime/node";
 ```
 
@@ -19,6 +25,7 @@ Runtime exports:
 
 - `ByokProvider`
 - `BYOK_PROVIDER_IDS`
+- `BYOK_PROVIDER_API_KEY_ENV_VARS`
 - `byokProviderDefinition`
 - `byokProviderDefinitions`
 - `isByokProviderId`
@@ -26,6 +33,7 @@ Runtime exports:
 - `generateText`
 - `createByok`
 - `listModels`
+- `resolveByokEnvCredential`
 - `ByokProviderError`
 - `ByokProviderRateLimitError`
 
@@ -60,7 +68,7 @@ const { text } = await generateText({
 });
 ```
 
-Cloud providers use `{ provider, apiKey, model, prompt }`. Ollama uses `{ provider: ByokProvider.Ollama, model, prompt }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps` and `signal`.
+Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, credential: { source: "env", env }, model, prompt }` for trusted scripts that opt into BYOK's standard env var map. Ollama uses `{ provider: ByokProvider.Ollama, model, prompt }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps` and `signal`.
 
 The function-first API intentionally accepts plain text prompts only. Use the node runtime when you need connection testing, JSON response hints, or structured object generation.
 
@@ -82,6 +90,15 @@ const { text } = await ai.generateText({
 
 `ByokClient` exposes only `generateText`.
 
+`createByok` also accepts env-backed cloud credentials for trusted scripts:
+
+```ts
+const ai = createByok({
+	provider: ByokProvider.OpenAI,
+	credential: { source: "env", env: process.env },
+});
+```
+
 ### `listModels(options)`
 
 Lists portable model options without requiring a selected model.
@@ -93,9 +110,22 @@ const models = await listModels({
 });
 ```
 
-Cloud providers use `{ provider, apiKey }`. Ollama uses `{ provider: ByokProvider.Ollama }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps`.
+Cloud providers use `{ provider, apiKey }`, or `{ provider, credential: { source: "env", env } }` for trusted scripts. Ollama uses `{ provider: ByokProvider.Ollama }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps`.
 
 CLI model discovery is available from the Node runtime provider. Codex CLI shells out to `codex debug models`; Claude CLI fetches Anthropic model IDs from OpenRouter's public model list and strips the OpenRouter provider prefix.
+
+### Env-backed credentials
+
+Env-backed credentials are explicit at the call site. BYOK reads only the `env` object supplied by the caller; it does not import `process.env`, parse `.env` files, persist values, log values, or add env API-key support for Ollama.
+
+```ts
+const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
+	source: "env",
+	env: process.env,
+});
+```
+
+`BYOK_PROVIDER_API_KEY_ENV_VARS` contains the standard cloud-provider names: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, and OpenRouter `OPENROUTER_API_KEY`.
 
 ## Node Runtime
 

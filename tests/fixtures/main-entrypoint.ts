@@ -1,8 +1,10 @@
 import {
 	ByokProvider,
+	BYOK_PROVIDER_API_KEY_ENV_VARS,
 	createByok,
 	generateText,
 	listModels,
+	resolveByokEnvCredential,
 	type ByokHttpClient,
 	type ByokProviderDeps,
 } from "../../src";
@@ -17,6 +19,11 @@ const fetchImpl = (async () => new Response("{}")) as typeof fetch;
 const deps: ByokProviderDeps = {
 	fetchImpl,
 	http,
+};
+const env = {
+	OPENAI_API_KEY: "sk-test",
+	GOOGLE_API_KEY: "google-test",
+	GEMINI_API_KEY: "gemini-test",
 };
 
 const text = generateText({
@@ -38,6 +45,20 @@ const openRouterText = generateText({
 const modelOptions = listModels({
 	provider: ByokProvider.OpenAI,
 	apiKey: "sk-test",
+	deps,
+});
+
+const envText = generateText({
+	provider: ByokProvider.OpenAI,
+	credential: { source: "env", env },
+	model: "gpt-4o-mini",
+	prompt: "Explain BYOK in one sentence.",
+	deps,
+});
+
+const envModelOptions = listModels({
+	provider: ByokProvider.Google,
+	credential: { source: "env", env },
 	deps,
 });
 
@@ -71,6 +92,12 @@ const client = createByok({
 	deps,
 });
 
+const envClient = createByok({
+	provider: ByokProvider.OpenAI,
+	credential: { source: "env", env },
+	deps,
+});
+
 void listModels({
 	// @ts-expect-error use ByokProvider.OpenAI to avoid typos like this.
 	provider: "oppenai",
@@ -83,7 +110,22 @@ const clientText = client.generateText({
 	prompt: "Explain BYOK in one sentence.",
 });
 
+const envClientText = envClient.generateText({
+	model: "gpt-4o-mini",
+	prompt: "Explain BYOK in one sentence.",
+});
+
+const googleApiKey = resolveByokEnvCredential(ByokProvider.Google, {
+	source: "env",
+	env,
+});
+
 void text;
 void openRouterText;
 void modelOptions;
+void envText;
+void envModelOptions;
 void clientText;
+void envClientText;
+void googleApiKey;
+void BYOK_PROVIDER_API_KEY_ENV_VARS;

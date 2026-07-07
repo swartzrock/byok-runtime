@@ -5,8 +5,10 @@ export {
 	isByokProviderId,
 	normalizeProviderId,
 } from "./registry";
+export { BYOK_PROVIDER_API_KEY_ENV_VARS, resolveByokEnvCredential } from "./credentials";
 export { createByok, generateText, listModels } from "./client";
 export type {
+	ByokApiKeyCloudProviderConfig,
 	ByokCliProviderConfig,
 	ByokClient,
 	ByokClientConfig,
@@ -16,6 +18,9 @@ export type {
 	ByokCoreProviderConfig,
 	ByokCredentialFieldDefinition,
 	ByokCredentialKind,
+	ByokEnvCloudProviderConfig,
+	ByokEnvCredential,
+	ByokEnvironment,
 	ByokFacadeDeps,
 	ByokHttpClient,
 	ByokHttpRequest,

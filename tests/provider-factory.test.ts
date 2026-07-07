@@ -181,12 +181,12 @@ describe("createByokProvider", () => {
 	] as const)(
 		"lists %s models through its OpenAI-compatible base URL",
 		async (provider, expectedUrl, modelId, modelLabel) => {
-			const urls: string[] = [];
+			const requests: Array<{ url: string; headers?: HeadersInit }> = [];
 			const runtime = createByokProvider(
 				{ provider, apiKey: "key", model: modelId },
 				{
-					fetchImpl: (async (input) => {
-						urls.push(input.toString());
+					fetchImpl: (async (input, init) => {
+						requests.push({ url: input.toString(), headers: init?.headers });
 						return new Response(
 							JSON.stringify({
 								data: [{ id: modelId, name: modelLabel, display_name: modelLabel }],
@@ -199,7 +199,13 @@ describe("createByokProvider", () => {
 			);
 
 			await expect(runtime.listModels()).resolves.toEqual([{ id: modelId, label: modelLabel }]);
-			expect(urls).toEqual([expectedUrl]);
+			expect(requests[0]?.url).toBe(expectedUrl);
+			if (provider === "anthropic") {
+				const headers = new Headers(requests[0]?.headers);
+				expect(headers.get("x-api-key")).toBe("key");
+				expect(headers.get("anthropic-version")).toBe("2023-06-01");
+				expect(headers.has("authorization")).toBe(false);
+			}
 		}
 	);
 

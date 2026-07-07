@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Ideation: BYOK Runtime Provider Test Harness</title>
+		<style>
+			:root {
+				color-scheme: light;
+				--bg: #f7f7f4;
+				--panel: #ffffff;
+				--ink: #1f2428;
+				--muted: #59636e;
+				--line: #d9ded6;
+				--accent: #1f6f78;
+				--accent-soft: #d9eef0;
+				--plum: #6f4e7c;
+				--plum-soft: #efe3f2;
+				--leaf: #5b6f2a;
+				--leaf-soft: #ecf2da;
+				--warn: #7b4e20;
+				--warn-soft: #f4e7d8;
+				--code: #f1f3ee;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--ink);
+				font-family:
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					BlinkMacSystemFont,
+					"Segoe UI",
+					sans-serif;
+				font-size: 15px;
+				line-height: 1.58;
+			}
+			main {
+				width: min(960px, calc(100vw - 32px));
+				margin: 0 auto;
+				padding: 36px 0 48px;
+			}
+			header {
+				border-bottom: 1px solid var(--line);
+				padding-bottom: 22px;
+				margin-bottom: 26px;
+			}
+			.eyebrow {
+				font-size: 12px;
+				font-weight: 800;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--accent);
+			}
+			h1,
+			h2,
+			h3 {
+				line-height: 1.18;
+				letter-spacing: 0;
+				margin: 0;
+			}
+			h1 {
+				font-size: clamp(30px, 4.5vw, 48px);
+				margin-top: 8px;
+				max-width: 16ch;
+			}
+			h2 {
+				font-size: 24px;
+				margin-bottom: 12px;
+			}
+			h3 {
+				font-size: 19px;
+			}
+			p {
+				max-width: 74ch;
+				margin: 10px 0;
+			}
+			a {
+				color: var(--accent);
+				font-weight: 650;
+			}
+			code {
+				background: var(--code);
+				border: 1px solid var(--line);
+				border-radius: 5px;
+				padding: 0.1rem 0.3rem;
+				font-size: 0.92em;
+			}
+			.meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin-top: 18px;
+			}
+			.chip {
+				border: 1px solid var(--line);
+				background: var(--panel);
+				border-radius: 999px;
+				padding: 5px 10px;
+				font-size: 13px;
+				color: var(--muted);
+			}
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 10px;
+				margin: 22px 0 6px;
+			}
+			.stat {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 12px;
+			}
+			.stat strong {
+				display: block;
+				font-size: 20px;
+				color: inherit;
+			}
+			.stat span {
+				display: block;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			section {
+				margin-top: 32px;
+			}
+			.panel {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 18px;
+			}
+			.axes {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 10px;
+				margin-top: 12px;
+			}
+			.axis {
+				border-radius: 8px;
+				padding: 12px;
+				background: var(--accent-soft);
+				color: #174f56;
+				font-weight: 720;
+			}
+			.jump-list {
+				display: grid;
+				gap: 8px;
+				margin: 12px 0 18px;
+				padding: 0;
+				list-style: none;
+			}
+			.jump-list a {
+				display: block;
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 10px 12px;
+				text-decoration: none;
+			}
+			.idea {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 18px;
+				margin-top: 14px;
+			}
+			.idea-head {
+				display: flex;
+				justify-content: space-between;
+				gap: 14px;
+				align-items: flex-start;
+				margin-bottom: 10px;
+			}
+			.rank {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 34px;
+				height: 34px;
+				border-radius: 999px;
+				background: var(--ink);
+				color: #fff;
+				font-weight: 800;
+				margin-right: 8px;
+			}
+			.badges {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 7px;
+			}
+			.badge {
+				border-radius: 999px;
+				padding: 4px 9px;
+				font-size: 12px;
+				font-weight: 760;
+				background: var(--leaf-soft);
+				color: #44551f;
+			}
+			.badge.plum {
+				background: var(--plum-soft);
+				color: #5d3d67;
+			}
+			.badge.warn {
+				background: var(--warn-soft);
+				color: var(--warn);
+			}
+			dl {
+				display: grid;
+				grid-template-columns: 110px 1fr;
+				gap: 8px 12px;
+				margin: 14px 0 0;
+			}
+			dt {
+				font-size: 12px;
+				font-weight: 800;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			dd {
+				margin: 0;
+			}
+			.svg-wrap {
+				margin: 16px 0 4px;
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				background: #fbfcfa;
+				padding: 10px;
+				overflow-x: auto;
+			}
+			svg {
+				max-width: 100%;
+				height: auto;
+				display: block;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				overflow: hidden;
+			}
+			th,
+			td {
+				border-bottom: 1px solid var(--line);
+				padding: 10px;
+				text-align: left;
+				vertical-align: top;
+			}
+			th {
+				background: #eef1ed;
+				font-size: 12px;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			tr:last-child td {
+				border-bottom: 0;
+			}
+			footer {
+				margin-top: 34px;
+				padding-top: 16px;
+				border-top: 1px solid var(--line);
+				color: var(--muted);
+				font-size: 13px;
+			}
+			@media (max-width: 760px) {
+				main {
+					width: min(100vw - 20px, 960px);
+					padding-top: 24px;
+				}
+				.stats,
+				.axes {
+					grid-template-columns: 1fr;
+				}
+				.idea-head {
+					display: block;
+				}
+				.badges {
+					margin-top: 10px;
+				}
+				dl {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<header>
+				<div class="eyebrow">Ideation artifact</div>
+				<h1>BYOK Runtime Provider Test Harness</h1>
+				<p>
+					A ranked set of directions for a small CLI that can test model discovery and text
+					generation against the providers exposed by <code>byok-runtime</code>.
+				</p>
+				<div class="meta">
+					<span class="chip">Date: <time datetime="2026-07-06">2026-07-06</time></span>
+					<span class="chip">Topic: byok-runtime-provider-test-harness</span>
+					<span class="chip">Mode: repo-grounded</span>
+					<span class="chip">Focus: provider smoke CLI with env-key support</span>
+				</div>
+				<div class="stats">
+					<div class="stat"><strong>18</strong><span>raw candidates</span></div>
+					<div class="stat"><strong>6</strong><span>ranked survivors</span></div>
+					<div class="stat"><strong>4</strong><span>topic axes</span></div>
+					<div class="stat"><strong>6</strong><span>requested providers</span></div>
+				</div>
+			</header>
+
+			<section id="grounding-context">
+				<h2>Grounding Context</h2>
+				<div class="panel">
+					<p>
+						<code>byok-runtime</code> is already organized around exactly the two operations the
+						tester needs: text generation and model discovery. The README describes first success as
+						calling <code>generateText</code> with provider, credential, model, and prompt, and
+						setup flows as calling <code>listModels</code> before a model is selected (<a
+							href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L12"
+							>README.md:12</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L14"
+							>README.md:14</a
+						>).
+					</p>
+					<p>
+						The main entrypoint is intentionally the trusted-runtime API for API-key providers and
+						Ollama, while local CLI providers live on <code>@swartzrock/byok-runtime/node</code> (<a
+							href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L64"
+							>README.md:64</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L75"
+							>README.md:75</a
+						>). The user's provider table covers Anthropic, OpenAI, Google Gemini, xAI, OpenRouter,
+						and Ollama, so the default harness should stay on the main facade and leave Codex CLI /
+						Claude CLI as a later extension.
+					</p>
+					<p>
+						The public types keep model discovery portable: <code>ByokModelOption</code> is only
+						<code>id</code> and <code>label</code>, cloud providers use <code>apiKey</code>, and
+						Ollama uses an optional URL plus model (<a
+							href="https://github.com/swartzrock/byok-runtime/blob/main/src/types.ts#L69"
+							>src/types.ts:69</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/types.ts#L75"
+							>src/types.ts:75</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/types.ts#L139"
+							>src/types.ts:139</a
+						>). The facade already has separate config constructors for generation and listing, with
+						a sentinel model for listing (<a
+							href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L14"
+							>src/client.ts:14</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L51"
+							>src/client.ts:51</a
+						>,
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L89"
+							>src/client.ts:89</a
+						>).
+					</p>
+					<p>
+						External provider docs support the expected environment convention: Anthropic's
+						TypeScript SDK example uses <code>ANTHROPIC_API_KEY</code> by default; OpenAI's
+						quickstart uses <code>OPENAI_API_KEY</code> and says SDKs auto-read it; Google documents
+						<code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code> with
+						<code>GOOGLE_API_KEY</code> taking precedence; xAI examples use
+						<code>XAI_API_KEY</code>; OpenRouter examples use <code>OPENROUTER_API_KEY</code>; and
+						Ollama JS defaults its host to <code>http://127.0.0.1:11434</code>.
+					</p>
+				</div>
+			</section>
+
+			<section id="topic-axes">
+				<h2>Topic Axes</h2>
+				<div class="axes">
+					<div class="axis">Command surface</div>
+					<div class="axis">Credential and environment resolution</div>
+					<div class="axis">Provider behavior coverage</div>
+					<div class="axis">Packaging and verification</div>
+				</div>
+			</section>
+
+			<section id="ranked-ideas">
+				<h2>Ranked Ideas</h2>
+				<ul class="jump-list" aria-label="Ranked idea jump list">
+					<li>
+						<a href="#idea-1">1. Fixture-App CLI Under <code>examples/provider-smoke/</code></a>
+					</li>
+					<li>
+						<a href="#idea-2">2. Two Commands: <code>models</code> and <code>generate</code></a>
+					</li>
+					<li><a href="#idea-3">3. Explicit-Then-Environment Credential Resolver</a></li>
+					<li><a href="#idea-4">4. Model-List-First Generation Output</a></li>
+					<li>
+						<a href="#idea-5"
+							>5. Public-Facade Parity by Default, Node Runtime as Optional Extension</a
+						>
+					</li>
+					<li><a href="#idea-6">6. Readiness and Failure UX Without Secret Persistence</a></li>
+				</ul>
+
+				<article class="idea" id="idea-1">
+					<div class="idea-head">
+						<h3>
+							<span class="rank">1</span>Fixture-App CLI Under <code>examples/provider-smoke/</code>
+						</h3>
+						<div class="badges">
+							<span class="badge">Axis: Packaging and verification</span
+							><span class="badge plum">Conf 88%</span><span class="badge warn">Cx Medium</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Create a small, private example package under
+						<code>examples/provider-smoke/</code> with its own <code>package.json</code>, TypeScript
+						CLI entry, and scripts. It should import only the public package entrypoint, accept
+						provider/model/input/key options, and be excluded from package publication unless
+						intentionally added later.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>direct:</code> The package already documents consumer-facing imports from
+							<code>@swartzrock/byok-runtime</code> and treats provider internals as private (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L64"
+								>README.md:64</a
+							>,
+							<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L85"
+								>README.md:85</a
+							>). <code>package.json</code> publishes only <code>dist</code>, docs, and metadata
+							today (<a href="https://github.com/swartzrock/byok-runtime/blob/main/package.json#L35"
+								>package.json:35</a
+							>).
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							An example app validates the public API exactly as a consumer would use it, while
+							staying out of the library runtime and publish surface. It is also the natural place
+							for real API-key calls that should not run in CI by default.
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							Requires a little workspace wiring and a decision about whether examples typecheck as
+							part of the normal quality gate.
+						</dd>
+					</dl>
+					<div class="svg-wrap" aria-label="Fixture app imports public package path">
+						<svg viewBox="0 0 760 180" role="img" aria-labelledby="svg1-title svg1-desc">
+							<title id="svg1-title">Fixture app path</title>
+							<desc id="svg1-desc">
+								The provider smoke example imports the public package facade instead of provider
+								internals.
+							</desc>
+							<rect x="24" y="42" width="190" height="80" rx="8" fill="#d9eef0" stroke="#1f6f78" />
+							<text
+								x="119"
+								y="74"
+								text-anchor="middle"
+								font-size="15"
+								font-weight="700"
+								fill="#174f56"
+							>
+								examples/provider-smoke
+							</text>
+							<text x="119" y="98" text-anchor="middle" font-size="13" fill="#174f56">
+								CLI commands
+							</text>
+							<path
+								d="M224 82 H345"
+								stroke="#6f4e7c"
+								stroke-width="2.5"
+								marker-end="url(#arrow1)"
+							/>
+							<rect x="355" y="42" width="190" height="80" rx="8" fill="#efe3f2" stroke="#6f4e7c" />
+							<text
+								x="450"
+								y="74"
+								text-anchor="middle"
+								font-size="15"
+								font-weight="700"
+								fill="#5d3d67"
+							>
+								public facade
+							</text>
+							<text x="450" y="98" text-anchor="middle" font-size="13" fill="#5d3d67">
+								listModels + generateText
+							</text>
+							<path
+								d="M555 82 H676"
+								stroke="#5b6f2a"
+								stroke-width="2.5"
+								marker-end="url(#arrow2)"
+							/>
+							<rect x="686" y="42" width="48" height="80" rx="8" fill="#ecf2da" stroke="#5b6f2a" />
+							<text
+								x="710"
+								y="78"
+								text-anchor="middle"
+								font-size="13"
+								font-weight="700"
+								fill="#44551f"
+							>
+								real
+							</text>
+							<text x="710" y="98" text-anchor="middle" font-size="13" fill="#44551f">APIs</text>
+							<defs>
+								<marker
+									id="arrow1"
+									viewBox="0 0 10 10"
+									refX="9"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M 0 0 L 10 5 L 0 10 z" fill="#6f4e7c" />
+								</marker>
+								<marker
+									id="arrow2"
+									viewBox="0 0 10 10"
+									refX="9"
+									refY="5"
+									markerWidth="7"
+									markerHeight="7"
+									orient="auto-start-reverse"
+								>
+									<path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6f2a" />
+								</marker>
+							</defs>
+						</svg>
+					</div>
+				</article>
+
+				<article class="idea" id="idea-2">
+					<div class="idea-head">
+						<h3>
+							<span class="rank">2</span>Two Commands: <code>models</code> and <code>generate</code>
+						</h3>
+						<div class="badges">
+							<span class="badge">Axis: Command surface</span
+							><span class="badge plum">Conf 86%</span><span class="badge warn">Cx Low</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Give the CLI exactly two primary commands.
+						<code>models --provider &lt;id&gt; [--api-key &lt;key&gt;] [--url &lt;url&gt;]</code>
+						lists models.
+						<code
+							>generate --provider &lt;id&gt; --model &lt;model&gt; --input &lt;text&gt; [--api-key
+							&lt;key&gt;] [--url &lt;url&gt;]</code
+						>
+						lists the first five models, then prints the generated response.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>direct:</code> The public facade already exports separate
+							<code>generateText</code> and <code>listModels</code> helpers (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L80"
+								>src/client.ts:80</a
+							>,
+							<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L89"
+								>src/client.ts:89</a
+							>), and the README separately documents "Fetch Models" and "Generate Text" flows (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L189"
+								>README.md:189</a
+							>,
+							<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L202"
+								>README.md:202</a
+							>).
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							This mirrors the two product questions a maintainer has while testing providers: can
+							we discover models for this account, and can we get a text response from a chosen
+							model?
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							It does not cover structured output or <code>testConnection()</code> in v1. That is
+							probably correct for the user's immediate request.
+						</dd>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-3">
+					<div class="idea-head">
+						<h3><span class="rank">3</span>Explicit-Then-Environment Credential Resolver</h3>
+						<div class="badges">
+							<span class="badge">Axis: Credential and environment resolution</span
+							><span class="badge plum">Conf 84%</span><span class="badge warn">Cx Low</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Centralize credential resolution in one small map:
+						explicit <code>--api-key</code> wins, then the provider's standard environment variable.
+						Google should check <code>GOOGLE_API_KEY</code> before <code>GEMINI_API_KEY</code>,
+						matching Google's documented precedence. Ollama should ignore API keys and use
+						<code>--url</code> or the BYOK default URL.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>external:</code> Anthropic's TypeScript SDK example names
+							<code>ANTHROPIC_API_KEY</code> as the default key source. OpenAI's quickstart uses
+							<code>OPENAI_API_KEY</code> and says SDKs auto-read the system environment. Google
+							documents <code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code>, with
+							<code>GOOGLE_API_KEY</code> taking precedence. xAI examples use
+							<code>XAI_API_KEY</code>. OpenRouter examples standardize on
+							<code>OPENROUTER_API_KEY</code>.
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							A visible resolver keeps provider quirks out of the command handlers and gives
+							contributors one place to update when provider conventions change.
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							Environment resolution is host-app behavior, not core library behavior, so it should
+							stay inside the fixture app rather than leaking into <code>src/</code>.
+						</dd>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-4">
+					<div class="idea-head">
+						<h3><span class="rank">4</span>Model-List-First Generation Output</h3>
+						<div class="badges">
+							<span class="badge">Axis: Provider behavior coverage</span
+							><span class="badge plum">Conf 82%</span><span class="badge warn">Cx Low</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Make <code>generate</code> call
+						<code>listModels</code> first and print the first five returned model IDs before it
+						calls <code>generateText</code>. This single command proves model discovery and text
+						generation work for the same credential without making the user run two commands during
+						every smoke check.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>direct:</code> The README says setup flows call <code>listModels</code> before a
+							model is selected, and the model options contract is intentionally portable (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L14"
+								>README.md:14</a
+							>,
+							<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L200"
+								>README.md:200</a
+							>). The facade does not require a selected model for listing (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/src/client.ts#L51"
+								>src/client.ts:51</a
+							>).
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							The user asked specifically for response generation plus "also list the first 5
+							available models." Doing the list first catches bad keys and discovery endpoint
+							regressions before spending a generation call.
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							Some providers may return many models or transient model-list failures even when
+							generation would work. The CLI should report that clearly rather than hide it.
+						</dd>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-5">
+					<div class="idea-head">
+						<h3>
+							<span class="rank">5</span>Public-Facade Parity by Default, Node Runtime as Optional
+							Extension
+						</h3>
+						<div class="badges">
+							<span class="badge">Axis: Provider behavior coverage</span
+							><span class="badge plum">Conf 78%</span><span class="badge warn">Cx Medium</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Implement the first harness against
+						<code>@swartzrock/byok-runtime</code> only, because the user's six providers are all
+						reachable through <code>listModels</code> and <code>generateText</code>. Add a small
+						architecture note or TODO that a later <code>node-providers</code> command can import
+						<code>@swartzrock/byok-runtime/node</code> for Codex CLI and Claude CLI coverage.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>direct:</code> The public contract test enforces that the main entrypoint
+							exports only the intentional facade, while the README says the node subpath is for
+							local CLI providers (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L75"
+								>README.md:75</a
+							>,
+							<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L300"
+								>README.md:300</a
+							>). The core provider factory handles the six requested providers directly (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/src/providers/provider-factory.ts#L14"
+								>src/providers/provider-factory.ts:14</a
+							>).
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							This keeps the harness aligned with consumer usage and avoids accidentally expanding
+							the task into local process execution, command auth, and CLI model-list quirks.
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							Someone reading "all providers" from the enum might expect Codex CLI and Claude CLI
+							too. The README for the fixture should name the scoped provider set explicitly.
+						</dd>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-6">
+					<div class="idea-head">
+						<h3><span class="rank">6</span>Readiness and Failure UX Without Secret Persistence</h3>
+						<div class="badges">
+							<span class="badge">Axis: Credential and environment resolution</span
+							><span class="badge plum">Conf 76%</span><span class="badge warn">Cx Low</span>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Add a lightweight <code>--check</code> or validation
+						preflight inside each command that reports missing env vars, missing model, or
+						unreachable Ollama before calling generation. Never write API keys, prompts, or
+						responses to disk by default; output goes to stdout/stderr only.
+					</p>
+					<dl>
+						<dt>Basis</dt>
+						<dd>
+							<code>direct:</code> BYOK's README says the package receives credentials only as call
+							inputs, does not persist or log API keys, and expects trusted host runtimes (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/README.md#L110"
+								>README.md:110</a
+							>). Ollama already has URL validation and a default local URL (<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/src/providers/default-deps.ts#L4"
+								>src/providers/default-deps.ts:4</a
+							>,
+							<a
+								href="https://github.com/swartzrock/byok-runtime/blob/main/src/providers/default-deps.ts#L12"
+								>src/providers/default-deps.ts:12</a
+							>).
+						</dd>
+						<dt>Rationale</dt>
+						<dd>
+							The harness is going to be used with real credentials. Its most important non-feature
+							is restraint: clear messages, nonzero exits, and no secret storage.
+						</dd>
+						<dt>Downsides</dt>
+						<dd>
+							Too many custom exit codes can become fake precision. Keep the first version to
+							validation error, provider call failure, and success.
+						</dd>
+					</dl>
+				</article>
+			</section>
+
+			<section id="rejection-summary">
+				<h2>Rejection Summary</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Idea</th>
+							<th>Reason Rejected</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>1</td>
+							<td>Published CLI binary</td>
+							<td>Too much product surface for an internal provider smoke harness.</td>
+						</tr>
+						<tr>
+							<td>2</td>
+							<td>Full matrix runner</td>
+							<td>
+								Useful later, but too expensive because it can burn real API quota across all
+								providers accidentally.
+							</td>
+						</tr>
+						<tr>
+							<td>3</td>
+							<td>Auto-pick first model</td>
+							<td>
+								Convenient but risky; first listed model may be deprecated, expensive, or
+								unsuitable.
+							</td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td>Provider alias soup</td>
+							<td>
+								Small alias support is fine later, but broad aliasing creates ambiguity around
+								<code>claude</code> vs Anthropic vs Claude CLI.
+							</td>
+						</tr>
+						<tr>
+							<td>5</td>
+							<td>JSON-only output</td>
+							<td>Good for automation, worse for quick manual smoke testing.</td>
+						</tr>
+						<tr>
+							<td>6</td>
+							<td>Shell-script wrapper</td>
+							<td>
+								Too brittle for provider-specific option shapes and TypeScript public API checks.
+							</td>
+						</tr>
+						<tr>
+							<td>7</td>
+							<td>Store test profiles on disk</td>
+							<td>
+								Conflicts with BYOK's no-persistence posture and creates secret-handling work.
+							</td>
+						</tr>
+						<tr>
+							<td>8</td>
+							<td>Browser UI tester</td>
+							<td>Nice eventual demo, but the user asked for a CLI-shaped harness.</td>
+						</tr>
+						<tr>
+							<td>9</td>
+							<td><code>testConnection()</code>-first runtime design</td>
+							<td>
+								Requires the node runtime path when the public facade already covers the requested
+								six providers.
+							</td>
+						</tr>
+						<tr>
+							<td>10</td>
+							<td>Add test harness to published <code>files</code></td>
+							<td>
+								Increases package surface and support burden without helping local validation.
+							</td>
+						</tr>
+						<tr>
+							<td>11</td>
+							<td>Dry-run mode</td>
+							<td>
+								Useful for debugging arguments, but not enough value for the first CLI because
+								validation errors can show the same resolved provider/key-source summary.
+							</td>
+						</tr>
+						<tr>
+							<td>12</td>
+							<td>Dedicated Ollama status command</td>
+							<td>
+								Mostly duplicates <code>models --provider ollama</code>; keep the Ollama-specific
+								hinting inside the shared command instead.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section id="sources-references">
+				<h2>Sources and References</h2>
+				<div class="panel">
+					<p>
+						<a href="https://github.com/anthropics/anthropic-sdk-typescript"
+							>Anthropic TypeScript SDK</a
+						>: documents <code>ANTHROPIC_API_KEY</code> as the default API-key source in its
+						getting-started example.
+					</p>
+					<p>
+						<a href="https://developers.openai.com/api/docs/quickstart">OpenAI quickstart</a>:
+						documents <code>OPENAI_API_KEY</code> and notes SDKs automatically read the API key from
+						the system environment.
+					</p>
+					<p>
+						<a href="https://ai.google.dev/gemini-api/docs/api-key">Google Gemini API keys</a>:
+						documents <code>GEMINI_API_KEY</code> and <code>GOOGLE_API_KEY</code>, with
+						<code>GOOGLE_API_KEY</code> taking precedence.
+					</p>
+					<p>
+						<a href="https://docs.x.ai/overview">xAI docs</a>: examples use
+						<code>XAI_API_KEY</code> and OpenAI-compatible <code>https://api.x.ai/v1</code>.
+					</p>
+					<p>
+						<a href="https://openrouter.ai/docs/quickstart">OpenRouter quickstart</a>: documents
+						OpenRouter's OpenAI-compatible API and programmatic model listing via
+						<code>GET /api/v1/models</code>.
+					</p>
+					<p>
+						<a href="https://github.com/OpenRouterTeam/openrouter-examples">OpenRouter examples</a>:
+						standardize examples on <code>OPENROUTER_API_KEY</code>.
+					</p>
+					<p>
+						<a href="https://github.com/ollama/ollama-js">Ollama JS</a>: documents local host
+						default <code>http://127.0.0.1:11434</code> and <code>ollama.list()</code>.
+					</p>
+				</div>
+			</section>
+
+			<footer class="composition-signal">
+				Composed 2026-07-06T00:00:00-07:00 by ce-ideate from the user request in this thread.
+			</footer>
+		</main>
+	</body>
+</html>

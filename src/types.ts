@@ -66,11 +66,26 @@ export interface ByokProviderDefinition {
 	supportsModelListing: boolean;
 }
 
-export interface ByokCloudProviderConfig {
+export type ByokEnvironment = Readonly<Record<string, string | undefined>>;
+
+export interface ByokEnvCredential {
+	source: "env";
+	env: ByokEnvironment;
+}
+
+export interface ByokApiKeyCloudProviderConfig {
 	provider: ByokCloudProviderId;
 	apiKey: string;
 	model: string;
 }
+
+export interface ByokEnvCloudProviderConfig {
+	provider: ByokCloudProviderId;
+	credential: ByokEnvCredential;
+	model: string;
+}
+
+export type ByokCloudProviderConfig = ByokApiKeyCloudProviderConfig | ByokEnvCloudProviderConfig;
 
 export interface ByokOllamaProviderConfig {
 	provider: ByokOllamaProviderId;
@@ -87,7 +102,7 @@ export interface ByokCliProviderConfig {
 export type ByokProviderConfig =
 	ByokCloudProviderConfig | ByokOllamaProviderConfig | ByokCliProviderConfig;
 
-export type ByokCoreProviderConfig = ByokCloudProviderConfig | ByokOllamaProviderConfig;
+export type ByokCoreProviderConfig = ByokApiKeyCloudProviderConfig | ByokOllamaProviderConfig;
 
 export interface ByokHttpRequest {
 	url: string;
@@ -191,7 +206,10 @@ export type ByokGenerateTextOptions =
 	  });
 
 export type ByokListModelsOptions =
-	| (Omit<ByokCloudProviderConfig, "model"> & {
+	| (Omit<ByokApiKeyCloudProviderConfig, "model"> & {
+			deps?: ByokFacadeDeps;
+	  })
+	| (Omit<ByokEnvCloudProviderConfig, "model"> & {
 			deps?: ByokFacadeDeps;
 	  })
 	| (Omit<ByokOllamaProviderConfig, "model"> & {
@@ -199,7 +217,10 @@ export type ByokListModelsOptions =
 	  });
 
 export type ByokClientConfig =
-	| (Omit<ByokCloudProviderConfig, "model"> & {
+	| (Omit<ByokApiKeyCloudProviderConfig, "model"> & {
+			deps?: ByokFacadeDeps;
+	  })
+	| (Omit<ByokEnvCloudProviderConfig, "model"> & {
 			deps?: ByokFacadeDeps;
 	  })
 	| (Omit<ByokOllamaProviderConfig, "model"> & {

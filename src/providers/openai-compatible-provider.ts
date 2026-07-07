@@ -35,6 +35,7 @@ export interface OpenAiCompatibleProviderConfig {
 	textGenerator?: CloudTextGenerator;
 	listModelsImpl?: () => Promise<ByokModelOption[]>;
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
+	requestHeaders?: (apiKey: string) => Record<string, string>;
 }
 
 export interface OpenAiCompatibleModel {
@@ -108,6 +109,18 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 	});
 }
 
+function joinUrl(baseURL: string, path: string): string {
+	return `${baseURL.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+}
+
+async function readErrorDetail(response: Response): Promise<string> {
+	try {
+		return (await response.text()).trim();
+	} catch {
+		return "";
+	}
+}
+
 function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
 	if (schema instanceof z.ZodObject) {
 		const shape = schema.shape as Record<string, z.ZodType>;
@@ -173,18 +186,25 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	readonly requiresDownload = false;
 
 	private readonly vendor: string;
+	private readonly apiKey: string;
 	private readonly model: string;
+	private readonly baseURL: string;
+	private readonly fetchImpl: typeof fetch;
 	private readonly client: OpenAI;
 	private readonly objectGenerator?: CloudObjectGenerator;
 	private readonly textGenerator?: CloudTextGenerator;
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
 	private readonly normalizeModel: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
+	private readonly requestHeaders?: (apiKey: string) => Record<string, string>;
 
 	constructor(config: OpenAiCompatibleProviderConfig) {
 		this.id = config.id;
 		this.label = config.label;
 		this.vendor = config.vendor;
+		this.apiKey = config.apiKey;
 		this.model = config.model;
+		this.baseURL = config.baseURL;
+		this.fetchImpl = config.fetchImpl;
 		this.client = new OpenAI({
 			apiKey: config.apiKey,
 			baseURL: config.baseURL,
@@ -196,6 +216,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.textGenerator = config.textGenerator;
 		this.listModelsImpl = config.listModelsImpl;
 		this.normalizeModel = config.normalizeModel ?? normalizeModel;
+		this.requestHeaders = config.requestHeaders;
 	}
 
 	protected describeError(e: unknown): string {
@@ -210,6 +231,33 @@ export class OpenAiCompatibleProvider implements AiProvider {
 			return `Could not reach ${this.vendor}. Check your connection.`;
 		}
 		return `${this.vendor} request failed: ${msg}`;
+	}
+
+	private async requestJson<T>(
+		path: string,
+		init: { method: "GET" | "POST"; body?: unknown; signal?: AbortSignal }
+	): Promise<T> {
+		const response = await this.fetchImpl(joinUrl(this.baseURL, path), {
+			method: init.method,
+			headers: {
+				...(this.requestHeaders?.(this.apiKey) ?? { Authorization: `Bearer ${this.apiKey}` }),
+				"Content-Type": "application/json",
+			},
+			body: init.body ? JSON.stringify(init.body) : undefined,
+			signal: init.signal,
+		});
+		if (!response.ok) {
+			const detail = await readErrorDetail(response);
+			const error = new Error(
+				detail
+					? `HTTP ${response.status}: ${detail}`
+					: `HTTP ${response.status} from ${this.vendor}.`
+			) as Error & { status: number; headers: Headers };
+			error.status = response.status;
+			error.headers = response.headers;
+			throw error;
+		}
+		return (await response.json()) as T;
 	}
 
 	private async runWithRetry<T>(
@@ -272,6 +320,14 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
 	async listModels(): Promise<ByokModelOption[]> {
 		if (this.listModelsImpl) return this.listModelsImpl();
+		if (this.requestHeaders) {
+			const body = await this.requestJson<{ data?: OpenAiCompatibleModel[] }>("/models", {
+				method: "GET",
+			});
+			return (body.data ?? [])
+				.map((entry) => this.normalizeModel(entry))
+				.filter((entry): entry is ByokModelOption => entry !== null);
+		}
 		const body = await this.client.models.list();
 		return (body.data ?? [])
 			.map((entry) => entry as OpenAiCompatibleModel)
