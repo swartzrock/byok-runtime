@@ -33,6 +33,7 @@ export interface OpenAiCompatibleProviderConfig {
 	textGenerator?: CloudTextGenerator;
 	listModelsImpl?: () => Promise<ByokModelOption[]>;
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
+	requestHeaders?: (apiKey: string) => Record<string, string>;
 }
 
 export interface OpenAiCompatibleModel {
@@ -197,6 +198,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	private readonly textGenerator?: CloudTextGenerator;
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
 	private readonly normalizeModel: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
+	private readonly requestHeaders: (apiKey: string) => Record<string, string>;
 
 	constructor(config: OpenAiCompatibleProviderConfig) {
 		this.id = config.id;
@@ -210,6 +212,8 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.textGenerator = config.textGenerator;
 		this.listModelsImpl = config.listModelsImpl;
 		this.normalizeModel = config.normalizeModel ?? normalizeModel;
+		this.requestHeaders =
+			config.requestHeaders ?? ((apiKey) => ({ Authorization: `Bearer ${apiKey}` }));
 	}
 
 	protected describeError(e: unknown): string {
@@ -233,7 +237,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		const response = await this.fetchImpl(joinUrl(this.baseURL, path), {
 			method: init.method,
 			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
+				...this.requestHeaders(this.apiKey),
 				"Content-Type": "application/json",
 			},
 			body: init.body ? JSON.stringify(init.body) : undefined,

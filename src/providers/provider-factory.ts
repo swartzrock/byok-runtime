@@ -13,6 +13,7 @@ interface CloudProviderMetadata {
 	label: string;
 	vendor: string;
 	baseURL: string;
+	requestHeaders?: (apiKey: string) => Record<string, string>;
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 }
 
@@ -21,6 +22,10 @@ const CLOUD_PROVIDER_METADATA: Record<ByokCloudProviderId, CloudProviderMetadata
 		label: "Anthropic (Claude)",
 		vendor: "Anthropic",
 		baseURL: "https://api.anthropic.com/v1",
+		requestHeaders: (apiKey) => ({
+			"x-api-key": apiKey,
+			"anthropic-version": "2023-06-01",
+		}),
 	},
 	openai: {
 		label: "OpenAI (ChatGPT)",
