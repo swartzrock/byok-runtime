@@ -21,6 +21,7 @@ export function createByokNodeProvider(
 				fetchImpl: deps?.fetchImpl,
 			});
 		case "ollama":
+		case "lm-studio":
 			return createByokProvider(config, deps);
 		default:
 			return createByokProvider(resolveByokCloudProviderConfig(config), deps);

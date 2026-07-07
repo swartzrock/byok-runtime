@@ -10,7 +10,7 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokCloudProviderId, ByokModelOption } from "../types";
+import type { ByokModelOption, ByokProviderId } from "../types";
 
 export type CloudObjectGenerator = <T>(opts: {
 	schema: z.ZodType<T, z.ZodTypeDef, unknown>;
@@ -24,7 +24,7 @@ export type CloudTextGenerator = (opts: {
 }) => Promise<string>;
 
 export interface OpenAiCompatibleProviderConfig {
-	id: ByokCloudProviderId;
+	id: ByokProviderId;
 	label: string;
 	vendor: string;
 	apiKey: string;
@@ -36,6 +36,7 @@ export interface OpenAiCompatibleProviderConfig {
 	listModelsImpl?: () => Promise<ByokModelOption[]>;
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 	requestHeaders?: (apiKey: string) => Record<string, string>;
+	requiresNetwork?: boolean;
 }
 
 export interface OpenAiCompatibleModel {
@@ -180,9 +181,9 @@ function normalizeModel(entry: OpenAiCompatibleModel): ByokModelOption | null {
 }
 
 export class OpenAiCompatibleProvider implements AiProvider {
-	readonly id: ByokCloudProviderId;
+	readonly id: ByokProviderId;
 	readonly label: string;
-	readonly requiresNetwork = true;
+	readonly requiresNetwork: boolean;
 	readonly requiresDownload = false;
 
 	private readonly vendor: string;
@@ -200,6 +201,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	constructor(config: OpenAiCompatibleProviderConfig) {
 		this.id = config.id;
 		this.label = config.label;
+		this.requiresNetwork = config.requiresNetwork ?? true;
 		this.vendor = config.vendor;
 		this.apiKey = config.apiKey;
 		this.model = config.model;

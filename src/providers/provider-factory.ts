@@ -1,9 +1,15 @@
 import { OllamaProvider } from "./ollama-provider";
-import { normalizeOllamaUrl, resolveByokFetchDeps, resolveOllamaDeps } from "./default-deps";
+import {
+	normalizeLmStudioBaseUrl,
+	normalizeOllamaUrl,
+	resolveByokFetchDeps,
+	resolveOllamaDeps,
+} from "./default-deps";
 import { OpenAiCompatibleProvider, type OpenAiCompatibleModel } from "./openai-compatible-provider";
 import type {
 	ByokCloudProviderId,
 	ByokCoreProviderConfig,
+	ByokLmStudioProviderConfig,
 	ByokModelOption,
 	ByokProviderDeps,
 	ByokProviderRuntime,
@@ -57,6 +63,8 @@ const CLOUD_PROVIDER_METADATA: Record<ByokCloudProviderId, CloudProviderMetadata
 	},
 };
 
+const LM_STUDIO_API_KEY = "lm-studio";
+
 function createCloudProvider(
 	config: Extract<ByokCoreProviderConfig, { provider: ByokCloudProviderId }>,
 	deps?: Partial<ByokProviderDeps>
@@ -72,6 +80,23 @@ function createCloudProvider(
 	});
 }
 
+function createLmStudioProvider(
+	config: ByokLmStudioProviderConfig,
+	deps?: Partial<ByokProviderDeps>
+): ByokProviderRuntime {
+	const { fetchImpl } = resolveByokFetchDeps(deps);
+	return new OpenAiCompatibleProvider({
+		id: config.provider,
+		label: "LM Studio",
+		vendor: "LM Studio",
+		apiKey: LM_STUDIO_API_KEY,
+		model: config.model,
+		baseURL: normalizeLmStudioBaseUrl(config.url),
+		fetchImpl,
+		requiresNetwork: false,
+	});
+}
+
 export function createByokProvider(
 	config: ByokCoreProviderConfig,
 	deps?: Partial<ByokProviderDeps>
@@ -83,6 +108,8 @@ export function createByokProvider(
 		case "xai":
 		case "openrouter":
 			return createCloudProvider(config, deps);
+		case "lm-studio":
+			return createLmStudioProvider(config, deps);
 		case "ollama": {
 			const { http } = resolveOllamaDeps(deps);
 			return new OllamaProvider({

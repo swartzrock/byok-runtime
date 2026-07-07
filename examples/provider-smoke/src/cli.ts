@@ -4,7 +4,7 @@ import { generateText, listModels } from "../../../src";
 const CLOUD_PROVIDERS = ["anthropic", "openai", "google", "xai", "openrouter"] as const;
 
 type SmokeCloudProvider = (typeof CLOUD_PROVIDERS)[number];
-type SmokeProvider = SmokeCloudProvider | "ollama";
+type SmokeProvider = SmokeCloudProvider | "ollama" | "lm-studio";
 type SmokeEnv = Readonly<Record<string, string | undefined>>;
 
 interface SmokeByok {
@@ -41,7 +41,7 @@ const USAGE = `Usage:
   bun run provider-smoke models --provider <provider> [--api-key <key>] [--url <url>]
   bun run provider-smoke generate --provider <provider> --model <model> --input <text> [--api-key <key>] [--url <url>]
 
-Providers: anthropic, openai, google, xai, openrouter, ollama`;
+Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio`;
 
 export async function runProviderSmokeCli(
 	args: string[] = process.argv.slice(2),
@@ -82,9 +82,9 @@ export async function runProviderSmokeCli(
 }
 
 function providerConfig(flags: ParsedFlags, env: SmokeEnv) {
-	if (flags.provider === "ollama") {
+	if (flags.provider === "ollama" || flags.provider === "lm-studio") {
 		return {
-			provider: "ollama" as const,
+			provider: flags.provider,
 			url: flags.url,
 		};
 	}
@@ -113,11 +113,11 @@ function parseArgs(
 	if (!isSmokeProvider(provider)) {
 		return { ok: false, error: "Missing or invalid --provider." };
 	}
-	if (provider === "ollama" && flags.apiKey) {
-		return { ok: false, error: "Ollama uses --url, not --api-key." };
+	if ((provider === "ollama" || provider === "lm-studio") && flags.apiKey) {
+		return { ok: false, error: `${provider} uses --url, not --api-key.` };
 	}
-	if (provider !== "ollama" && flags.url) {
-		return { ok: false, error: "Only Ollama accepts --url." };
+	if (provider !== "ollama" && provider !== "lm-studio" && flags.url) {
+		return { ok: false, error: "Only local providers accept --url." };
 	}
 	if (command === "generate" && (!flags.model || !flags.input)) {
 		return { ok: false, error: "Generate requires --model and --input." };
@@ -163,7 +163,9 @@ function readFlags(args: string[]): Record<string, string | undefined> {
 
 function isSmokeProvider(provider: string | undefined): provider is SmokeProvider {
 	return (
-		provider === "ollama" || CLOUD_PROVIDERS.some((cloudProvider) => cloudProvider === provider)
+		provider === "ollama" ||
+		provider === "lm-studio" ||
+		CLOUD_PROVIDERS.some((cloudProvider) => cloudProvider === provider)
 	);
 }
 

@@ -48,5 +48,6 @@ describe("BYOK env credentials", () => {
 			openrouter: ["OPENROUTER_API_KEY"],
 		});
 		expect("ollama" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
+		expect("lm-studio" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
 	});
 });

@@ -86,6 +86,7 @@ describe("BYOK public contract", () => {
 			{ provider: "xai", apiKey: "xai-test", model: "grok-2-latest" },
 			{ provider: "openrouter", apiKey: "sk-or-test", model: "openai/gpt-4o" },
 			{ provider: "ollama", model: "llama3.1:8b" },
+			{ provider: "lm-studio", model: "qwen2.5-7b-instruct" },
 			{ provider: "codex-cli", command: "codex" },
 			{ provider: "claude-cli", command: "claude", model: "sonnet" },
 		];
@@ -135,7 +136,7 @@ describe("BYOK public contract", () => {
 		const definitions = byok.byokProviderDefinitions();
 		const byId = new Map(definitions.map((definition) => [definition.id, definition]));
 
-		expect(definitions).toHaveLength(8);
+		expect(definitions).toHaveLength(9);
 		for (const definition of definitions) {
 			expect(definition.supportsModelListing).toBe(true);
 			expect(definition.shortLabel.length).toBeGreaterThan(0);
@@ -171,6 +172,17 @@ describe("BYOK public contract", () => {
 			icon: {
 				source: "custom",
 			},
+			supportsModelListing: true,
+		} satisfies Partial<ByokProviderDefinition>);
+		expect(byId.get("lm-studio")).toMatchObject({
+			label: "LM Studio",
+			shortLabel: "LM Studio",
+			credentialKind: "url",
+			credentialField: {
+				label: "LM Studio URL",
+				secret: false,
+			},
+			requiresNetwork: false,
 			supportsModelListing: true,
 		} satisfies Partial<ByokProviderDefinition>);
 		expect(byId.get("anthropic")?.icon.source).toBe("svgl");
