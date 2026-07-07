@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+import type { ChatCompletion } from "openai/resources/chat/completions";
 import { z } from "zod/v3";
 import {
 	type AiProvider,
@@ -40,14 +42,6 @@ export interface OpenAiCompatibleModel {
 	id?: string;
 	name?: string;
 	display_name?: string;
-}
-
-interface ChatCompletionResponse {
-	choices?: Array<{
-		message?: {
-			content?: string | Array<{ type?: string; text?: string }>;
-		};
-	}>;
 }
 
 const DEFAULT_RATE_LIMIT_RETRIES = 2;
@@ -163,12 +157,14 @@ function parseObjectResponse<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, tex
 	return schema.parse(JSON.parse(stripJsonFence(text)));
 }
 
-function extractText(body: ChatCompletionResponse): string {
-	const content = body.choices?.[0]?.message?.content;
+function extractText(body: ChatCompletion): string {
+	const content: unknown = body.choices?.[0]?.message?.content;
 	if (typeof content === "string") return content;
 	if (Array.isArray(content)) {
 		return content
-			.map((part) => (part.type === "text" && typeof part.text === "string" ? part.text : ""))
+			.map((part: { type?: string; text?: unknown }) =>
+				part.type === "text" && typeof part.text === "string" ? part.text : ""
+			)
 			.join("");
 	}
 	throw new Error("OpenAI-compatible response did not include message content.");
@@ -194,11 +190,12 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	private readonly model: string;
 	private readonly baseURL: string;
 	private readonly fetchImpl: typeof fetch;
+	private readonly client: OpenAI;
 	private readonly objectGenerator?: CloudObjectGenerator;
 	private readonly textGenerator?: CloudTextGenerator;
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
 	private readonly normalizeModel: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
-	private readonly requestHeaders: (apiKey: string) => Record<string, string>;
+	private readonly requestHeaders?: (apiKey: string) => Record<string, string>;
 
 	constructor(config: OpenAiCompatibleProviderConfig) {
 		this.id = config.id;
@@ -208,12 +205,18 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.model = config.model;
 		this.baseURL = config.baseURL;
 		this.fetchImpl = config.fetchImpl;
+		this.client = new OpenAI({
+			apiKey: config.apiKey,
+			baseURL: config.baseURL,
+			fetch: config.fetchImpl,
+			maxRetries: 0,
+			dangerouslyAllowBrowser: true,
+		});
 		this.objectGenerator = config.generator;
 		this.textGenerator = config.textGenerator;
 		this.listModelsImpl = config.listModelsImpl;
 		this.normalizeModel = config.normalizeModel ?? normalizeModel;
-		this.requestHeaders =
-			config.requestHeaders ?? ((apiKey) => ({ Authorization: `Bearer ${apiKey}` }));
+		this.requestHeaders = config.requestHeaders;
 	}
 
 	protected describeError(e: unknown): string {
@@ -237,7 +240,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		const response = await this.fetchImpl(joinUrl(this.baseURL, path), {
 			method: init.method,
 			headers: {
-				...this.requestHeaders(this.apiKey),
+				...(this.requestHeaders?.(this.apiKey) ?? { Authorization: `Bearer ${this.apiKey}` }),
 				"Content-Type": "application/json",
 			},
 			body: init.body ? JSON.stringify(init.body) : undefined,
@@ -290,14 +293,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		if (this.textGenerator) {
 			return this.textGenerator({ ...input, signal });
 		}
-		const body = await this.requestJson<ChatCompletionResponse>("/chat/completions", {
-			method: "POST",
-			signal,
-			body: {
+		const body = await this.client.chat.completions.create(
+			{
 				model: this.model,
 				messages: [{ role: "user", content: input.prompt }],
 			},
-		});
+			{ signal }
+		);
 		return extractText(body);
 	}
 
@@ -318,10 +320,17 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
 	async listModels(): Promise<ByokModelOption[]> {
 		if (this.listModelsImpl) return this.listModelsImpl();
-		const body = await this.requestJson<{ data?: OpenAiCompatibleModel[] }>("/models", {
-			method: "GET",
-		});
+		if (this.requestHeaders) {
+			const body = await this.requestJson<{ data?: OpenAiCompatibleModel[] }>("/models", {
+				method: "GET",
+			});
+			return (body.data ?? [])
+				.map((entry) => this.normalizeModel(entry))
+				.filter((entry): entry is ByokModelOption => entry !== null);
+		}
+		const body = await this.client.models.list();
 		return (body.data ?? [])
+			.map((entry) => entry as OpenAiCompatibleModel)
 			.map((entry) => this.normalizeModel(entry))
 			.filter((entry): entry is ByokModelOption => entry !== null);
 	}
