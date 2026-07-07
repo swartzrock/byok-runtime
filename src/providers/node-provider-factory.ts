@@ -1,6 +1,7 @@
 import { ClaudeCliProvider } from "./claude-cli-provider";
 import { CodexCliProvider } from "./codex-cli-provider";
 import { createByokProvider } from "./provider-factory";
+import { resolveByokCloudProviderConfig } from "../credentials";
 import type { ByokProviderConfig, ByokProviderDeps, ByokProviderRuntime } from "../types";
 
 export function createByokNodeProvider(
@@ -19,7 +20,9 @@ export function createByokNodeProvider(
 				model: config.model,
 				fetchImpl: deps?.fetchImpl,
 			});
-		default:
+		case "ollama":
 			return createByokProvider(config, deps);
+		default:
+			return createByokProvider(resolveByokCloudProviderConfig(config), deps);
 	}
 }

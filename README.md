@@ -20,6 +20,7 @@ The API is shaped for backend, desktop backend, Electron main-process, and other
 - Unified runtime for Anthropic, OpenAI, Google Gemini, xAI, OpenRouter, Ollama, Codex CLI, and Claude CLI.
 - One-call `generateText` helper for core providers with default fetch-based transports.
 - `createByok` client for repeated text generation with one bound credential or Ollama URL.
+- Opt-in env-backed credentials for trusted local scripts and smoke tooling.
 - Trusted-runtime main entrypoint for API-key providers and Ollama.
 - Node-only subpath for local CLI providers and command execution.
 - App-supplied `fetch` and HTTP transports so callers can run in trusted Node, desktop backend, test, or custom runtimes.
@@ -32,16 +33,16 @@ The API is shaped for backend, desktop backend, Electron main-process, and other
 
 ## Provider Support
 
-| Provider ID  | Credential                    | Entry point                     | Model listing                                                    | Generation                                          |
-| ------------ | ----------------------------- | ------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| `anthropic`  | API key + model               | `@swartzrock/byok-runtime`      | Anthropic account models                                         | Text and object                                     |
-| `openai`     | API key + model               | `@swartzrock/byok-runtime`      | OpenAI model IDs                                                 | Text and object                                     |
-| `google`     | API key + model               | `@swartzrock/byok-runtime`      | Gemini model IDs                                                 | Text and object                                     |
-| `xai`        | API key + model               | `@swartzrock/byok-runtime`      | xAI model IDs                                                    | Text and object                                     |
-| `openrouter` | API key + model               | `@swartzrock/byok-runtime`      | Portable model options                                           | Text and object-like JSON parsing                   |
-| `ollama`     | URL + model                   | `@swartzrock/byok-runtime`      | Installed local models                                           | Text                                                |
-| `codex-cli`  | Local command, optional model | `@swartzrock/byok-runtime/node` | Codex CLI model IDs                                              | Text                                                |
-| `claude-cli` | Local command, optional model | `@swartzrock/byok-runtime/node` | Anthropic model IDs from OpenRouter, without the provider prefix | Text, with JSON-schema hints through `generateText` |
+| Provider ID  | Credential                        | Entry point                     | Model listing                                                    | Generation                                          |
+| ------------ | --------------------------------- | ------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `anthropic`  | API key or env credential + model | `@swartzrock/byok-runtime`      | Anthropic account models                                         | Text and object                                     |
+| `openai`     | API key or env credential + model | `@swartzrock/byok-runtime`      | OpenAI model IDs                                                 | Text and object                                     |
+| `google`     | API key or env credential + model | `@swartzrock/byok-runtime`      | Gemini model IDs                                                 | Text and object                                     |
+| `xai`        | API key or env credential + model | `@swartzrock/byok-runtime`      | xAI model IDs                                                    | Text and object                                     |
+| `openrouter` | API key or env credential + model | `@swartzrock/byok-runtime`      | Portable model options                                           | Text and object-like JSON parsing                   |
+| `ollama`     | URL + model                       | `@swartzrock/byok-runtime`      | Installed local models                                           | Text                                                |
+| `codex-cli`  | Local command, optional model     | `@swartzrock/byok-runtime/node` | Codex CLI model IDs                                              | Text                                                |
+| `claude-cli` | Local command, optional model     | `@swartzrock/byok-runtime/node` | Anthropic model IDs from OpenRouter, without the provider prefix | Text, with JSON-schema hints through `generateText` |
 
 The main entrypoint avoids Node-only process APIs, but it is still intended for trusted host runtimes that can safely receive provider credentials. Use `@swartzrock/byok-runtime/node` only from trusted Node or desktop backends that are allowed to spawn local commands.
 
@@ -109,6 +110,23 @@ The function-first API accepts plain text prompts only. Use the lower-level runt
 
 BYOK receives credentials only as call inputs. It does not persist or log API keys. Keep BYOK execution behind a trusted server, main process, local backend, or custom transport; browser and Electron renderer UIs should not import BYOK directly with provider credentials.
 
+### Env-Backed Credentials
+
+Explicit `apiKey` values are the recommended path for host apps because the host stays in charge of credential collection and storage. For trusted local scripts and examples, cloud providers can instead opt in to BYOK's standard environment variable map:
+
+```ts
+import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
+
+const { text } = await generateText({
+	provider: ByokProvider.OpenAI,
+	credential: { source: "env", env: process.env },
+	model: "gpt-4o-mini",
+	prompt: "Explain env-backed BYOK credentials in one sentence.",
+});
+```
+
+Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, and `OPENROUTER_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`. BYOK does not parse `.env` files, read `process.env` on its own, persist secrets, log values, or add env credentials for Ollama.
+
 ## Basic Usage
 
 ### Reuse a Credential
@@ -130,6 +148,15 @@ const { text } = await ai.generateText({
 ```
 
 `createByok` is intentionally narrow: it binds the credential or URL, then accepts a model and prompt per call. Use `listModels` for setup-time model discovery.
+
+Trusted scripts can bind env-backed credentials the same way:
+
+```ts
+const ai = createByok({
+	provider: ByokProvider.OpenAI,
+	credential: { source: "env", env: process.env },
+});
+```
 
 ### List Providers
 
@@ -279,7 +306,43 @@ const models = await listModels({
 
 `ByokProvider.Anthropic`, `ByokProvider.OpenAI`, `ByokProvider.Google`, `ByokProvider.Xai`, and `ByokProvider.OpenRouter` use the same API-key shape. `ByokProvider.Ollama` defaults to `http://localhost:11434`; pass `url` only for a different Ollama server.
 
+Trusted scripts can also list cloud models with env-backed credentials:
+
+```ts
+const models = await listModels({
+	provider: ByokProvider.Google,
+	credential: { source: "env", env: process.env },
+});
+```
+
 CLI model discovery is available from the `@swartzrock/byok-runtime/node` runtime provider. Codex CLI uses `codex debug models`; Claude CLI fetches Anthropic model IDs from OpenRouter's public model list and strips the OpenRouter provider prefix.
+
+## Provider Smoke CLI
+
+This repository includes an example smoke CLI for manual provider checks. It delegates credential lookup to BYOK: pass `--api-key` for explicit credentials, omit it for env-backed cloud credentials, and use `--url` only for Ollama.
+
+```bash
+OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
+	--provider openai \
+	--model gpt-4o-mini \
+	--input "Reply with one short sentence."
+
+bun run provider-smoke models \
+	--provider anthropic \
+	--api-key "<ANTHROPIC_API_KEY>"
+
+GOOGLE_API_KEY="<GOOGLE_API_KEY>" GEMINI_API_KEY="<GEMINI_API_KEY>" \
+	bun run provider-smoke models --provider google
+
+bun run provider-smoke generate \
+	--provider ollama \
+	--model llama3.1:8b \
+	--input "Write one sentence about local inference."
+
+bun run provider-smoke models \
+	--provider ollama \
+	--url http://127.0.0.1:11434
+```
 
 ### Use Ollama
 

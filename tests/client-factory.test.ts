@@ -93,6 +93,44 @@ describeForVitest("BYOK cloud client facade", () => {
 		);
 	});
 
+	it("resolves env-backed Google credentials before provider creation", async () => {
+		const result = await generateText({
+			provider: "google",
+			credential: {
+				source: "env",
+				env: {
+					GOOGLE_API_KEY: "google-key",
+					GEMINI_API_KEY: "gemini-key",
+				},
+			},
+			model: "gemini-1.5-flash",
+			prompt: "Say hi.",
+		});
+
+		expect(result).toEqual({ text: "Cloud response." });
+		expect(mocks.createByokProvider).toHaveBeenCalledWith(
+			{
+				provider: "google",
+				apiKey: "google-key",
+				model: "gemini-1.5-flash",
+			},
+			undefined
+		);
+	});
+
+	it("fails env-backed generation before provider creation when credentials are missing", async () => {
+		await expect(
+			generateText({
+				provider: "openai",
+				credential: { source: "env", env: {} },
+				model: "gpt-4o-mini",
+				prompt: "Say hi.",
+			})
+		).rejects.toThrow(/OPENAI_API_KEY/);
+
+		expect(mocks.createByokProvider).not.toHaveBeenCalled();
+	});
+
 	it("lists cloud models without a caller-supplied model", async () => {
 		const result = await listModels({
 			provider: "openai",
@@ -108,6 +146,43 @@ describeForVitest("BYOK cloud client facade", () => {
 				model: "",
 			},
 			{ fetchImpl }
+		);
+	});
+
+	it("resolves env-backed credentials for model listing", async () => {
+		await listModels({
+			provider: "openai",
+			credential: { source: "env", env: { OPENAI_API_KEY: "sk-openai-env" } },
+		});
+
+		expect(mocks.createByokProvider).toHaveBeenCalledWith(
+			{
+				provider: "openai",
+				apiKey: "sk-openai-env",
+				model: "",
+			},
+			undefined
+		);
+	});
+
+	it("resolves env-backed credentials in createByok", async () => {
+		const client = createByok({
+			provider: "openrouter",
+			credential: { source: "env", env: { OPENROUTER_API_KEY: "sk-or-env" } },
+		});
+
+		await client.generateText({
+			model: "openai/gpt-4o",
+			prompt: "Say hi.",
+		});
+
+		expect(mocks.createByokProvider).toHaveBeenCalledWith(
+			{
+				provider: "openrouter",
+				apiKey: "sk-or-env",
+				model: "openai/gpt-4o",
+			},
+			undefined
 		);
 	});
 
