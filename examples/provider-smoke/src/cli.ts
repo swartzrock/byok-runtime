@@ -62,7 +62,7 @@ export async function runProviderSmokeCli(
 	try {
 		if (parsed.flags.command === "models") {
 			const models = await byok.listModels(providerConfig(parsed.flags, env));
-			for (const model of models.slice(0, 5)) {
+			for (const model of models) {
 				stdout(model.id);
 			}
 			return 0;

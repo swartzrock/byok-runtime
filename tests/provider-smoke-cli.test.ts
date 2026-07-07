@@ -25,7 +25,7 @@ describe("provider smoke CLI", () => {
 		});
 	});
 
-	it("delegates Anthropic model listing to explicit API-key credentials and prints five IDs", async () => {
+	it("delegates Anthropic model listing to explicit API-key credentials and prints every ID", async () => {
 		const output: string[] = [];
 		const listModels = vi.fn().mockResolvedValue([
 			{ id: "model-1", label: "model-1" },
@@ -46,7 +46,7 @@ describe("provider smoke CLI", () => {
 		);
 
 		expect(code).toBe(0);
-		expect(output).toEqual(["model-1", "model-2", "model-3", "model-4", "model-5"]);
+		expect(output).toEqual(["model-1", "model-2", "model-3", "model-4", "model-5", "model-6"]);
 		expect(listModels).toHaveBeenCalledWith({
 			provider: "anthropic",
 			apiKey: "sk-ant-test",
