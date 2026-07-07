@@ -4,14 +4,14 @@ Run real provider smoke checks from the repository root with BYOK's public facad
 Cloud providers use `--api-key` when supplied; otherwise they use BYOK's env-backed credential mode with the standard provider environment variables.
 Ollama stays URL-backed and defaults to the local server URL.
 
-| Provider   | Env-backed API key names                |
-| ---------- | --------------------------------------- |
-| Anthropic  | `ANTHROPIC_API_KEY`                     |
-| OpenAI     | `OPENAI_API_KEY`                        |
-| Google     | `GOOGLE_API_KEY`, then `GEMINI_API_KEY` |
-| xAI        | `XAI_API_KEY`                           |
-| OpenRouter | `OPENROUTER_API_KEY`                    |
-| Ollama     | Not supported; use `--url`              |
+| Provider   | Env-backed API key names             |
+| ---------- | ------------------------------------ |
+| Anthropic  | `ANTHROPIC_API_KEY`                  |
+| OpenAI     | `OPENAI_API_KEY`                     |
+| Google     | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
+| xAI        | `XAI_API_KEY`                        |
+| OpenRouter | `OPENROUTER_API_KEY`                 |
+| Ollama     | n/a                                  |
 
 ```bash
 OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
