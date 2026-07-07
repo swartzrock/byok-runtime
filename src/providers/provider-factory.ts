@@ -1,57 +1,88 @@
-import { AnthropicProvider } from "./anthropic-provider";
-import { GoogleProvider } from "./google-provider";
 import { OllamaProvider } from "./ollama-provider";
-import { OpenAIProvider } from "./openai-provider";
-import { OpenRouterProvider } from "./openrouter-provider";
-import { XaiProvider } from "./xai-provider";
 import { normalizeOllamaUrl, resolveByokFetchDeps, resolveOllamaDeps } from "./default-deps";
-import type { ByokCoreProviderConfig, ByokProviderDeps, ByokProviderRuntime } from "../types";
+import { OpenAiCompatibleProvider, type OpenAiCompatibleModel } from "./openai-compatible-provider";
+import type {
+	ByokCloudProviderId,
+	ByokCoreProviderConfig,
+	ByokModelOption,
+	ByokProviderDeps,
+	ByokProviderRuntime,
+} from "../types";
+
+interface CloudProviderMetadata {
+	label: string;
+	vendor: string;
+	baseURL: string;
+	requestHeaders?: (apiKey: string) => Record<string, string>;
+	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
+}
+
+const CLOUD_PROVIDER_METADATA: Record<ByokCloudProviderId, CloudProviderMetadata> = {
+	anthropic: {
+		label: "Anthropic (Claude)",
+		vendor: "Anthropic",
+		baseURL: "https://api.anthropic.com/v1",
+		requestHeaders: (apiKey) => ({
+			"x-api-key": apiKey,
+			"anthropic-version": "2023-06-01",
+		}),
+	},
+	openai: {
+		label: "OpenAI (ChatGPT)",
+		vendor: "OpenAI",
+		baseURL: "https://api.openai.com/v1",
+	},
+	google: {
+		label: "Google (Gemini)",
+		vendor: "Google",
+		baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+	},
+	xai: {
+		label: "xAI (Grok)",
+		vendor: "xAI",
+		baseURL: "https://api.x.ai/v1",
+	},
+	openrouter: {
+		label: "OpenRouter",
+		vendor: "OpenRouter",
+		baseURL: "https://openrouter.ai/api/v1",
+		normalizeModel: (entry) => {
+			const id = entry.id ?? "";
+			if (!id.trim()) return null;
+			return {
+				id,
+				label: entry.name ?? id,
+			};
+		},
+	},
+};
+
+function createCloudProvider(
+	config: Extract<ByokCoreProviderConfig, { provider: ByokCloudProviderId }>,
+	deps?: Partial<ByokProviderDeps>
+): ByokProviderRuntime {
+	const { fetchImpl } = resolveByokFetchDeps(deps);
+	const metadata = CLOUD_PROVIDER_METADATA[config.provider];
+	return new OpenAiCompatibleProvider({
+		id: config.provider,
+		apiKey: config.apiKey,
+		model: config.model,
+		fetchImpl,
+		...metadata,
+	});
+}
 
 export function createByokProvider(
 	config: ByokCoreProviderConfig,
 	deps?: Partial<ByokProviderDeps>
 ): ByokProviderRuntime {
 	switch (config.provider) {
-		case "anthropic": {
-			const { fetchImpl } = resolveByokFetchDeps(deps);
-			return new AnthropicProvider({
-				apiKey: config.apiKey,
-				model: config.model,
-				fetchImpl,
-			}) as unknown as ByokProviderRuntime;
-		}
-		case "openai": {
-			const { fetchImpl } = resolveByokFetchDeps(deps);
-			return new OpenAIProvider({
-				apiKey: config.apiKey,
-				model: config.model,
-				fetchImpl,
-			}) as unknown as ByokProviderRuntime;
-		}
-		case "google": {
-			const { fetchImpl } = resolveByokFetchDeps(deps);
-			return new GoogleProvider({
-				apiKey: config.apiKey,
-				model: config.model,
-				fetchImpl,
-			}) as unknown as ByokProviderRuntime;
-		}
-		case "xai": {
-			const { fetchImpl } = resolveByokFetchDeps(deps);
-			return new XaiProvider({
-				apiKey: config.apiKey,
-				model: config.model,
-				fetchImpl,
-			}) as unknown as ByokProviderRuntime;
-		}
-		case "openrouter": {
-			const { fetchImpl } = resolveByokFetchDeps(deps);
-			return new OpenRouterProvider({
-				apiKey: config.apiKey,
-				model: config.model,
-				fetchImpl,
-			}) as unknown as ByokProviderRuntime;
-		}
+		case "anthropic":
+		case "openai":
+		case "google":
+		case "xai":
+		case "openrouter":
+			return createCloudProvider(config, deps);
 		case "ollama": {
 			const { http } = resolveOllamaDeps(deps);
 			return new OllamaProvider({

@@ -56,16 +56,7 @@
 		"url": "https://github.com/swartzrock/byok-runtime/issues"
 	},
 	"dependencies": {
-		"@ai-sdk/anthropic": "^3.0.81",
-		"@ai-sdk/google": "^3.0.80",
-		"@ai-sdk/openai": "^3.0.68",
-		"@ai-sdk/provider-utils": "^4.0.27",
-		"@ai-sdk/xai": "^3.0.93",
-		"@anthropic-ai/sdk": "^0.104.1",
-		"@google/genai": "^2.8.0",
-		"ai": "^6.0.197",
 		"ollama": "^0.6.3",
-		"openai": "^6.42.0",
 		"tslib": "2.6.2",
 		"zod": "^3.25.76"
 	},

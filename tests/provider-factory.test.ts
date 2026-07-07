@@ -157,6 +157,75 @@ describe("createByokProvider", () => {
 		expect(typeof provider.listModels).toBe("function");
 	});
 
+	it.each([
+		[
+			"anthropic",
+			"https://api.anthropic.com/v1/models",
+			"claude-account-123",
+			"Claude Account 123",
+			{
+				"x-api-key": "key",
+				"anthropic-version": "2023-06-01",
+				"Content-Type": "application/json",
+			},
+		],
+		[
+			"openai",
+			"https://api.openai.com/v1/models",
+			"gpt-4o-mini",
+			"gpt-4o-mini",
+			{ Authorization: "Bearer key", "Content-Type": "application/json" },
+		],
+		[
+			"google",
+			"https://generativelanguage.googleapis.com/v1beta/openai/models",
+			"gemini-1.5-flash",
+			"gemini-1.5-flash",
+			{ Authorization: "Bearer key", "Content-Type": "application/json" },
+		],
+		[
+			"xai",
+			"https://api.x.ai/v1/models",
+			"grok-2-latest",
+			"grok-2-latest",
+			{ Authorization: "Bearer key", "Content-Type": "application/json" },
+		],
+		[
+			"openrouter",
+			"https://openrouter.ai/api/v1/models",
+			"anthropic/claude-sonnet-4",
+			"Anthropic: Claude Sonnet 4",
+			{ Authorization: "Bearer key", "Content-Type": "application/json" },
+		],
+	] as const)(
+		"lists %s models through its configured base URL",
+		async (provider, expectedUrl, modelId, modelLabel, expectedHeaders) => {
+			const requests: Array<{ url: string; headers?: HeadersInit }> = [];
+			const runtime = createByokProvider(
+				{ provider, apiKey: "key", model: modelId },
+				{
+					fetchImpl: (async (input, init) => {
+						requests.push({ url: input.toString(), headers: init?.headers });
+						return new Response(
+							JSON.stringify({
+								data: [{ id: modelId, name: modelLabel, display_name: modelLabel }],
+							}),
+							{ status: 200, headers: { "content-type": "application/json" } }
+						);
+					}) as typeof fetch,
+					http,
+				}
+			);
+
+			await expect(runtime.listModels()).resolves.toEqual([{ id: modelId, label: modelLabel }]);
+			expect(requests[0]?.url).toBe(expectedUrl);
+			expect(requests[0]?.headers).toMatchObject(expectedHeaders);
+			if (provider === "anthropic") {
+				expect(requests[0]?.headers).not.toHaveProperty("Authorization");
+			}
+		}
+	);
+
 	it("keeps CLI model overrides optional on the Node subpath", () => {
 		const config: ByokProviderConfig = { provider: "codex-cli", command: "codex" };
 		const provider = createByokNodeProvider(config, { fetchImpl, http });
