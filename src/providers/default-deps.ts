@@ -2,6 +2,7 @@ import { ByokProviderError, type ByokHttpClient, type ByokProviderDeps } from ".
 
 const MAX_DEFAULT_HTTP_RESPONSE_BYTES = 1_000_000;
 export const DEFAULT_OLLAMA_URL = "http://localhost:11434";
+export const DEFAULT_LM_STUDIO_BASE_URL = "http://localhost:1234/v1";
 
 function globalFetch(): typeof fetch | undefined {
 	const candidate = globalThis.fetch;
@@ -24,6 +25,24 @@ export function normalizeOllamaUrl(url: string = DEFAULT_OLLAMA_URL): string {
 		throw new ByokProviderError("Ollama URL must not include credentials.");
 	}
 	return parsed.toString().replace(/\/+$/, "");
+}
+
+export function normalizeLmStudioBaseUrl(url: string = DEFAULT_LM_STUDIO_BASE_URL): string {
+	const candidate = url.trim() || DEFAULT_LM_STUDIO_BASE_URL;
+	let parsed: URL;
+	try {
+		parsed = new URL(candidate);
+	} catch {
+		throw new ByokProviderError("LM Studio URL must be a valid http(s) URL.");
+	}
+	if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+		throw new ByokProviderError("LM Studio URL must use http or https.");
+	}
+	if (parsed.username || parsed.password) {
+		throw new ByokProviderError("LM Studio URL must not include credentials.");
+	}
+	const normalized = parsed.toString().replace(/\/+$/, "");
+	return parsed.pathname === "/" ? `${normalized}/v1` : normalized;
 }
 
 function concatChunks(chunks: Uint8Array[], totalBytes: number): Uint8Array {

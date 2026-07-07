@@ -7,6 +7,7 @@ export enum ByokProvider {
 	Google = "google",
 	Xai = "xai",
 	OpenRouter = "openrouter",
+	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
 }
@@ -16,6 +17,8 @@ export type ByokProviderId = `${ByokProvider}`;
 export type ByokCloudProviderId = "anthropic" | "openai" | "google" | "xai" | "openrouter";
 
 export type ByokOllamaProviderId = "ollama";
+
+export type ByokLmStudioProviderId = "lm-studio";
 
 export type ByokCliProviderId = "codex-cli" | "claude-cli";
 
@@ -93,6 +96,12 @@ export interface ByokOllamaProviderConfig {
 	model: string;
 }
 
+export interface ByokLmStudioProviderConfig {
+	provider: ByokLmStudioProviderId;
+	url?: string;
+	model: string;
+}
+
 export interface ByokCliProviderConfig {
 	provider: ByokCliProviderId;
 	command: string;
@@ -100,9 +109,13 @@ export interface ByokCliProviderConfig {
 }
 
 export type ByokProviderConfig =
-	ByokCloudProviderConfig | ByokOllamaProviderConfig | ByokCliProviderConfig;
+	| ByokCloudProviderConfig
+	| ByokOllamaProviderConfig
+	| ByokLmStudioProviderConfig
+	| ByokCliProviderConfig;
 
-export type ByokCoreProviderConfig = ByokApiKeyCloudProviderConfig | ByokOllamaProviderConfig;
+export type ByokCoreProviderConfig =
+	ByokApiKeyCloudProviderConfig | ByokOllamaProviderConfig | ByokLmStudioProviderConfig;
 
 export interface ByokHttpRequest {
 	url: string;
@@ -203,6 +216,11 @@ export type ByokGenerateTextOptions =
 			prompt: string;
 			deps?: ByokFacadeDeps;
 			signal?: AbortSignal;
+	  })
+	| (ByokLmStudioProviderConfig & {
+			prompt: string;
+			deps?: ByokFacadeDeps;
+			signal?: AbortSignal;
 	  });
 
 export type ByokListModelsOptions =
@@ -214,6 +232,9 @@ export type ByokListModelsOptions =
 	  })
 	| (Omit<ByokOllamaProviderConfig, "model"> & {
 			deps?: ByokFacadeDeps;
+	  })
+	| (Omit<ByokLmStudioProviderConfig, "model"> & {
+			deps?: ByokFacadeDeps;
 	  });
 
 export type ByokClientConfig =
@@ -224,6 +245,9 @@ export type ByokClientConfig =
 			deps?: ByokFacadeDeps;
 	  })
 	| (Omit<ByokOllamaProviderConfig, "model"> & {
+			deps?: ByokFacadeDeps;
+	  })
+	| (Omit<ByokLmStudioProviderConfig, "model"> & {
 			deps?: ByokFacadeDeps;
 	  });
 

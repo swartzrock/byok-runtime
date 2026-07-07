@@ -2,7 +2,7 @@
 
 Run real provider smoke checks from the repository root with BYOK's public facade.
 Cloud providers use `--api-key` when supplied; otherwise they use BYOK's env-backed credential mode with the standard provider environment variables.
-Ollama stays URL-backed and defaults to the local server URL.
+Ollama and LM Studio stay URL-backed and default to their local server URLs.
 
 | Provider   | Env-backed API key names             |
 | ---------- | ------------------------------------ |
@@ -12,6 +12,7 @@ Ollama stays URL-backed and defaults to the local server URL.
 | xAI        | `XAI_API_KEY`                        |
 | OpenRouter | `OPENROUTER_API_KEY`                 |
 | Ollama     | n/a                                  |
+| LM Studio  | n/a                                  |
 
 ```bash
 OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
@@ -34,4 +35,8 @@ bun run provider-smoke generate \
 bun run provider-smoke models \
 	--provider ollama \
 	--url http://127.0.0.1:11434
+
+bun run provider-smoke models \
+	--provider lm-studio \
+	--url http://127.0.0.1:1234/v1
 ```

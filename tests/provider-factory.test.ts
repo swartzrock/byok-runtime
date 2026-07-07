@@ -19,6 +19,7 @@ describe("createByokProvider", () => {
 		[{ provider: "google", apiKey: "AIza-test", model: "gemini-1.5-flash" }, "google"],
 		[{ provider: "xai", apiKey: "xai-test", model: "grok-2-latest" }, "xai"],
 		[{ provider: "openrouter", apiKey: "sk-or-test", model: "openai/gpt-4o" }, "openrouter"],
+		[{ provider: "lm-studio", model: "qwen2.5-7b-instruct" }, "lm-studio"],
 	] as const)("creates the %s runtime", (config, expectedId) => {
 		const provider = createByokProvider(config satisfies ByokCoreProviderConfig, {
 			fetchImpl,
@@ -77,6 +78,36 @@ describe("createByokProvider", () => {
 		await provider.generateText({ prompt: "Say hi." });
 
 		expect(requests[0]?.url).toBe("http://localhost:11434/api/generate");
+	});
+
+	it("defaults LM Studio to the local OpenAI-compatible v1 URL", async () => {
+		const requests: Array<{ url: string; body?: string }> = [];
+		const provider = createByokProvider(
+			{
+				provider: "lm-studio",
+				model: "qwen2.5-7b-instruct",
+			},
+			{
+				fetchImpl: (async (input, init) => {
+					requests.push({ url: input.toString(), body: init?.body?.toString() });
+					return new Response(
+						JSON.stringify({ choices: [{ message: { content: "Local response." } }] }),
+						{ status: 200, headers: { "content-type": "application/json" } }
+					);
+				}) as typeof fetch,
+				http,
+			}
+		);
+
+		await expect(provider.generateText({ prompt: "Say hi." })).resolves.toEqual({
+			text: "Local response.",
+		});
+		expect(requests[0]?.url).toBe("http://localhost:1234/v1/chat/completions");
+		expect(JSON.parse(requests[0]?.body ?? "{}")).toMatchObject({
+			model: "qwen2.5-7b-instruct",
+			messages: [{ role: "user", content: "Say hi." }],
+		});
+		expect(provider.requiresNetwork).toBe(false);
 	});
 
 	it("treats blank Ollama URLs as the default local server URL", async () => {
@@ -138,6 +169,31 @@ describe("createByokProvider", () => {
 		).toThrow(ByokProviderError);
 	});
 
+	it.each(["file:///tmp/lm-studio.sock", "javascript:alert(1)", "not a url"])(
+		"rejects invalid LM Studio URL %s",
+		(url) => {
+			expect(() =>
+				createByokProvider(
+					{ provider: "lm-studio", url, model: "qwen2.5-7b-instruct" },
+					{ fetchImpl, http }
+				)
+			).toThrow(ByokProviderError);
+		}
+	);
+
+	it("rejects LM Studio URLs with embedded credentials", () => {
+		expect(() =>
+			createByokProvider(
+				{
+					provider: "lm-studio",
+					url: "http://user:pass@localhost:1234/v1",
+					model: "qwen2.5-7b-instruct",
+				},
+				{ fetchImpl, http }
+			)
+		).toThrow(ByokProviderError);
+	});
+
 	it("caps default HTTP response bodies", async () => {
 		const client = createDefaultHttpClient(
 			(async () => new Response("x".repeat(1_000_001))) as typeof fetch
@@ -178,6 +234,7 @@ describe("createByokProvider", () => {
 			"anthropic/claude-sonnet-4",
 			"Anthropic: Claude Sonnet 4",
 		],
+		["lm-studio", "http://localhost:1234/v1/models", "qwen2.5-7b-instruct", "Qwen 2.5 7B Instruct"],
 	] as const)(
 		"lists %s models through its OpenAI-compatible base URL",
 		async (provider, expectedUrl, modelId, modelLabel) => {
@@ -208,6 +265,26 @@ describe("createByokProvider", () => {
 			}
 		}
 	);
+
+	it("adds /v1 when an LM Studio caller passes the default server root", async () => {
+		const requests: string[] = [];
+		const runtime = createByokProvider(
+			{ provider: "lm-studio", url: "http://localhost:1234", model: "qwen2.5-7b-instruct" },
+			{
+				fetchImpl: (async (input) => {
+					requests.push(input.toString());
+					return new Response(JSON.stringify({ data: [] }), {
+						status: 200,
+						headers: { "content-type": "application/json" },
+					});
+				}) as typeof fetch,
+				http,
+			}
+		);
+
+		await expect(runtime.listModels()).resolves.toEqual([]);
+		expect(requests[0]).toBe("http://localhost:1234/v1/models");
+	});
 
 	it("keeps CLI model overrides optional on the Node subpath", () => {
 		const config: ByokProviderConfig = { provider: "codex-cli", command: "codex" };

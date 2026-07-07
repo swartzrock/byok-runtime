@@ -68,7 +68,7 @@ const { text } = await generateText({
 });
 ```
 
-Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, credential: { source: "env", env }, model, prompt }` for trusted scripts that opt into BYOK's standard env var map. Ollama uses `{ provider: ByokProvider.Ollama, model, prompt }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps` and `signal`.
+Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, credential: { source: "env", env }, model, prompt }` for trusted scripts that opt into BYOK's standard env var map. URL-backed local providers use `{ provider, model, prompt }` and accept optional `url`; Ollama defaults to `http://localhost:11434`, and LM Studio defaults to `http://localhost:1234/v1`. Both forms accept optional `deps` and `signal`.
 
 The function-first API intentionally accepts plain text prompts only. Use the node runtime when you need connection testing, JSON response hints, or structured object generation.
 
@@ -110,13 +110,13 @@ const models = await listModels({
 });
 ```
 
-Cloud providers use `{ provider, apiKey }`, or `{ provider, credential: { source: "env", env } }` for trusted scripts. Ollama uses `{ provider: ByokProvider.Ollama }` and accepts optional `url` for non-default Ollama servers. Both forms accept optional `deps`.
+Cloud providers use `{ provider, apiKey }`, or `{ provider, credential: { source: "env", env } }` for trusted scripts. URL-backed local providers use `{ provider }` and accept optional `url`; Ollama defaults to `http://localhost:11434`, and LM Studio defaults to `http://localhost:1234/v1`. Both forms accept optional `deps`.
 
 CLI model discovery is available from the Node runtime provider. Codex CLI shells out to `codex debug models`; Claude CLI fetches Anthropic model IDs from OpenRouter's public model list and strips the OpenRouter provider prefix.
 
 ### Env-backed credentials
 
-Env-backed credentials are explicit at the call site. BYOK reads only the `env` object supplied by the caller; it does not import `process.env`, parse `.env` files, persist values, log values, or add env API-key support for Ollama.
+Env-backed credentials are explicit at the call site. BYOK reads only the `env` object supplied by the caller; it does not import `process.env`, parse `.env` files, persist values, log values, or add env API-key support for local URL-backed providers.
 
 ```ts
 const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
@@ -183,6 +183,7 @@ enum ByokProvider {
 	Google = "google",
 	Xai = "xai",
 	OpenRouter = "openrouter",
+	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
 }

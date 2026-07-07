@@ -17,11 +17,11 @@ The API is shaped for backend, desktop backend, Electron main-process, and other
 
 ## Features
 
-- Unified runtime for Anthropic, OpenAI, Google Gemini, xAI, OpenRouter, Ollama, Codex CLI, and Claude CLI.
+- Unified runtime for Anthropic, OpenAI, Google Gemini, xAI, OpenRouter, Ollama, LM Studio, Codex CLI, and Claude CLI.
 - One-call `generateText` helper for core providers with default fetch-based transports.
-- `createByok` client for repeated text generation with one bound credential or Ollama URL.
+- `createByok` client for repeated text generation with one bound credential or local provider URL.
 - Opt-in env-backed credentials for trusted local scripts and smoke tooling.
-- Trusted-runtime main entrypoint for API-key providers and Ollama.
+- Trusted-runtime main entrypoint for API-key providers, Ollama, and LM Studio.
 - Node-only subpath for local CLI providers and command execution.
 - App-supplied `fetch` and HTTP transports so callers can run in trusted Node, desktop backend, test, or custom runtimes.
 - Provider metadata for settings UIs: labels, credential fields, model fields, icons, setup requirements, and model-list capability flags.
@@ -41,6 +41,7 @@ The API is shaped for backend, desktop backend, Electron main-process, and other
 | `xai`        | API key or env credential + model | `@swartzrock/byok-runtime`      | xAI model IDs                                                    | Text and object                                     |
 | `openrouter` | API key or env credential + model | `@swartzrock/byok-runtime`      | Portable model options                                           | Text and object-like JSON parsing                   |
 | `ollama`     | URL + model                       | `@swartzrock/byok-runtime`      | Installed local models                                           | Text                                                |
+| `lm-studio`  | URL + model                       | `@swartzrock/byok-runtime`      | Local OpenAI-compatible model IDs                                | Text and object-like JSON parsing                   |
 | `codex-cli`  | Local command, optional model     | `@swartzrock/byok-runtime/node` | Codex CLI model IDs                                              | Text                                                |
 | `claude-cli` | Local command, optional model     | `@swartzrock/byok-runtime/node` | Anthropic model IDs from OpenRouter, without the provider prefix | Text, with JSON-schema hints through `generateText` |
 
@@ -62,7 +63,7 @@ Runtime requirement: Node.js 24 or newer for backend usage. Browser and Electron
 
 ## Entry Points
 
-Use the main entrypoint for trusted-runtime API-key providers, Ollama, and shared types:
+Use the main entrypoint for trusted-runtime API-key providers, Ollama, LM Studio, and shared types:
 
 ```ts
 import {
@@ -125,13 +126,13 @@ const { text } = await generateText({
 });
 ```
 
-Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, and `OPENROUTER_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`. BYOK does not parse `.env` files, read `process.env` on its own, persist secrets, log values, or add env credentials for Ollama.
+Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, and `OPENROUTER_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`. BYOK does not parse `.env` files, read `process.env` on its own, persist secrets, log values, or add env credentials for local URL-backed providers.
 
 ## Basic Usage
 
 ### Reuse a Credential
 
-Use `createByok` when several calls share the same provider credential or Ollama URL. The model stays per call.
+Use `createByok` when several calls share the same provider credential or local provider URL. The model stays per call.
 
 ```ts
 import { ByokProvider, createByok } from "@swartzrock/byok-runtime";
@@ -304,7 +305,7 @@ const models = await listModels({
 });
 ```
 
-`ByokProvider.Anthropic`, `ByokProvider.OpenAI`, `ByokProvider.Google`, `ByokProvider.Xai`, and `ByokProvider.OpenRouter` use the same API-key shape. `ByokProvider.Ollama` defaults to `http://localhost:11434`; pass `url` only for a different Ollama server.
+`ByokProvider.Anthropic`, `ByokProvider.OpenAI`, `ByokProvider.Google`, `ByokProvider.Xai`, and `ByokProvider.OpenRouter` use the same API-key shape. `ByokProvider.Ollama` defaults to `http://localhost:11434`; `ByokProvider.LmStudio` defaults to `http://localhost:1234/v1` and accepts root URLs like `http://localhost:1234`.
 
 Trusted scripts can also list cloud models with env-backed credentials:
 
@@ -319,7 +320,7 @@ CLI model discovery is available from the `@swartzrock/byok-runtime/node` runtim
 
 ## Provider Smoke CLI
 
-This repository includes an example smoke CLI for manual provider checks. It delegates credential lookup to BYOK: pass `--api-key` for explicit credentials, omit it for env-backed cloud credentials, and use `--url` only for Ollama.
+This repository includes an example smoke CLI for manual provider checks. It delegates credential lookup to BYOK: pass `--api-key` for explicit credentials, omit it for env-backed cloud credentials, and use `--url` only for local URL-backed providers.
 
 ```bash
 OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
@@ -342,6 +343,10 @@ bun run provider-smoke generate \
 bun run provider-smoke models \
 	--provider ollama \
 	--url http://127.0.0.1:11434
+
+bun run provider-smoke models \
+	--provider lm-studio \
+	--url http://127.0.0.1:1234/v1
 ```
 
 ### Use Ollama
@@ -359,6 +364,22 @@ const response = await generateText({
 ```
 
 Pass `url` only when using a non-default local, LAN, or remote Ollama server. BYOK accepts explicit `http:` and `https:` Ollama URLs without embedded credentials; prompts are sent to the configured URL.
+
+### Use LM Studio
+
+LM Studio defaults to `http://localhost:1234/v1` and uses the existing OpenAI-compatible runtime.
+
+```ts
+import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
+
+const response = await generateText({
+	provider: ByokProvider.LmStudio,
+	model: "qwen2.5-7b-instruct",
+	prompt: "Write one sentence about local model inference.",
+});
+```
+
+Pass `url` only when LM Studio is listening somewhere other than the default local REST API. Root URLs such as `http://localhost:1234` are normalized to the `/v1` API base.
 
 ### Use Local CLI Providers
 

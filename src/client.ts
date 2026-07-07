@@ -24,6 +24,13 @@ function providerConfigFromGenerateTextOptions(
 			model: options.model,
 		};
 	}
+	if (options.provider === "lm-studio") {
+		return {
+			provider: "lm-studio",
+			url: options.url,
+			model: options.model,
+		};
+	}
 	return resolveByokCloudProviderConfig(options);
 }
 
@@ -38,6 +45,13 @@ function providerConfigFromClientInput(
 			model: input.model,
 		};
 	}
+	if (config.provider === "lm-studio") {
+		return {
+			provider: "lm-studio",
+			url: config.url,
+			model: input.model,
+		};
+	}
 	return resolveByokCloudProviderConfig({ ...config, model: input.model });
 }
 
@@ -47,6 +61,13 @@ function providerConfigFromListModelsOptions(
 	if (options.provider === "ollama") {
 		return {
 			provider: "ollama",
+			url: options.url,
+			model: MODEL_NOT_REQUIRED_FOR_LISTING,
+		};
+	}
+	if (options.provider === "lm-studio") {
+		return {
+			provider: "lm-studio",
 			url: options.url,
 			model: MODEL_NOT_REQUIRED_FOR_LISTING,
 		};

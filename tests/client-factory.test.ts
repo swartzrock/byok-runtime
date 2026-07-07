@@ -200,4 +200,19 @@ describeForVitest("BYOK cloud client facade", () => {
 			undefined
 		);
 	});
+
+	it("lists LM Studio models without a caller-supplied model", async () => {
+		await listModels({
+			provider: "lm-studio",
+		});
+
+		expect(mocks.createByokProvider).toHaveBeenCalledWith(
+			{
+				provider: "lm-studio",
+				url: undefined,
+				model: "",
+			},
+			undefined
+		);
+	});
 });

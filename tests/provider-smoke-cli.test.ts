@@ -74,6 +74,35 @@ describe("provider smoke CLI", () => {
 		});
 	});
 
+	it("uses LM Studio URL-backed generation without env credentials", async () => {
+		const generateText = vi.fn().mockResolvedValue({ text: "Local response." });
+
+		const code = await runProviderSmokeCli(
+			[
+				"generate",
+				"--provider",
+				"lm-studio",
+				"--model",
+				"qwen2.5-7b-instruct",
+				"--input",
+				"Say hi.",
+			],
+			{
+				env: { OPENAI_API_KEY: "sk-openai-env" },
+				stdout: vi.fn(),
+				byok: { generateText, listModels: vi.fn() },
+			}
+		);
+
+		expect(code).toBe(0);
+		expect(generateText).toHaveBeenCalledWith({
+			provider: "lm-studio",
+			url: undefined,
+			model: "qwen2.5-7b-instruct",
+			prompt: "Say hi.",
+		});
+	});
+
 	it("returns help with a non-zero code for invalid input", async () => {
 		const errors: string[] = [];
 
