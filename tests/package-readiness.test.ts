@@ -89,7 +89,7 @@ describe("BYOK package readiness", () => {
 			"package.json",
 		]);
 		expect(manifest.engines).toEqual({
-			node: ">=24",
+			node: ">=20",
 		});
 		expect(existsSync(fromPackage("README.md"))).toBe(true);
 		expect(existsSync(fromPackage("API.md"))).toBe(true);

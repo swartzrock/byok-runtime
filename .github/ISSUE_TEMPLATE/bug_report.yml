@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in @swartzrock/byok-runtime is not working as documented.
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - anthropic
+        - openai
+        - google
+        - xai
+        - openrouter
+        - ollama
+        - lm-studio
+        - codex-cli
+        - claude-cli
+        - not provider-specific
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime
+      description: Node/Bun version and environment (server, Electron main, etc.).
+      placeholder: Node 22.12 on macOS, Electron 33 main process
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal code that reproduces the issue. Never include real API keys.
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behavior
+    validations:
+      required: true

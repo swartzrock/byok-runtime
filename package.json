@@ -20,6 +20,9 @@
 	"scripts": {
 		"attw": "attw --pack --profile esm-only --ignore-rules cjs-resolves-to-esm no-resolution",
 		"build": "tsup",
+		"changeset": "changeset",
+		"changeset:version": "changeset version",
+		"changeset:publish": "changeset publish",
 		"check": "bun run format:check && bun run lint && bun run build && bun run typecheck && bun run typecheck:examples && bun run test && bun run pack:check && bun run publint && bun run attw",
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
@@ -40,8 +43,24 @@
 		"package.json"
 	],
 	"engines": {
-		"node": ">=24"
+		"node": ">=20"
 	},
+	"keywords": [
+		"ai",
+		"llm",
+		"byok",
+		"bring-your-own-key",
+		"anthropic",
+		"openai",
+		"gemini",
+		"openrouter",
+		"ollama",
+		"lm-studio",
+		"text-generation",
+		"structured-output",
+		"model-discovery",
+		"typescript"
+	],
 	"publishConfig": {
 		"access": "public",
 		"provenance": true
@@ -62,6 +81,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.4",
+		"@changesets/cli": "^2.29.5",
 		"@eslint/js": "^10.0.1",
 		"@types/node": "^24.0.4",
 		"eslint": "^10.6.0",
