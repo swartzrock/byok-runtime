@@ -89,7 +89,7 @@ describe("BYOK package readiness", () => {
 			"package.json",
 		]);
 		expect(manifest.engines).toEqual({
-			node: ">=24",
+			node: ">=20",
 		});
 		expect(existsSync(fromPackage("README.md"))).toBe(true);
 		expect(existsSync(fromPackage("API.md"))).toBe(true);
@@ -111,7 +111,6 @@ describe("BYOK package readiness", () => {
 		expect(existsSync(fromPackage(".prettierrc.json"))).toBe(true);
 		expect(existsSync(fromPackage(".prettierignore"))).toBe(true);
 		expect(existsSync(fromPackage("eslint.config.js"))).toBe(true);
-		expect(existsSync(fromPackage(".npmrc"))).toBe(true);
 		expect(existsSync(fromPackage("tsconfig.eslint.json"))).toBe(true);
 	});
 

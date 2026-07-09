@@ -1,17 +1,23 @@
 # BYOK-Runtime
 
-[![Language](https://img.shields.io/badge/language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Package manager](https://img.shields.io/badge/package_manager-bun_1.3.14-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![npm](https://img.shields.io/npm/v/%40swartzrock%2Fbyok-runtime)](https://www.npmjs.com/package/@swartzrock/byok-runtime)
 [![CI](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/swartzrock/byok-runtime/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/github/v/release/swartzrock/byok-runtime?include_prereleases&label=release)](https://github.com/swartzrock/byok-runtime/releases)
-[![GitHub release date](https://img.shields.io/github/release-date/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/releases)
-[![Last commit](https://img.shields.io/github/last-commit/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/commits/main)
-[![Issues](https://img.shields.io/github/issues/swartzrock/byok-runtime)](https://github.com/swartzrock/byok-runtime/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Function-first text generation, provider runtime, and model discovery for bring-your-own-key AI applications.
+Run your TypeScript app against user-supplied AI accounts — without writing provider-specific generation code.
 
-`@swartzrock/byok-runtime` lets a TypeScript app run against user-supplied AI accounts without owning provider-specific generation code. For first success, call `generateText` with an explicit provider, credential, model, and prompt. For setup flows, call `listModels` before a model is selected. When an app needs connection testing, structured output, or custom runtime methods, BYOK also exposes the lower-level provider runtime.
+```ts
+import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
+
+const { text } = await generateText({
+	provider: ByokProvider.OpenAI,
+	apiKey: process.env.OPENAI_API_KEY!,
+	model: "gpt-4o-mini",
+	prompt: "Explain retrieval-augmented generation in two sentences.",
+});
+```
+
+Swap `provider` and the same call runs against Anthropic, Google Gemini, xAI, OpenRouter, or a local Ollama or LM Studio server. For setup flows, call `listModels` before a model is selected. When an app needs connection testing, structured output, or custom runtime methods, BYOK also exposes the lower-level provider runtime.
 
 The API is shaped for backend, desktop backend, Electron main-process, and other trusted TypeScript runtimes.
 
@@ -59,7 +65,7 @@ If your application builds schemas directly, install `zod` as an application dep
 npm install zod
 ```
 
-Runtime requirement: Node.js 24 or newer for backend usage. Browser and Electron renderer UIs should call BYOK through a trusted server, main process, local backend, or custom transport rather than importing BYOK directly with provider credentials.
+Runtime requirement: Node.js 20 or newer for backend usage. Browser and Electron renderer UIs should call BYOK through a trusted server, main process, local backend, or custom transport rather than importing BYOK directly with provider credentials.
 
 ## Entry Points
 
@@ -86,25 +92,7 @@ import {
 
 Provider implementation files under `src/providers` and helper files under `src/models` are package internals. Consumers should import from the public entrypoints only.
 
-## Quick Start
-
-This example generates text with OpenAI in Node 24.
-
-```ts
-import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
-
-const apiKey = process.env.OPENAI_API_KEY;
-if (!apiKey) throw new Error("Set OPENAI_API_KEY before running this example.");
-
-const { text } = await generateText({
-	provider: ByokProvider.OpenAI,
-	apiKey,
-	model: "gpt-4o-mini",
-	prompt: "Explain retrieval-augmented generation in two sentences.",
-});
-
-console.log(text);
-```
+## Scope and Security
 
 BYOK is AI-SDK-shaped, not AI-SDK-compatible. If your app needs AI SDK `LanguageModel` objects or AI SDK's full result object semantics, use AI SDK directly. Use BYOK when the app's job is to run against user-owned provider credentials and local providers through one small interface.
 The function-first API accepts plain text prompts only. Use the lower-level runtime when you need provider-specific generation hints such as JSON response formatting.
