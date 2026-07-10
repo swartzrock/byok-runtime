@@ -92,7 +92,7 @@ import {
 
 Provider implementation files under `src/providers` and helper files under `src/models` are package internals. Consumers should import from the public entrypoints only.
 
-##  Security
+## Security
 
 BYOK receives credentials only as call inputs. It does not persist or log API keys. Keep BYOK execution behind a trusted server, main process, local backend, or custom transport; browser and Electron renderer UIs should not import BYOK directly with provider credentials.
 
