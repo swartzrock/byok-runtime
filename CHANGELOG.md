@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- cf1d2ce: new description and testing changesets to prepare for npm release
+
 ## 0.1.0
 
 - Initial public package migration for `@swartzrock/byok-runtime`.
