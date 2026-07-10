@@ -231,11 +231,7 @@ describe("LocalCommandRunner", () => {
 	it("maps missing commands to setup guidance", async () => {
 		const process = new FakeProcess();
 		const warn = vi.fn();
-		const calls: Array<Parameters<LocalProcessSpawner>> = [];
-		const spawner: LocalProcessSpawner = (command, args, options) => {
-			calls.push([command, args, options]);
-			return process;
-		};
+		const spawner: LocalProcessSpawner = () => process;
 		const runner = new LocalCommandRunner(spawner, { PATH: "/usr/bin" }, { warn }, () => "");
 		const result = runner.run({ command: "missing-codex" });
 
@@ -246,14 +242,11 @@ describe("LocalCommandRunner", () => {
 		);
 
 		await expect(result).rejects.toThrow(/missing-codex was not found.*command path/i);
-		expect(warn).toHaveBeenCalledWith(
-			"BYOK local CLI failed to start",
-			expect.objectContaining({
-				command: "missing-codex",
-				code: "ENOENT",
-				PATH: calls[0][2].env?.PATH,
-			})
-		);
+		expect(warn).toHaveBeenCalledWith("BYOK local CLI failed to start", {
+			command: "missing-codex",
+			code: "ENOENT",
+			hasPath: true,
+		});
 	});
 
 	it("passes metacharacters as argv and stdin data without shell expansion", async () => {
