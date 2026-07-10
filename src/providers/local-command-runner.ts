@@ -276,7 +276,7 @@ export class LocalCommandRunner {
 					this.logger.warn("BYOK local CLI failed to start", {
 						command: request.command,
 						code: error.code,
-						PATH: commandEnv.PATH ?? "",
+						hasPath: Boolean(commandEnv.PATH),
 					});
 					reject(new ProviderError(errorMessageForSpawn(request.command, error)));
 				}, removeAbortListener);
