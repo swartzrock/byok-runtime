@@ -17,7 +17,7 @@ const { text } = await generateText({
 });
 ```
 
-Swap `provider` and the same call runs against Anthropic, Google Gemini, xAI, OpenRouter, or a local Ollama or LM Studio server. For setup flows, call `listModels` before a model is selected. When an app needs connection testing, structured output, or custom runtime methods, BYOK also exposes the lower-level provider runtime.
+Swap the `ByokProvider` and the same call runs against Anthropic, Google Gemini, xAI, OpenRouter, or a local Ollama or LM Studio server. For setup flows, call `listModels` before a model is selected. When an app needs connection testing, structured output, or custom runtime methods, BYOK also exposes the lower-level provider runtime.
 
 The API is shaped for backend, desktop backend, Electron main-process, and other trusted TypeScript runtimes.
 
@@ -92,10 +92,7 @@ import {
 
 Provider implementation files under `src/providers` and helper files under `src/models` are package internals. Consumers should import from the public entrypoints only.
 
-## Scope and Security
-
-BYOK is AI-SDK-shaped, not AI-SDK-compatible. If your app needs AI SDK `LanguageModel` objects or AI SDK's full result object semantics, use AI SDK directly. Use BYOK when the app's job is to run against user-owned provider credentials and local providers through one small interface.
-The function-first API accepts plain text prompts only. Use the lower-level runtime when you need provider-specific generation hints such as JSON response formatting.
+## Security
 
 BYOK receives credentials only as call inputs. It does not persist or log API keys. Keep BYOK execution behind a trusted server, main process, local backend, or custom transport; browser and Electron renderer UIs should not import BYOK directly with provider credentials.
 
@@ -400,16 +397,6 @@ BYOK does not persist credentials, fetched models, or setup verification state. 
 ## API Reference
 
 See [API.md](./API.md) for the full public API reference, including exported functions, constants, classes, entrypoint differences, and public types.
-
-## SDK Improvement Notes
-
-Follow-up API design items before a broader public release:
-
-- Make structured output capability explicit in provider metadata. Today callers infer it by checking whether `runtime.generateObject` exists.
-- Replace OpenRouter's local Zod-to-JSON-schema subset with a more complete schema conversion path before documenting broad schema support.
-- Keep app-settings helpers out of the public barrel unless several external consumers need the same storage contract.
-
-These are follow-up API design items, not blockers for documenting the current package.
 
 ## Development
 
