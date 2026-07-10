@@ -226,10 +226,6 @@ Import from these public entrypoints only. Files under `src/providers` and `src/
 - [Contributing guide](https://github.com/swartzrock/byok-runtime/blob/main/CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
 
-## Project Status
-
-BYOK Runtime is pre-1.0. Minor releases may include breaking API changes while the public contract settles; review the [changelog](./CHANGELOG.md) before upgrading.
-
 ## License
 
 MIT. See [LICENSE](./LICENSE).
