@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- 5d19dc9: testing minor changesets
+
 ## 0.2.0
 
 ### Minor Changes
