@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- fed7e88: Initial stable release of BYOK Runtime, with unified provider generation, model discovery, environment-backed credentials, local runtimes, and stable public entrypoints, plus helpful docs to get started quickly.
+
+### Patch Changes
+
+- fdb714d: Improve the npm package page with a faster quick start, clearer runtime requirements, consolidated provider guidance, and expanded search metadata.
+
 ## 0.3.0
 
 ### Minor Changes
