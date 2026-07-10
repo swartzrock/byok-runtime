@@ -1,7 +1,7 @@
 {
 	"name": "@swartzrock/byok-runtime",
 	"version": "0.3.0",
-	"description": "Let users bring their own AI keys — one TypeScript API for OpenAI, Anthropic, Gemini, Ollama, and more.",
+	"description": "Build BYOK AI apps with one TypeScript API for user-owned cloud keys, local models, model discovery, and CLI providers.",
 	"type": "module",
 	"packageManager": "bun@1.3.14",
 	"sideEffects": false,
@@ -53,9 +53,15 @@
 		"anthropic",
 		"openai",
 		"gemini",
+		"xai",
 		"openrouter",
 		"ollama",
 		"lm-studio",
+		"claude",
+		"codex",
+		"electron",
+		"local-ai",
+		"ai-provider",
 		"text-generation",
 		"structured-output",
 		"model-discovery",
@@ -70,6 +76,7 @@
 		"type": "git",
 		"url": "git+https://github.com/swartzrock/byok-runtime.git"
 	},
+	"homepage": "https://github.com/swartzrock/byok-runtime#readme",
 	"bugs": {
 		"url": "https://github.com/swartzrock/byok-runtime/issues"
 	},
