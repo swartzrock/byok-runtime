@@ -5,7 +5,9 @@ import {
 	isByokProviderId,
 	listModels,
 	type ByokCliProviderId,
+	type ByokCliProviderConfig,
 	type ByokCloudProviderId,
+	type ByokListModelsOptions,
 	type ByokProviderId,
 } from "../../../src";
 import { createByokNodeProvider } from "../../../src/node";
@@ -112,7 +114,7 @@ export async function runProviderSmokeCli(
 	}
 }
 
-function cliProviderConfig(flags: ParsedFlags) {
+function cliProviderConfig(flags: ParsedFlags): ByokCliProviderConfig {
 	if (!isSmokeCliProvider(flags.provider)) {
 		throw new Error("Expected a CLI provider.");
 	}
@@ -123,7 +125,7 @@ function cliProviderConfig(flags: ParsedFlags) {
 	};
 }
 
-function providerConfig(flags: ParsedFlags, env: SmokeEnv) {
+function providerConfig(flags: ParsedFlags, env: SmokeEnv): ByokListModelsOptions {
 	if (flags.provider === "ollama" || flags.provider === "lm-studio") {
 		return {
 			provider: flags.provider,
@@ -177,18 +179,19 @@ function parseArgs(
 	if (!isSmokeCliProvider(provider) && flags.executable) {
 		return { ok: false, error: "Only CLI providers accept --executable." };
 	}
-	if (command === "generate" && (!flags.model || !flags.input)) {
-		return { ok: false, error: "Generate requires --model and --input." };
-	}
-
 	if (command === "generate") {
+		const model = flags.model;
+		const input = flags.input;
+		if (!model || !input) {
+			return { ok: false, error: "Generate requires --model and --input." };
+		}
 		return {
 			ok: true,
 			flags: {
 				command,
 				provider,
-				model: flags.model,
-				input: flags.input,
+				model,
+				input,
 				apiKey: flags.apiKey,
 				url: flags.url,
 				executable: flags.executable,
