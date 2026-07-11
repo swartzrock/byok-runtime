@@ -1,11 +1,24 @@
 import { pathToFileURL } from "node:url";
-import { generateText, listModels } from "../../../src";
+import {
+	byokProviderDefinition,
+	generateText,
+	isByokProviderId,
+	listModels,
+	type ByokCliProviderId,
+	type ByokCloudProviderId,
+	type ByokProviderId,
+} from "../../../src";
+import { createByokNodeProvider } from "../../../src/node";
 
-const CLOUD_PROVIDERS = ["anthropic", "openai", "google", "xai", "openrouter"] as const;
-
-type SmokeCloudProvider = (typeof CLOUD_PROVIDERS)[number];
-type SmokeProvider = SmokeCloudProvider | "ollama" | "lm-studio";
+type SmokeCloudProvider = ByokCloudProviderId;
+type SmokeCliProvider = ByokCliProviderId;
+type SmokeProvider = ByokProviderId;
 type SmokeEnv = Readonly<Record<string, string | undefined>>;
+
+const CLI_PROVIDER_COMMANDS: Record<SmokeCliProvider, string> = {
+	"codex-cli": "codex",
+	"claude-cli": "claude",
+};
 
 interface SmokeByok {
 	generateText: typeof generateText;
@@ -17,12 +30,14 @@ interface RunProviderSmokeCliOptions {
 	stdout?: (line: string) => void;
 	stderr?: (line: string) => void;
 	byok?: SmokeByok;
+	createNodeProvider?: typeof createByokNodeProvider;
 }
 
 interface ParsedBaseFlags {
 	provider: SmokeProvider;
 	apiKey?: string;
 	url?: string;
+	executable?: string;
 }
 
 interface ParsedGenerateFlags extends ParsedBaseFlags {
@@ -38,10 +53,10 @@ interface ParsedModelsFlags extends ParsedBaseFlags {
 type ParsedFlags = ParsedGenerateFlags | ParsedModelsFlags;
 
 const USAGE = `Usage:
-  bun run provider-smoke models --provider <provider> [--api-key <key>] [--url <url>]
-  bun run provider-smoke generate --provider <provider> --model <model> --input <text> [--api-key <key>] [--url <url>]
+  bun run provider-smoke models --provider <provider> [--api-key <key>] [--url <url>] [--executable <path>]
+  bun run provider-smoke generate --provider <provider> --model <model> --input <text> [--api-key <key>] [--url <url>] [--executable <path>]
 
-Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio`;
+Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio, codex-cli, claude-cli`;
 
 export async function runProviderSmokeCli(
 	args: string[] = process.argv.slice(2),
@@ -50,6 +65,7 @@ export async function runProviderSmokeCli(
 	const stderr = options.stderr ?? console.error;
 	const stdout = options.stdout ?? console.log;
 	const byok = options.byok ?? { generateText, listModels };
+	const createNodeProvider = options.createNodeProvider ?? createByokNodeProvider;
 	const env = options.env ?? process.env;
 	const parsed = parseArgs(args);
 
@@ -60,6 +76,21 @@ export async function runProviderSmokeCli(
 	}
 
 	try {
+		if (isSmokeCliProvider(parsed.flags.provider)) {
+			const provider = createNodeProvider(cliProviderConfig(parsed.flags));
+			if (parsed.flags.command === "models") {
+				const models = await provider.listModels();
+				for (const model of models) {
+					stdout(model.id);
+				}
+				return 0;
+			}
+
+			const result = await provider.generateText({ prompt: parsed.flags.input });
+			stdout(result.text);
+			return 0;
+		}
+
 		if (parsed.flags.command === "models") {
 			const models = await byok.listModels(providerConfig(parsed.flags, env));
 			for (const model of models) {
@@ -81,6 +112,17 @@ export async function runProviderSmokeCli(
 	}
 }
 
+function cliProviderConfig(flags: ParsedFlags) {
+	if (!isSmokeCliProvider(flags.provider)) {
+		throw new Error("Expected a CLI provider.");
+	}
+	return {
+		provider: flags.provider,
+		command: flags.executable ?? CLI_PROVIDER_COMMANDS[flags.provider],
+		...(flags.command === "generate" ? { model: flags.model } : {}),
+	};
+}
+
 function providerConfig(flags: ParsedFlags, env: SmokeEnv) {
 	if (flags.provider === "ollama" || flags.provider === "lm-studio") {
 		return {
@@ -89,10 +131,16 @@ function providerConfig(flags: ParsedFlags, env: SmokeEnv) {
 		};
 	}
 	if (flags.apiKey) {
+		if (!isSmokeCloudProvider(flags.provider)) {
+			throw new Error("Expected an API-key provider.");
+		}
 		return {
 			provider: flags.provider,
 			apiKey: flags.apiKey,
 		};
+	}
+	if (!isSmokeCloudProvider(flags.provider)) {
+		throw new Error("Expected an API-key provider.");
 	}
 	return {
 		provider: flags.provider,
@@ -108,7 +156,11 @@ function parseArgs(
 		return { ok: false, error: "Missing command." };
 	}
 
-	const flags = readFlags(rest);
+	const parsedFlags = readFlags(rest);
+	if (!parsedFlags.ok) {
+		return parsedFlags;
+	}
+	const flags = parsedFlags.flags;
 	const provider = flags.provider;
 	if (!isSmokeProvider(provider)) {
 		return { ok: false, error: "Missing or invalid --provider." };
@@ -116,8 +168,14 @@ function parseArgs(
 	if ((provider === "ollama" || provider === "lm-studio") && flags.apiKey) {
 		return { ok: false, error: `${provider} uses --url, not --api-key.` };
 	}
+	if (isSmokeCliProvider(provider) && flags.apiKey) {
+		return { ok: false, error: `${provider} uses --executable, not --api-key.` };
+	}
 	if (provider !== "ollama" && provider !== "lm-studio" && flags.url) {
 		return { ok: false, error: "Only local providers accept --url." };
+	}
+	if (!isSmokeCliProvider(provider) && flags.executable) {
+		return { ok: false, error: "Only CLI providers accept --executable." };
 	}
 	if (command === "generate" && (!flags.model || !flags.input)) {
 		return { ok: false, error: "Generate requires --model and --input." };
@@ -133,6 +191,7 @@ function parseArgs(
 				input: flags.input,
 				apiKey: flags.apiKey,
 				url: flags.url,
+				executable: flags.executable,
 			},
 		};
 	}
@@ -144,29 +203,36 @@ function parseArgs(
 			provider,
 			apiKey: flags.apiKey,
 			url: flags.url,
+			executable: flags.executable,
 		},
 	};
 }
 
-function readFlags(args: string[]): Record<string, string | undefined> {
+function readFlags(
+	args: string[]
+): { ok: true; flags: Record<string, string | undefined> } | { ok: false; error: string } {
 	const flags: Record<string, string | undefined> = {};
 	for (let index = 0; index < args.length; index += 2) {
 		const name = args[index];
 		const value = args[index + 1];
 		if (!name?.startsWith("--") || value === undefined || value.startsWith("--")) {
-			return flags;
+			return { ok: false, error: "Every flag requires a value." };
 		}
 		flags[toCamelFlag(name.slice(2))] = value;
 	}
-	return flags;
+	return { ok: true, flags };
 }
 
 function isSmokeProvider(provider: string | undefined): provider is SmokeProvider {
-	return (
-		provider === "ollama" ||
-		provider === "lm-studio" ||
-		CLOUD_PROVIDERS.some((cloudProvider) => cloudProvider === provider)
-	);
+	return isByokProviderId(provider);
+}
+
+function isSmokeCliProvider(provider: SmokeProvider): provider is SmokeCliProvider {
+	return byokProviderDefinition(provider).credentialKind === "command";
+}
+
+function isSmokeCloudProvider(provider: SmokeProvider): provider is SmokeCloudProvider {
+	return byokProviderDefinition(provider).credentialKind === "api-key";
 }
 
 function toCamelFlag(name: string): string {

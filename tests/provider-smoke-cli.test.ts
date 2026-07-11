@@ -103,6 +103,59 @@ describe("provider smoke CLI", () => {
 		});
 	});
 
+	it("delegates CLI model listing and generation to the Node provider", async () => {
+		const output: string[] = [];
+		const listModels = vi.fn().mockResolvedValue([{ id: "gpt-5", label: "gpt-5" }]);
+		const generateText = vi.fn().mockResolvedValue({ text: "Hello from Codex." });
+		const createNodeProvider = vi.fn().mockReturnValue({ listModels, generateText });
+
+		const modelsCode = await runProviderSmokeCli(
+			["models", "--provider", "codex-cli", "--executable", "/opt/bin/codex"],
+			{
+				stdout: (line) => output.push(line),
+				byok: { generateText: vi.fn(), listModels: vi.fn() },
+				createNodeProvider,
+			}
+		);
+		const generateCode = await runProviderSmokeCli(
+			["generate", "--provider", "codex-cli", "--model", "gpt-5", "--input", "Say hi."],
+			{
+				stdout: (line) => output.push(line),
+				byok: { generateText: vi.fn(), listModels: vi.fn() },
+				createNodeProvider,
+			}
+		);
+
+		expect(modelsCode).toBe(0);
+		expect(generateCode).toBe(0);
+		expect(output).toEqual(["gpt-5", "Hello from Codex."]);
+		expect(createNodeProvider).toHaveBeenNthCalledWith(1, {
+			provider: "codex-cli",
+			command: "/opt/bin/codex",
+		});
+		expect(createNodeProvider).toHaveBeenNthCalledWith(2, {
+			provider: "codex-cli",
+			command: "codex",
+			model: "gpt-5",
+		});
+		expect(generateText).toHaveBeenCalledWith({ prompt: "Say hi." });
+	});
+
+	it("rejects a CLI executable flag without a value", async () => {
+		const errors: string[] = [];
+		const createNodeProvider = vi.fn();
+
+		const code = await runProviderSmokeCli(["models", "--provider", "codex-cli", "--executable"], {
+			stderr: (line) => errors.push(line),
+			byok: { generateText: vi.fn(), listModels: vi.fn() },
+			createNodeProvider,
+		});
+
+		expect(code).toBe(1);
+		expect(errors.join("\n")).toContain("Every flag requires a value.");
+		expect(createNodeProvider).not.toHaveBeenCalled();
+	});
+
 	it("returns help with a non-zero code for invalid input", async () => {
 		const errors: string[] = [];
 

@@ -223,6 +223,7 @@ Import from these public entrypoints only. Files under `src/providers` and `src/
 
 - [API reference](./API.md)
 - [Provider smoke CLI](https://github.com/swartzrock/byok-runtime/tree/main/examples/provider-smoke)
+- [First available LLM script](./examples/first-available-llm.sh)
 - [Contributing guide](https://github.com/swartzrock/byok-runtime/blob/main/CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
 
