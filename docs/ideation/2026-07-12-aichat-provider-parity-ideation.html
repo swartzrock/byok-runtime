@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Ideation: AIChat Provider Parity</title>
+		<style>
+			:root {
+				--bg: #f7f7f4;
+				--paper: #fff;
+				--ink: #1d2329;
+				--muted: #58636e;
+				--line: #d8dde1;
+				--accent: #215c86;
+				--soft: #eaf3f8;
+				--green: #176847;
+				--green-soft: #e9f6ef;
+				--amber: #835512;
+				--amber-soft: #fff5dc;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html {
+				scroll-behavior: smooth;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--ink);
+				font:
+					15px/1.58 ui-sans-serif,
+					system-ui,
+					-apple-system,
+					BlinkMacSystemFont,
+					"Segoe UI",
+					sans-serif;
+			}
+			main {
+				width: min(940px, calc(100% - 32px));
+				margin: 36px auto 64px;
+			}
+			.hero,
+			.card,
+			.panel {
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: 16px;
+			}
+			.hero {
+				padding: 34px;
+			}
+			.eyebrow {
+				font-size: 12px;
+				font-weight: 750;
+				letter-spacing: 0.09em;
+				text-transform: uppercase;
+				color: var(--accent);
+			}
+			h1 {
+				font-size: clamp(30px, 5vw, 48px);
+				line-height: 1.08;
+				margin: 8px 0 14px;
+				letter-spacing: -0.035em;
+			}
+			h2 {
+				font-size: 25px;
+				margin: 46px 0 16px;
+			}
+			h3 {
+				font-size: 20px;
+				margin: 0;
+			}
+			p {
+				max-width: 74ch;
+			}
+			.meta,
+			.chips {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.chip {
+				border-radius: 999px;
+				padding: 5px 10px;
+				background: var(--soft);
+				color: #16496c;
+				font-size: 12px;
+				font-weight: 700;
+			}
+			.meta {
+				margin-top: 22px;
+			}
+			.meta span {
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.meta b {
+				color: var(--ink);
+			}
+			nav {
+				margin: 18px 0;
+				padding: 16px 20px;
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: 12px;
+			}
+			nav a {
+				color: var(--accent);
+				margin-right: 16px;
+				text-decoration: none;
+				font-weight: 650;
+			}
+			.panel {
+				padding: 24px;
+				margin: 14px 0;
+			}
+			.axes {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 10px;
+			}
+			.axis {
+				padding: 14px;
+				background: var(--soft);
+				border-radius: 10px;
+				color: #16496c;
+				font-weight: 700;
+			}
+			.roadmap {
+				display: flex;
+				gap: 6px;
+				align-items: stretch;
+				margin: 18px 0 26px;
+			}
+			.step {
+				flex: 1;
+				padding: 12px 8px;
+				background: var(--soft);
+				border-radius: 10px;
+				text-align: center;
+				font-size: 12px;
+				font-weight: 750;
+				color: #16496c;
+			}
+			.arrow {
+				align-self: center;
+				color: var(--muted);
+			}
+			.jump {
+				margin: 0 0 20px;
+				padding: 18px 22px;
+			}
+			.jump ol {
+				margin: 8px 0 0;
+				padding-left: 20px;
+			}
+			.jump a {
+				color: var(--accent);
+			}
+			.card {
+				padding: 26px;
+				margin: 16px 0;
+				scroll-margin-top: 18px;
+			}
+			.rank {
+				font-size: 12px;
+				font-weight: 800;
+				color: var(--accent);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.desc {
+				font-size: 16px;
+			}
+			.field {
+				display: grid;
+				grid-template-columns: 110px 1fr;
+				gap: 10px;
+				margin: 12px 0;
+			}
+			.field dt {
+				font-weight: 750;
+				color: var(--muted);
+			}
+			.field dd {
+				margin: 0;
+				max-width: 72ch;
+			}
+			.high {
+				background: var(--green-soft);
+				color: var(--green);
+			}
+			.med {
+				background: var(--amber-soft);
+				color: var(--amber);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: 12px;
+				overflow: hidden;
+			}
+			th,
+			td {
+				text-align: left;
+				padding: 12px 14px;
+				border-bottom: 1px solid var(--line);
+				vertical-align: top;
+			}
+			th {
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--muted);
+			}
+			tr:last-child td {
+				border-bottom: 0;
+			}
+			code {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 0.92em;
+			}
+			footer {
+				margin-top: 42px;
+				color: var(--muted);
+				font-size: 12px;
+				text-align: center;
+			}
+			@media (max-width: 680px) {
+				.axes {
+					grid-template-columns: 1fr;
+				}
+				.roadmap {
+					display: grid;
+					grid-template-columns: 1fr;
+				}
+				.arrow {
+					display: none;
+				}
+				.field {
+					grid-template-columns: 1fr;
+					gap: 2px;
+				}
+				.hero,
+				.card,
+				.panel {
+					padding: 20px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<header class="hero">
+				<div class="eyebrow">Ranked ideation · provider expansion</div>
+				<h1>AIChat provider parity for BYOK Runtime</h1>
+				<p>
+					How to reach AIChat's full provider surface without turning a compact TypeScript library
+					into 25 bespoke integrations—or freezing an API that fails at Vertex and Bedrock.
+				</p>
+				<div class="meta">
+					<span><b>Date</b> <time datetime="2026-07-12">2026-07-12</time></span
+					><span><b>Topic</b> aichat-provider-parity</span><span><b>Mode</b> repo-grounded</span>
+				</div>
+			</header>
+			<nav aria-label="Document sections">
+				<a href="#grounding">Grounding</a><a href="#axes">Axes</a><a href="#ideas">Ranked ideas</a
+				><a href="#rejections">Cuts</a>
+			</nav>
+
+			<section id="grounding">
+				<h2>Grounding Context</h2>
+				<div class="panel">
+					<p>
+						<strong>Target library.</strong> <code>byok-runtime</code> is a strict TypeScript/ESM
+						npm library with a deliberately small trusted-host API. It currently recognizes nine
+						provider IDs: five API-key clouds, two local servers, and two local CLIs. Its public
+						contract centers on text generation, optional object generation, model listing, and
+						connection status.
+					</p>
+					<p>
+						<strong>Comparison source.</strong> AIChat's source registers seven dedicated
+						transports—OpenAI, Gemini, Claude, Cohere, Azure OpenAI, Vertex AI, and Bedrock—plus one
+						OpenAI-compatible transport carrying 18 named aliases: AI21, Cloudflare, DeepInfra,
+						DeepSeek, Ernie, GitHub Models, Groq, Hunyuan, MiniMax, Mistral, Moonshot, OpenRouter,
+						Perplexity, Qianwen, xAI, ZhipuAI, Jina, and Voyage AI. Ollama is a configurable
+						compatible endpoint rather than a registered alias.
+					</p>
+					<p>
+						<strong>Difficulty signal.</strong> Most missing names are catalog records over an
+						existing transport. Native protocol translation is the middle tier. Azure changes
+						routing and headers; Vertex adds renewable OAuth plus project/location/publisher
+						routing; Bedrock adds multi-part AWS credentials, regional endpoints, SigV4 signing, and
+						provider-neutral conversation mapping.
+					</p>
+					<p>
+						<strong>Capability gap.</strong> AIChat also models streaming, tools, vision,
+						embeddings, reranking, usage, and detailed per-model constraints. Provider-name parity
+						and operation parity are different milestones and should be reported separately.
+					</p>
+				</div>
+			</section>
+
+			<section id="axes">
+				<h2>Topic Axes</h2>
+				<div class="axes">
+					<div class="axis">Compatible-provider presets</div>
+					<div class="axis">Native protocol adapters</div>
+					<div class="axis">Cloud identity and routing</div>
+					<div class="axis">Capability and model contract</div>
+				</div>
+			</section>
+
+			<section id="ideas">
+				<h2>Ranked Ideas</h2>
+				<div class="roadmap" aria-label="Conceptual difficulty sequence">
+					<div class="step">1 · Parity taxonomy</div>
+					<span class="arrow">→</span>
+					<div class="step">2 · Executable catalog</div>
+					<span class="arrow">→</span>
+					<div class="step">3 · Compatible cohort</div>
+					<span class="arrow">→</span>
+					<div class="step">4 · Native codecs</div>
+					<span class="arrow">→</span>
+					<div class="step">5 · Cloud auth</div>
+				</div>
+				<div class="panel jump">
+					<strong>Jump to an idea</strong>
+					<ol>
+						<li><a href="#idea-1">Define parity by transport family</a></li>
+						<li><a href="#idea-2">Build one executable provider manifest</a></li>
+						<li><a href="#idea-3">Ship compatible providers in confidence rings</a></li>
+						<li><a href="#idea-4">Make custom compatible instances first-class</a></li>
+						<li><a href="#idea-5">Use protocol codecs and composable routing</a></li>
+						<li><a href="#idea-6">Publish a model-level capability ledger</a></li>
+						<li><a href="#idea-7">Deliver easy-to-hard; validate hard-to-easy</a></li>
+					</ol>
+				</div>
+
+				<article class="card" id="idea-1">
+					<div class="rank">1 · Foundation</div>
+					<h3>Define parity by transport family, not provider count</h3>
+					<p class="desc">
+						Treat the goal as eight wire families plus named presets, rather than 25 bespoke
+						provider implementations. The working order becomes: compatible presets; Azure's
+						OpenAI-shaped routing; native Claude/Gemini/Cohere codecs; Vertex composition; Bedrock
+						signed transport.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 96%</span><span class="chip">Complexity Low</span
+						><span class="chip">Axis: compatible presets</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> AIChat's <code>src/client/mod.rs</code> places 18 aliases
+								behind one <code>openai-compatible</code> client and registers dedicated clients
+								separately.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								This taxonomy makes “easier to harder” reflect translation and authentication
+								distance, and prevents one provider file per marketing brand.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								The word “provider” becomes overloaded; documentation must distinguish identity,
+								preset, transport, and verified capability.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-2">
+					<div class="rank">2 · Highest leverage</div>
+					<h3>Build one executable provider manifest</h3>
+					<p class="desc">
+						Create a single authoritative specification for provider identity, transport family,
+						default endpoint, environment keys, credential fields, icon/labels, model-list strategy,
+						and bounded quirks. Generate or validate today’s duplicated enum, unions, registry,
+						credentials map, factory cases, documentation rows, and contract tests from it; pin the
+						upstream AIChat source revision and report catalog drift.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 94%</span><span class="chip">Complexity Medium</span
+						><span class="chip">Axis: compatible presets</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> BYOK currently repeats provider identity across
+								<code>types.ts</code>, <code>credentials.ts</code>, <code>registry.ts</code>, icons,
+								factories, and exact-order public-contract tests. AIChat's own
+								<code>ai21</code>/<code>ai12</code> example drift demonstrates the failure mode.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								Adding the compatible cohort becomes catalog work with exceptional code only; future
+								upstream additions become detectable rather than another audit.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Code generation can obscure public API changes. A validation-first manifest may be
+								safer than immediately generating every source file.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-3">
+					<div class="rank">3 · Easy-lane release strategy</div>
+					<h3>Ship compatible providers in confidence rings</h3>
+					<p class="desc">
+						Add missing aliases through the shared adapter, but classify each operation as verified,
+						unsupported with reason, or unverified. Start with fixed-URL bearer-auth chat endpoints;
+						follow with templated URLs and optional credentials; finish the compatible lane with
+						operation quirks such as Ernie rerank paths and Voyage field names.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 92%</span><span class="chip">Complexity Medium</span
+						><span class="chip">Axis: capability contract</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> BYOK's existing compatible adapter already parameterizes
+								base URLs, headers, model normalization, and listing.
+								<strong>external:</strong> AIChat's compatible client exposes optional auth and
+								provider-specific rerank quirks.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								This provides provider-name breadth early without pretending “OpenAI-compatible”
+								means equal support for listing, objects, embeddings, reranking, or streaming.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Confidence rings need crisp promotion tests and could confuse users if labels are
+								too granular.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-4">
+					<div class="rank">4 · Semantic parity</div>
+					<h3>Make custom compatible provider instances first-class</h3>
+					<p class="desc">
+						Support arbitrary names, base URLs, optional keys, and user-supplied model
+						IDs/capabilities in addition to built-in presets. Separate stable provider kind from
+						configured instance identity so multiple Azure resources, Vertex projects, Bedrock
+						regions, or compatible endpoints can coexist.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 90%</span><span class="chip">Complexity Medium</span
+						><span class="chip">Axis: compatible presets</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> AIChat accepts unknown compatible provider names with
+								custom endpoints and named client configurations; BYOK's current closed enum and
+								single config shape cannot express that class.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								Static alias parity would still omit a provider class AIChat supports. Instances
+								also model enterprise accounts more honestly than one global enum slot per vendor.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								This is a larger public-type change than adding enum values and needs a migration
+								story for existing stored settings.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-5">
+					<div class="rank">5 · Native-adapter architecture</div>
+					<h3>Use protocol codecs, then compose routing and authentication</h3>
+					<p class="desc">
+						Introduce a small provider-neutral representation for messages, content parts, tools,
+						sampling, stream events, embeddings, and rerank inputs. Lower it through OpenAI, Claude,
+						Gemini, and Cohere codecs; keep endpoint routing and request authentication separate so
+						Azure wraps OpenAI semantics and Vertex routes to Gemini, Claude, or Mistral codecs
+						instead of duplicating them.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 89%</span><span class="chip">Complexity High</span
+						><span class="chip">Axis: native adapters</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> AIChat translates Anthropic content blocks, Gemini
+								roles/parts, and Cohere request/event fields; its Vertex client selects protocol
+								behavior by publisher/model family.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								The work compounds: direct Claude/Gemini codecs become Vertex prerequisites, Azure
+								reuses OpenAI, and future providers add translations rather than orchestration
+								forks.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								An over-general IR is a classic abstraction trap. It should grow only from exercised
+								provider fixtures, with Cohere as an early stress test.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-6">
+					<div class="rank">6 · Honest capability growth</div>
+					<h3>Publish a model-level capability ledger with optional facets</h3>
+					<p class="desc">
+						Keep <code>generateText</code> as the stable minimum, then expose optional streaming,
+						messages/tools/vision, embeddings, and reranking facets. Capabilities belong primarily
+						to model deployments—not just provider brands—and should allow supported, unsupported,
+						and unknown states, backed by static metadata, discovery, and probes.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 91%</span><span class="chip">Complexity High</span
+						><span class="chip">Axis: capability contract</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> BYOK models currently contain only <code>id</code> and
+								<code>label</code>. AIChat records modality, tools, vision, stream/system
+								restrictions, token limits, pricing, and embedding limits, while providers implement
+								uneven operations.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								It separates provider-name parity from capability parity and gives consumers typed
+								feature detection instead of prose claims or failed network calls.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Capability metadata can stale quickly. Conservative unknown states and monotonicity
+								checks are necessary.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="card" id="idea-7">
+					<div class="rank">7 · Sequencing rule</div>
+					<h3>Deliver easy-to-hard, but validate architecture hard-to-easy</h3>
+					<p class="desc">
+						Ship value in the intuitive order, yet run thin design probes for Vertex OAuth/project
+						routing and Bedrock compound credentials/SigV4 before freezing the compatible-provider
+						config model. The probes need not ship; they only prove that the public credential,
+						endpoint, instance, and capability shapes will survive the final tranche.
+					</p>
+					<div class="chips">
+						<span class="chip high">Confidence 93%</span><span class="chip">Complexity Medium</span
+						><span class="chip">Axis: cloud identity and routing</span>
+					</div>
+					<dl>
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> BYOK currently reduces cloud config to
+								<code>{apiKey, model}</code>, while Vertex requires project/location and expiring
+								OAuth and Bedrock requires region, key/secret, optional session token, and
+								per-request signing.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								It prevents easy aliases from cementing a public API that later needs a breaking
+								rewrite, without delaying the easy-lane release until Bedrock is complete.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Architecture probes consume effort before visible providers ship and must be
+								time-boxed to avoid disguised implementation.
+							</dd>
+						</div>
+					</dl>
+				</article>
+			</section>
+
+			<section id="rejections">
+				<h2>Rejection Summary</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Considered idea</th>
+							<th>Reason cut</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>1</td>
+							<td>Host-owned credential brokers as a standalone direction</td>
+							<td>
+								Credential abstraction is necessary, but the evidence does not settle ownership;
+								folded into the routing/auth tradeoff.
+							</td>
+						</tr>
+						<tr>
+							<td>2</td>
+							<td>AIChat differential fixture oracle</td>
+							<td>
+								Potentially valuable, but cross-language oracle stability and maintenance cost are
+								not supported strongly enough.
+							</td>
+						</tr>
+						<tr>
+							<td>3</td>
+							<td>Vertex routing shell as a separate idea</td>
+							<td>Strong but narrower duplicate of protocol codecs plus composable routing.</td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td>Provider lockfile and drift detector</td>
+							<td>
+								Strong but best treated as a property of the executable manifest, not a separate
+								direction.
+							</td>
+						</tr>
+						<tr>
+							<td>5</td>
+							<td>Cohere-first stress test</td>
+							<td>
+								Useful sequencing variant, but it belongs inside native-codec validation rather than
+								the top-level candidate set.
+							</td>
+						</tr>
+						<tr>
+							<td>6</td>
+							<td>Runtime capability negotiation handshake</td>
+							<td>
+								Promising later refinement; remote probes can be unreliable and should not precede
+								explicit static capability states.
+							</td>
+						</tr>
+						<tr>
+							<td>7</td>
+							<td>Capability monotonicity rules</td>
+							<td>Sound maintenance policy, but subordinate to the capability-ledger direction.</td>
+						</tr>
+						<tr>
+							<td>8</td>
+							<td>One native adapter per provider</td>
+							<td>
+								Rejected as duplicative and contrary to direct evidence that most aliases share
+								transports.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+			<footer>
+				Composed 2026-07-12T16:40Z by ce-ideate from the user request and local
+				<code>byok-runtime</code>/<code>aichat</code> source evidence.
+			</footer>
+		</main>
+	</body>
+</html>

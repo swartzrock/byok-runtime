@@ -119,6 +119,9 @@ const googleApiKey = resolveByokEnvCredential(ByokProvider.Google, {
 	source: "env",
 	env,
 });
+const anthropicEnvVars: readonly ["ANTHROPIC_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.anthropic;
+const googleEnvVars: readonly ["GOOGLE_API_KEY", "GEMINI_API_KEY"] =
+	BYOK_PROVIDER_API_KEY_ENV_VARS.google;
 
 void text;
 void openRouterText;
@@ -128,4 +131,5 @@ void envModelOptions;
 void clientText;
 void envClientText;
 void googleApiKey;
-void BYOK_PROVIDER_API_KEY_ENV_VARS;
+void anthropicEnvVars;
+void googleEnvVars;

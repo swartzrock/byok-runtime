@@ -5,14 +5,23 @@ import {
 	type ByokCloudProviderId,
 	type ByokEnvCredential,
 } from "./types";
+import { BYOK_CLOUD_PROVIDER_MANIFEST } from "./provider-manifest";
 
-export const BYOK_PROVIDER_API_KEY_ENV_VARS = {
-	anthropic: ["ANTHROPIC_API_KEY"],
-	openai: ["OPENAI_API_KEY"],
-	google: ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
-	xai: ["XAI_API_KEY"],
-	openrouter: ["OPENROUTER_API_KEY"],
-} as const satisfies Record<ByokCloudProviderId, readonly string[]>;
+type ProviderApiKeyEnvVars = {
+	readonly [
+		Provider in keyof typeof BYOK_CLOUD_PROVIDER_MANIFEST
+	]: (typeof BYOK_CLOUD_PROVIDER_MANIFEST)[Provider]["apiKeyEnvVars"];
+};
+
+function apiKeyEnvVars(): ProviderApiKeyEnvVars {
+	const envVars = {} as Record<ByokCloudProviderId, readonly [string, ...string[]]>;
+	for (const provider of Object.keys(BYOK_CLOUD_PROVIDER_MANIFEST) as ByokCloudProviderId[]) {
+		envVars[provider] = BYOK_CLOUD_PROVIDER_MANIFEST[provider].apiKeyEnvVars;
+	}
+	return envVars as ProviderApiKeyEnvVars;
+}
+
+export const BYOK_PROVIDER_API_KEY_ENV_VARS = apiKeyEnvVars();
 
 export function resolveByokEnvCredential(
 	provider: ByokCloudProviderId,
