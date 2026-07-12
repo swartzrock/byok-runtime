@@ -19,6 +19,17 @@ describe("createByokProvider", () => {
 		[{ provider: "google", apiKey: "AIza-test", model: "gemini-1.5-flash" }, "google"],
 		[{ provider: "xai", apiKey: "xai-test", model: "grok-2-latest" }, "xai"],
 		[{ provider: "openrouter", apiKey: "sk-or-test", model: "openai/gpt-4o" }, "openrouter"],
+		[{ provider: "groq", apiKey: "gsk-test", model: "llama-3.3-70b-versatile" }, "groq"],
+		[{ provider: "mistral", apiKey: "mistral-test", model: "mistral-small-latest" }, "mistral"],
+		[{ provider: "deepseek", apiKey: "deepseek-test", model: "deepseek-chat" }, "deepseek"],
+		[
+			{
+				provider: "deepinfra",
+				apiKey: "deepinfra-test",
+				model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+			},
+			"deepinfra",
+		],
 		[{ provider: "lm-studio", model: "qwen2.5-7b-instruct" }, "lm-studio"],
 	] as const)("creates the %s runtime", (config, expectedId) => {
 		const provider = createByokProvider(config satisfies ByokCoreProviderConfig, {
@@ -233,6 +244,20 @@ describe("createByokProvider", () => {
 			"https://openrouter.ai/api/v1/models",
 			"anthropic/claude-sonnet-4",
 			"Anthropic: Claude Sonnet 4",
+		],
+		[
+			"groq",
+			"https://api.groq.com/openai/v1/models",
+			"llama-3.3-70b-versatile",
+			"llama-3.3-70b-versatile",
+		],
+		["mistral", "https://api.mistral.ai/v1/models", "mistral-small-latest", "mistral-small-latest"],
+		["deepseek", "https://api.deepseek.com/models", "deepseek-chat", "deepseek-chat"],
+		[
+			"deepinfra",
+			"https://api.deepinfra.com/v1/openai/models",
+			"meta-llama/Meta-Llama-3.1-8B-Instruct",
+			"meta-llama/Meta-Llama-3.1-8B-Instruct",
 		],
 		["lm-studio", "http://localhost:1234/v1/models", "qwen2.5-7b-instruct", "Qwen 2.5 7B Instruct"],
 	] as const)(
