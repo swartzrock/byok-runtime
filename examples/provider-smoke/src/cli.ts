@@ -37,6 +37,10 @@ interface ParsedDetectFlags {
 	command: "detect";
 }
 
+interface ParsedHelpFlags {
+	command: "help";
+}
+
 interface ParsedBaseFlags {
 	provider: ByokProviderId;
 }
@@ -52,12 +56,15 @@ interface ParsedModelsFlags extends ParsedBaseFlags {
 }
 
 type ParsedProviderFlags = ParsedGenerateFlags | ParsedModelsFlags;
-type ParsedFlags = ParsedDetectFlags | ParsedProviderFlags;
+type ParsedFlags = ParsedDetectFlags | ParsedHelpFlags | ParsedProviderFlags;
 
 const USAGE = `Usage:
-	bun run provider-smoke detect
+  bun run provider-smoke detect
   bun run provider-smoke models --provider <provider>
   bun run provider-smoke generate --provider <provider> --model <model> --input <text>
+
+Options:
+  -h, --help  Show this help message.
 
 Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio, codex-cli, claude-cli`;
 
@@ -80,6 +87,11 @@ export async function runProviderSmokeCli(
 	}
 
 	try {
+		if (parsed.flags.command === "help") {
+			stdout(USAGE);
+			return 0;
+		}
+
 		if (parsed.flags.command === "detect") {
 			for (const provider of await findProviders({ env })) {
 				stdout(provider);
@@ -145,6 +157,11 @@ function parseCliArgs(
 	args: string[]
 ): { ok: true; flags: ParsedFlags } | { ok: false; error: string } {
 	const [command, ...rest] = args;
+	if (command === "help" || command === "--help" || command === "-h") {
+		return rest.length === 0
+			? { ok: true, flags: { command: "help" } }
+			: { ok: false, error: "Help does not accept options." };
+	}
 	if (command === "detect") {
 		return rest.length === 0
 			? { ok: true, flags: { command } }

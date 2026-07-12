@@ -2,6 +2,51 @@ import { describe, expect, it, vi } from "vitest";
 import { runProviderSmokeCli } from "../examples/provider-smoke/src/cli";
 
 describe("provider smoke CLI", () => {
+	it.each(["--help", "-h", "help"])("prints help for %s and exits successfully", async (arg) => {
+		const output: string[] = [];
+		const errors: string[] = [];
+		const findProviders = vi.fn();
+
+		const code = await runProviderSmokeCli([arg], {
+			stdout: (line) => output.push(line),
+			stderr: (line) => errors.push(line),
+			findProviders,
+		});
+
+		expect(code).toBe(0);
+		expect(errors).toEqual([]);
+		expect(output).toHaveLength(1);
+		expect(output[0]).toContain("Usage:");
+		expect(output[0]).toContain("bun run provider-smoke detect");
+		expect(output[0]).toContain("-h, --help  Show this help message.");
+		expect(output[0]).toContain("Providers:");
+		expect(
+			output[0]
+				.split("\n")
+				.filter((line) => line.includes("bun run provider-smoke"))
+				.every((line) => line.startsWith("  "))
+		).toBe(true);
+		expect(findProviders).not.toHaveBeenCalled();
+	});
+
+	it("rejects arguments passed after help", async () => {
+		const stdout = vi.fn();
+		const stderr = vi.fn();
+		const findProviders = vi.fn();
+
+		const code = await runProviderSmokeCli(["--help", "unexpected"], {
+			stdout,
+			stderr,
+			findProviders,
+		});
+
+		expect(code).toBe(1);
+		expect(stdout).not.toHaveBeenCalled();
+		expect(stderr).toHaveBeenNthCalledWith(1, "Help does not accept options.");
+		expect(stderr).toHaveBeenNthCalledWith(2, expect.stringContaining("Usage:"));
+		expect(findProviders).not.toHaveBeenCalled();
+	});
+
 	it("prints providers detected by the Node runtime", async () => {
 		const output: string[] = [];
 		const findProviders = vi.fn().mockResolvedValue(["ollama", "codex-cli", "anthropic"]);
