@@ -25,7 +25,7 @@ describe("provider smoke CLI", () => {
 		});
 	});
 
-	it("delegates Anthropic model listing to explicit API-key credentials and prints every ID", async () => {
+	it("delegates Anthropic model listing to env-backed credentials and prints every ID", async () => {
 		const output: string[] = [];
 		const listModels = vi.fn().mockResolvedValue([
 			{ id: "model-1", label: "model-1" },
@@ -36,20 +36,17 @@ describe("provider smoke CLI", () => {
 			{ id: "model-6", label: "model-6" },
 		]);
 
-		const code = await runProviderSmokeCli(
-			["models", "--provider", "anthropic", "--api-key", "sk-ant-test"],
-			{
-				env: {},
-				stdout: (line) => output.push(line),
-				byok: { generateText: vi.fn(), listModels },
-			}
-		);
+		const code = await runProviderSmokeCli(["models", "--provider", "anthropic"], {
+			env: { ANTHROPIC_API_KEY: "sk-ant-env" },
+			stdout: (line) => output.push(line),
+			byok: { generateText: vi.fn(), listModels },
+		});
 
 		expect(code).toBe(0);
 		expect(output).toEqual(["model-1", "model-2", "model-3", "model-4", "model-5", "model-6"]);
 		expect(listModels).toHaveBeenCalledWith({
 			provider: "anthropic",
-			apiKey: "sk-ant-test",
+			credential: { source: "env", env: { ANTHROPIC_API_KEY: "sk-ant-env" } },
 		});
 	});
 
@@ -68,7 +65,6 @@ describe("provider smoke CLI", () => {
 		expect(code).toBe(0);
 		expect(generateText).toHaveBeenCalledWith({
 			provider: "ollama",
-			url: undefined,
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
 		});
@@ -97,7 +93,6 @@ describe("provider smoke CLI", () => {
 		expect(code).toBe(0);
 		expect(generateText).toHaveBeenCalledWith({
 			provider: "lm-studio",
-			url: undefined,
 			model: "qwen2.5-7b-instruct",
 			prompt: "Say hi.",
 		});
@@ -109,14 +104,11 @@ describe("provider smoke CLI", () => {
 		const generateText = vi.fn().mockResolvedValue({ text: "Hello from Codex." });
 		const createNodeProvider = vi.fn().mockReturnValue({ listModels, generateText });
 
-		const modelsCode = await runProviderSmokeCli(
-			["models", "--provider", "codex-cli", "--executable", "/opt/bin/codex"],
-			{
-				stdout: (line) => output.push(line),
-				byok: { generateText: vi.fn(), listModels: vi.fn() },
-				createNodeProvider,
-			}
-		);
+		const modelsCode = await runProviderSmokeCli(["models", "--provider", "codex-cli"], {
+			stdout: (line) => output.push(line),
+			byok: { generateText: vi.fn(), listModels: vi.fn() },
+			createNodeProvider,
+		});
 		const generateCode = await runProviderSmokeCli(
 			["generate", "--provider", "codex-cli", "--model", "gpt-5", "--input", "Say hi."],
 			{
@@ -131,7 +123,7 @@ describe("provider smoke CLI", () => {
 		expect(output).toEqual(["gpt-5", "Hello from Codex."]);
 		expect(createNodeProvider).toHaveBeenNthCalledWith(1, {
 			provider: "codex-cli",
-			command: "/opt/bin/codex",
+			command: "codex",
 		});
 		expect(createNodeProvider).toHaveBeenNthCalledWith(2, {
 			provider: "codex-cli",
@@ -141,18 +133,21 @@ describe("provider smoke CLI", () => {
 		expect(generateText).toHaveBeenCalledWith({ prompt: "Say hi." });
 	});
 
-	it("rejects a CLI executable flag without a value", async () => {
+	it("rejects unsupported provider configuration flags", async () => {
 		const errors: string[] = [];
 		const createNodeProvider = vi.fn();
 
-		const code = await runProviderSmokeCli(["models", "--provider", "codex-cli", "--executable"], {
-			stderr: (line) => errors.push(line),
-			byok: { generateText: vi.fn(), listModels: vi.fn() },
-			createNodeProvider,
-		});
+		const code = await runProviderSmokeCli(
+			["models", "--provider", "codex-cli", "--executable", "/opt/bin/codex"],
+			{
+				stderr: (line) => errors.push(line),
+				byok: { generateText: vi.fn(), listModels: vi.fn() },
+				createNodeProvider,
+			}
+		);
 
 		expect(code).toBe(1);
-		expect(errors.join("\n")).toContain("Every flag requires a value.");
+		expect(errors.join("\n")).toContain("Unknown option '--executable'");
 		expect(createNodeProvider).not.toHaveBeenCalled();
 	});
 

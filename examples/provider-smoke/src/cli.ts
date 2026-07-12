@@ -1,4 +1,5 @@
 import { pathToFileURL } from "node:url";
+import { parseArgs as parseNodeArgs } from "node:util";
 import {
 	byokProviderDefinition,
 	generateText,
@@ -7,17 +8,13 @@ import {
 	type ByokCliProviderId,
 	type ByokCliProviderConfig,
 	type ByokCloudProviderId,
+	type ByokEnvironment,
 	type ByokListModelsOptions,
 	type ByokProviderId,
 } from "../../../src";
 import { createByokNodeProvider } from "../../../src/node";
 
-type SmokeCloudProvider = ByokCloudProviderId;
-type SmokeCliProvider = ByokCliProviderId;
-type SmokeProvider = ByokProviderId;
-type SmokeEnv = Readonly<Record<string, string | undefined>>;
-
-const CLI_PROVIDER_COMMANDS: Record<SmokeCliProvider, string> = {
+const CLI_PROVIDER_COMMANDS: Record<ByokCliProviderId, string> = {
 	"codex-cli": "codex",
 	"claude-cli": "claude",
 };
@@ -28,7 +25,7 @@ interface SmokeByok {
 }
 
 interface RunProviderSmokeCliOptions {
-	env?: SmokeEnv;
+	env?: ByokEnvironment;
 	stdout?: (line: string) => void;
 	stderr?: (line: string) => void;
 	byok?: SmokeByok;
@@ -36,10 +33,7 @@ interface RunProviderSmokeCliOptions {
 }
 
 interface ParsedBaseFlags {
-	provider: SmokeProvider;
-	apiKey?: string;
-	url?: string;
-	executable?: string;
+	provider: ByokProviderId;
 }
 
 interface ParsedGenerateFlags extends ParsedBaseFlags {
@@ -55,8 +49,8 @@ interface ParsedModelsFlags extends ParsedBaseFlags {
 type ParsedFlags = ParsedGenerateFlags | ParsedModelsFlags;
 
 const USAGE = `Usage:
-  bun run provider-smoke models --provider <provider> [--api-key <key>] [--url <url>] [--executable <path>]
-  bun run provider-smoke generate --provider <provider> --model <model> --input <text> [--api-key <key>] [--url <url>] [--executable <path>]
+  bun run provider-smoke models --provider <provider>
+  bun run provider-smoke generate --provider <provider> --model <model> --input <text>
 
 Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio, codex-cli, claude-cli`;
 
@@ -69,7 +63,7 @@ export async function runProviderSmokeCli(
 	const byok = options.byok ?? { generateText, listModels };
 	const createNodeProvider = options.createNodeProvider ?? createByokNodeProvider;
 	const env = options.env ?? process.env;
-	const parsed = parseArgs(args);
+	const parsed = parseCliArgs(args);
 
 	if (!parsed.ok) {
 		stderr(parsed.error);
@@ -78,31 +72,25 @@ export async function runProviderSmokeCli(
 	}
 
 	try {
-		if (isSmokeCliProvider(parsed.flags.provider)) {
-			const provider = createNodeProvider(cliProviderConfig(parsed.flags));
-			if (parsed.flags.command === "models") {
-				const models = await provider.listModels();
-				for (const model of models) {
-					stdout(model.id);
-				}
-				return 0;
-			}
-
-			const result = await provider.generateText({ prompt: parsed.flags.input });
-			stdout(result.text);
-			return 0;
-		}
-
 		if (parsed.flags.command === "models") {
-			const models = await byok.listModels(providerConfig(parsed.flags, env));
+			const models = isSmokeCliProvider(parsed.flags.provider)
+				? await createNodeProvider(cliProviderConfig(parsed.flags)).listModels()
+				: await byok.listModels(providerConfig(parsed.flags.provider, env));
 			for (const model of models) {
 				stdout(model.id);
 			}
 			return 0;
 		}
 
+		if (isSmokeCliProvider(parsed.flags.provider)) {
+			const provider = createNodeProvider(cliProviderConfig(parsed.flags));
+			const result = await provider.generateText({ prompt: parsed.flags.input });
+			stdout(result.text);
+			return 0;
+		}
+
 		const result = await byok.generateText({
-			...providerConfig(parsed.flags, env),
+			...providerConfig(parsed.flags.provider, env),
 			model: parsed.flags.model,
 			prompt: parsed.flags.input,
 		});
@@ -120,37 +108,25 @@ function cliProviderConfig(flags: ParsedFlags): ByokCliProviderConfig {
 	}
 	return {
 		provider: flags.provider,
-		command: flags.executable ?? CLI_PROVIDER_COMMANDS[flags.provider],
+		command: CLI_PROVIDER_COMMANDS[flags.provider],
 		...(flags.command === "generate" ? { model: flags.model } : {}),
 	};
 }
 
-function providerConfig(flags: ParsedFlags, env: SmokeEnv): ByokListModelsOptions {
-	if (flags.provider === "ollama" || flags.provider === "lm-studio") {
-		return {
-			provider: flags.provider,
-			url: flags.url,
-		};
+function providerConfig(provider: ByokProviderId, env: ByokEnvironment): ByokListModelsOptions {
+	if (provider === "ollama" || provider === "lm-studio") {
+		return { provider };
 	}
-	if (flags.apiKey) {
-		if (!isSmokeCloudProvider(flags.provider)) {
-			throw new Error("Expected an API-key provider.");
-		}
-		return {
-			provider: flags.provider,
-			apiKey: flags.apiKey,
-		};
-	}
-	if (!isSmokeCloudProvider(flags.provider)) {
+	if (!isSmokeCloudProvider(provider)) {
 		throw new Error("Expected an API-key provider.");
 	}
 	return {
-		provider: flags.provider,
+		provider,
 		credential: { source: "env" as const, env },
 	};
 }
 
-function parseArgs(
+function parseCliArgs(
 	args: string[]
 ): { ok: true; flags: ParsedFlags } | { ok: false; error: string } {
 	const [command, ...rest] = args;
@@ -158,30 +134,28 @@ function parseArgs(
 		return { ok: false, error: "Missing command." };
 	}
 
-	const parsedFlags = readFlags(rest);
-	if (!parsedFlags.ok) {
-		return parsedFlags;
+	let values;
+	try {
+		({ values } = parseNodeArgs({
+			args: rest,
+			options: {
+				provider: { type: "string" },
+				model: { type: "string" },
+				input: { type: "string" },
+			},
+			strict: true,
+		}));
+	} catch (error) {
+		return { ok: false, error: error instanceof Error ? error.message : String(error) };
 	}
-	const flags = parsedFlags.flags;
-	const provider = flags.provider;
-	if (!isSmokeProvider(provider)) {
+
+	const provider = values.provider;
+	if (!isByokProviderId(provider)) {
 		return { ok: false, error: "Missing or invalid --provider." };
 	}
-	if ((provider === "ollama" || provider === "lm-studio") && flags.apiKey) {
-		return { ok: false, error: `${provider} uses --url, not --api-key.` };
-	}
-	if (isSmokeCliProvider(provider) && flags.apiKey) {
-		return { ok: false, error: `${provider} uses --executable, not --api-key.` };
-	}
-	if (provider !== "ollama" && provider !== "lm-studio" && flags.url) {
-		return { ok: false, error: "Only local providers accept --url." };
-	}
-	if (!isSmokeCliProvider(provider) && flags.executable) {
-		return { ok: false, error: "Only CLI providers accept --executable." };
-	}
 	if (command === "generate") {
-		const model = flags.model;
-		const input = flags.input;
+		const model = values.model;
+		const input = values.input;
 		if (!model || !input) {
 			return { ok: false, error: "Generate requires --model and --input." };
 		}
@@ -192,9 +166,6 @@ function parseArgs(
 				provider,
 				model,
 				input,
-				apiKey: flags.apiKey,
-				url: flags.url,
-				executable: flags.executable,
 			},
 		};
 	}
@@ -204,42 +175,16 @@ function parseArgs(
 		flags: {
 			command,
 			provider,
-			apiKey: flags.apiKey,
-			url: flags.url,
-			executable: flags.executable,
 		},
 	};
 }
 
-function readFlags(
-	args: string[]
-): { ok: true; flags: Record<string, string | undefined> } | { ok: false; error: string } {
-	const flags: Record<string, string | undefined> = {};
-	for (let index = 0; index < args.length; index += 2) {
-		const name = args[index];
-		const value = args[index + 1];
-		if (!name?.startsWith("--") || value === undefined || value.startsWith("--")) {
-			return { ok: false, error: "Every flag requires a value." };
-		}
-		flags[toCamelFlag(name.slice(2))] = value;
-	}
-	return { ok: true, flags };
-}
-
-function isSmokeProvider(provider: string | undefined): provider is SmokeProvider {
-	return isByokProviderId(provider);
-}
-
-function isSmokeCliProvider(provider: SmokeProvider): provider is SmokeCliProvider {
+function isSmokeCliProvider(provider: ByokProviderId): provider is ByokCliProviderId {
 	return byokProviderDefinition(provider).credentialKind === "command";
 }
 
-function isSmokeCloudProvider(provider: SmokeProvider): provider is SmokeCloudProvider {
+function isSmokeCloudProvider(provider: ByokProviderId): provider is ByokCloudProviderId {
 	return byokProviderDefinition(provider).credentialKind === "api-key";
-}
-
-function toCamelFlag(name: string): string {
-	return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
