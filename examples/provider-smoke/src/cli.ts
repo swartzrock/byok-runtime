@@ -1,6 +1,8 @@
 import { pathToFileURL } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import {
+	BYOK_PROVIDER_API_KEY_ENV_VARS,
+	BYOK_PROVIDER_IDS,
 	generateText,
 	isByokProviderId,
 	listModels,
@@ -65,7 +67,7 @@ const USAGE = `Usage:
 Options:
   -h, --help  Show this help message.
 
-Providers: anthropic, openai, google, xai, openrouter, groq, mistral, deepseek, deepinfra, ollama, lm-studio, codex-cli, claude-cli`;
+Providers: ${BYOK_PROVIDER_IDS.join(", ")}`;
 
 export async function runProviderSmokeCli(
 	args: string[] = process.argv.slice(2),
@@ -220,17 +222,7 @@ function isSmokeCliProvider(provider: ByokProviderId): provider is ByokCliProvid
 }
 
 function isSmokeCloudProvider(provider: ByokProviderId): provider is ByokCloudProviderId {
-	return (
-		provider === "anthropic" ||
-		provider === "openai" ||
-		provider === "google" ||
-		provider === "xai" ||
-		provider === "openrouter" ||
-		provider === "groq" ||
-		provider === "mistral" ||
-		provider === "deepseek" ||
-		provider === "deepinfra"
-	);
+	return Object.hasOwn(BYOK_PROVIDER_API_KEY_ENV_VARS, provider);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
