@@ -21,6 +21,10 @@ describe("findAvailableProviders", () => {
 					GEMINI_API_KEY: "gemini-test",
 					XAI_API_KEY: "xai-test",
 					OPENROUTER_API_KEY: "openrouter-test",
+					GROQ_API_KEY: "groq-test",
+					MISTRAL_API_KEY: "mistral-test",
+					DEEPSEEK_API_KEY: "deepseek-test",
+					DEEPINFRA_API_KEY: "deepinfra-test",
 				},
 			},
 			{ fetchImpl, commandExists }
@@ -36,6 +40,10 @@ describe("findAvailableProviders", () => {
 			"google",
 			"xai",
 			"openrouter",
+			"groq",
+			"mistral",
+			"deepseek",
+			"deepinfra",
 		]);
 		expect(fetchImpl).toHaveBeenCalledTimes(2);
 		expect(urls).toEqual(["http://127.0.0.1:11434/api/tags", "http://127.0.0.1:1234/v1/models"]);
