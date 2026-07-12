@@ -56,4 +56,4 @@ To detect providers in priority order, choose a random available model, and prin
 ./examples/first-available-llm.sh "What is BYOK?"
 ```
 
-The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, and OpenRouter. Set `OLLAMA_URL` or `LM_STUDIO_URL` to override the local defaults.
+The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, and OpenRouter.

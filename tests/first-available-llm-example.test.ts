@@ -45,7 +45,7 @@ describe("first available LLM example", () => {
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
-  *" models --provider ollama "*) printf 'llama3.2\\nqwen3\\n' ;;
+  *" models --provider ollama"*) printf 'llama3.2\\nqwen3\\n' ;;
   *" generate --provider ollama "*) printf 'Local answer.\\n' ;;
   *) exit 1 ;;
 esac`
@@ -59,7 +59,7 @@ esac`
 		expect(invocations).toHaveLength(2);
 		expect(invocations[0]).toContain("models --provider ollama");
 		expect(invocations[1]).toMatch(
-			/generate --provider ollama --url http:\/\/127\.0\.0\.1:11434 --model (?:llama3\.2|qwen3) --input What is BYOK\?/
+			/generate --provider ollama --model (?:llama3\.2|qwen3) --input What is BYOK\?/
 		);
 	});
 
@@ -88,9 +88,8 @@ esac`
 		const invocations = (await readFile(log, "utf8")).trim().split("\n");
 		expect(invocations).toHaveLength(2);
 		expect(invocations[0]).toContain("models --provider codex-cli");
-		expect(invocations[0]).toContain(`--executable ${join(directory, "codex")}`);
 		expect(invocations[1]).toMatch(
-			/generate --provider codex-cli --executable .*\/codex --model gpt-5(?:-mini)? --input What is BYOK\?/
+			/generate --provider codex-cli --model gpt-5(?:-mini)? --input What is BYOK\?/
 		);
 	});
 
@@ -109,8 +108,8 @@ esac`
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
-  *" models --provider ollama "*) exit 1 ;;
-  *" models --provider codex-cli "*) printf 'gpt-5\\n' ;;
+  *" models --provider ollama"*) exit 1 ;;
+  *" models --provider codex-cli"*) printf 'gpt-5\\n' ;;
   *" generate --provider codex-cli "*) printf 'Fallback answer.\\n' ;;
   *) exit 1 ;;
 esac`
