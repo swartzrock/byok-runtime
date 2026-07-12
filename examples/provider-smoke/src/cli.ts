@@ -65,7 +65,7 @@ const USAGE = `Usage:
 Options:
   -h, --help  Show this help message.
 
-Providers: anthropic, openai, google, xai, openrouter, ollama, lm-studio, codex-cli, claude-cli`;
+Providers: anthropic, openai, google, xai, openrouter, groq, mistral, deepseek, deepinfra, ollama, lm-studio, codex-cli, claude-cli`;
 
 export async function runProviderSmokeCli(
 	args: string[] = process.argv.slice(2),
@@ -225,7 +225,11 @@ function isSmokeCloudProvider(provider: ByokProviderId): provider is ByokCloudPr
 		provider === "openai" ||
 		provider === "google" ||
 		provider === "xai" ||
-		provider === "openrouter"
+		provider === "openrouter" ||
+		provider === "groq" ||
+		provider === "mistral" ||
+		provider === "deepseek" ||
+		provider === "deepinfra"
 	);
 }
 

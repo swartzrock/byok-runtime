@@ -126,6 +126,45 @@ describe("provider smoke CLI", () => {
 		});
 	});
 
+	it.each([
+		["groq", "GROQ_API_KEY"],
+		["mistral", "MISTRAL_API_KEY"],
+		["deepseek", "DEEPSEEK_API_KEY"],
+		["deepinfra", "DEEPINFRA_API_KEY"],
+	] as const)("routes %s model listing through cloud credentials", async (provider, envVar) => {
+		const listModels = vi.fn().mockResolvedValue([{ id: "model-1", label: "model-1" }]);
+		const env = { [envVar]: `${provider}-test` };
+
+		const code = await runProviderSmokeCli(["models", "--provider", provider], {
+			env,
+			stdout: vi.fn(),
+			byok: { generateText: vi.fn(), listModels },
+		});
+
+		expect(code).toBe(0);
+		expect(listModels).toHaveBeenCalledWith({
+			provider,
+			credential: { source: "env", env },
+		});
+	});
+
+	it("rejects local-only URL flags for cloud providers", async () => {
+		const listModels = vi.fn();
+		const errors: string[] = [];
+
+		const code = await runProviderSmokeCli(
+			["models", "--provider", "groq", "--url", "http://localhost:1234"],
+			{
+				stderr: (line) => errors.push(line),
+				byok: { generateText: vi.fn(), listModels },
+			}
+		);
+
+		expect(code).toBe(1);
+		expect(errors.join("\n")).toContain("Unknown option '--url'");
+		expect(listModels).not.toHaveBeenCalled();
+	});
+
 	it("uses Ollama URL-backed generation without env credentials", async () => {
 		const generateText = vi.fn().mockResolvedValue({ text: "Local response." });
 
