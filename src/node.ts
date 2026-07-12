@@ -1,6 +1,11 @@
 export * from "./index";
 export { createByokNodeProvider } from "./providers/node-provider-factory";
 export {
+	findAvailableProviders,
+	type FindAvailableProvidersDeps,
+	type FindAvailableProvidersOptions,
+} from "./provider-discovery";
+export {
 	ClaudeCliProvider,
 	extractClaudeCliOutput,
 	type ClaudeCliProviderOptions,

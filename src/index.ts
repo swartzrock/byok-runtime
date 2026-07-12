@@ -9,11 +9,13 @@ export { BYOK_PROVIDER_API_KEY_ENV_VARS, resolveByokEnvCredential } from "./cred
 export { createByok, generateText, listModels } from "./client";
 export type {
 	ByokApiKeyCloudProviderConfig,
+	ByokCliProviderId,
 	ByokCliProviderConfig,
 	ByokClient,
 	ByokClientConfig,
 	ByokClientTextGenerationInput,
 	ByokCloudProviderConfig,
+	ByokCloudProviderId,
 	ByokConnectionState,
 	ByokCoreProviderConfig,
 	ByokCredentialFieldDefinition,

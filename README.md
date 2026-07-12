@@ -117,6 +117,16 @@ for (const provider of byokProviderDefinitions()) {
 
 Use the Node runtime when an application needs connection testing, structured output, JSON response hints, CLI providers, or custom transports.
 
+Discover locally available provider candidates before asking a user to choose one:
+
+```ts
+import { findAvailableProviders } from "@swartzrock/byok-runtime/node";
+
+const providers = await findAvailableProviders({ env: process.env });
+```
+
+The ordered result checks local servers, installed AI CLIs, then standard cloud API-key variables. Discovery is lightweight; list models or test the selected provider before generation.
+
 ```ts
 import { ByokProvider, createByokNodeProvider } from "@swartzrock/byok-runtime/node";
 
@@ -215,7 +225,7 @@ BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist
 ## Entry Points
 
 - `@swartzrock/byok-runtime` — API-key providers, Ollama, LM Studio, helpers, metadata, and shared types.
-- `@swartzrock/byok-runtime/node` — everything above plus local CLI providers and command execution.
+- `@swartzrock/byok-runtime/node` — everything above plus provider discovery, local CLI providers, and command execution.
 
 Import from these public entrypoints only. Files under `src/providers` and `src/models` are package internals.
 
@@ -223,6 +233,7 @@ Import from these public entrypoints only. Files under `src/providers` and `src/
 
 - [API reference](./API.md)
 - [Provider smoke CLI](https://github.com/swartzrock/byok-runtime/tree/main/examples/provider-smoke)
+- [First available LLM script](./examples/first-available-llm.sh)
 - [Contributing guide](https://github.com/swartzrock/byok-runtime/blob/main/CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
 
