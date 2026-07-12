@@ -35,7 +35,7 @@ const { text } = await generateText({
 console.log(text);
 ```
 
-Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Ollama, or LM Studio.
+Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Ollama, or LM Studio.
 
 BYOK Runtime is designed for trusted servers, desktop backends, Electron main processes, and local tools. Browser and Electron renderer UIs should call it through a trusted host boundary rather than receive provider credentials directly.
 
@@ -57,12 +57,18 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 | Google     | API key or env      | Gemini model IDs       | Text and object      |
 | xAI        | API key or env      | Model IDs              | Text and object      |
 | OpenRouter | API key or env      | Portable model options | Text and JSON-like   |
+| Groq       | API key or env      | Model IDs              | Text and JSON-like   |
+| Mistral    | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepSeek   | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepInfra  | API key or env      | Model IDs              | Text and JSON-like   |
 | Ollama     | Local or remote URL | Installed models       | Text                 |
 | LM Studio  | Local or remote URL | Local model IDs        | Text and JSON-like   |
 | Codex CLI  | Local CLI session   | Codex model IDs        | Text                 |
 | Claude CLI | Local CLI session   | Anthropic model IDs    | Text with JSON hints |
 
 Cloud and local-server providers use the main entrypoint. CLI providers can spawn local commands and are available only from `@swartzrock/byok-runtime/node`.
+
+Groq, Mistral, DeepSeek, and DeepInfra reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
 
 ## Common Workflows
 
@@ -206,7 +212,7 @@ const { text } = await generateText({
 });
 ```
 
-Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, and `OPENROUTER_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
+Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
 
 BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
 

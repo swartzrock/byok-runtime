@@ -124,7 +124,7 @@ const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
 });
 ```
 
-`BYOK_PROVIDER_API_KEY_ENV_VARS` contains the standard cloud-provider names: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, and OpenRouter `OPENROUTER_API_KEY`.
+`BYOK_PROVIDER_API_KEY_ENV_VARS` contains the standard cloud-provider names: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, OpenRouter `OPENROUTER_API_KEY`, Groq `GROQ_API_KEY`, Mistral `MISTRAL_API_KEY`, DeepSeek `DEEPSEEK_API_KEY`, and DeepInfra `DEEPINFRA_API_KEY`.
 
 ## Node Runtime
 
@@ -194,6 +194,10 @@ enum ByokProvider {
 	Google = "google",
 	Xai = "xai",
 	OpenRouter = "openrouter",
+	Groq = "groq",
+	Mistral = "mistral",
+	DeepSeek = "deepseek",
+	DeepInfra = "deepinfra",
 	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
@@ -203,6 +207,8 @@ enum ByokProvider {
 ### Provider Inventory
 
 `BYOK_PROVIDER_IDS` contains the supported provider IDs in stable order. Host applications own provider presentation, form fields, and settings copy.
+
+Groq, Mistral, DeepSeek, and DeepInfra use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Support does not extend to every OpenAI API or provider-specific capability.
 
 ## Model Options
 

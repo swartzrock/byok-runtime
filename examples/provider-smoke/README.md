@@ -17,6 +17,10 @@ bun run provider-smoke detect
 | Google     | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
 | xAI        | `XAI_API_KEY`                        |
 | OpenRouter | `OPENROUTER_API_KEY`                 |
+| Groq       | `GROQ_API_KEY`                       |
+| Mistral    | `MISTRAL_API_KEY`                    |
+| DeepSeek   | `DEEPSEEK_API_KEY`                   |
+| DeepInfra  | `DEEPINFRA_API_KEY`                  |
 | Ollama     | n/a                                  |
 | LM Studio  | n/a                                  |
 | Codex CLI  | n/a                                  |
@@ -33,6 +37,9 @@ ANTHROPIC_API_KEY="<ANTHROPIC_API_KEY>" \
 
 GOOGLE_API_KEY="<GOOGLE_API_KEY>" GEMINI_API_KEY="<GEMINI_API_KEY>" \
 	bun run provider-smoke models --provider google
+
+GROQ_API_KEY="<GROQ_API_KEY>" \
+	bun run provider-smoke models --provider groq
 
 bun run provider-smoke generate \
 	--provider ollama \
@@ -53,4 +60,6 @@ To detect providers through the library, choose a random available model, and pr
 ./examples/first-available-llm.sh "What is BYOK?"
 ```
 
-The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, and OpenRouter.
+The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, and DeepInfra.
+
+Groq, Mistral, DeepSeek, and DeepInfra smoke checks exercise BYOK's OpenAI-compatible chat-completions and model-listing subset, not full OpenAI API parity.
