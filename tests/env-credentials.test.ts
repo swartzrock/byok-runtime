@@ -49,9 +49,7 @@ describe("BYOK env credentials", () => {
 		["deepseek", "DEEPSEEK_API_KEY"],
 		["deepinfra", "DEEPINFRA_API_KEY"],
 	] as const)("names %s's expected %s when credentials are missing", (provider, envVar) => {
-		expect(() =>
-			resolveByokEnvCredential(provider, { source: "env", env: {} })
-		).toThrow(envVar);
+		expect(() => resolveByokEnvCredential(provider, { source: "env", env: {} })).toThrow(envVar);
 	});
 
 	it("exports the standard API-key env var map without Ollama", () => {

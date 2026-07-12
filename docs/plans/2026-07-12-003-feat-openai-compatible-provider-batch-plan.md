@@ -172,13 +172,13 @@ Complete U1 through U4 on `feat/openai-compatible-provider-batch`, run the full 
 
 ## Verification Contract
 
-| Gate | Coverage | Done signal |
-|---|---|---|
-| Focused Vitest | Manifest, factory, transport, credentials, discovery, public contract, smoke CLI | New provider tests fail before implementation and pass afterward |
-| TypeScript checks | Source, examples, literal provider/env tuples | No union gaps or type widening |
-| Full `bun run check` | Format, lint, build, all tests, pack, publint, attw | Repository-required package gate passes |
-| Diff audit | Runtime reuse and UI boundary | No new transport classes, UI metadata, or icon assets |
-| GitHub CI | Package and CodeQL workflows | Pull request reaches a decided green state |
+| Gate                 | Coverage                                                                         | Done signal                                                      |
+| -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Focused Vitest       | Manifest, factory, transport, credentials, discovery, public contract, smoke CLI | New provider tests fail before implementation and pass afterward |
+| TypeScript checks    | Source, examples, literal provider/env tuples                                    | No union gaps or type widening                                   |
+| Full `bun run check` | Format, lint, build, all tests, pack, publint, attw                              | Repository-required package gate passes                          |
+| Diff audit           | Runtime reuse and UI boundary                                                    | No new transport classes, UI metadata, or icon assets            |
+| GitHub CI            | Package and CodeQL workflows                                                     | Pull request reaches a decided green state                       |
 
 ---
 
