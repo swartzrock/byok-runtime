@@ -1,6 +1,7 @@
 import {
 	ByokProvider,
 	BYOK_PROVIDER_API_KEY_ENV_VARS,
+	BYOK_PROVIDER_IDS,
 	createByok,
 	generateText,
 	listModels,
@@ -122,6 +123,17 @@ const googleApiKey = resolveByokEnvCredential(ByokProvider.Google, {
 const anthropicEnvVars: readonly ["ANTHROPIC_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.anthropic;
 const googleEnvVars: readonly ["GOOGLE_API_KEY", "GEMINI_API_KEY"] =
 	BYOK_PROVIDER_API_KEY_ENV_VARS.google;
+const providerIds: readonly [
+	"anthropic",
+	"openai",
+	"google",
+	"xai",
+	"openrouter",
+	"ollama",
+	"lm-studio",
+	"codex-cli",
+	"claude-cli",
+] = BYOK_PROVIDER_IDS;
 
 void text;
 void openRouterText;
@@ -133,3 +145,4 @@ void envClientText;
 void googleApiKey;
 void anthropicEnvVars;
 void googleEnvVars;
+void providerIds;

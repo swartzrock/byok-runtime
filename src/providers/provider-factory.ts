@@ -57,11 +57,11 @@ function createCloudProvider(
 	deps?: Partial<ByokProviderDeps>
 ): ByokProviderRuntime {
 	const { fetchImpl } = resolveByokFetchDeps(deps);
-	const { definition, runtime } = BYOK_CLOUD_PROVIDER_MANIFEST[config.provider];
+	const { runtime } = BYOK_CLOUD_PROVIDER_MANIFEST[config.provider];
 	return new OpenAiCompatibleProvider({
 		id: config.provider,
-		label: definition.label,
-		vendor: definition.vendor,
+		label: runtime.label,
+		vendor: runtime.vendor,
 		baseURL: runtime.baseURL,
 		apiKey: config.apiKey,
 		model: config.model,

@@ -1,10 +1,4 @@
-export {
-	BYOK_PROVIDER_IDS,
-	byokProviderDefinition,
-	byokProviderDefinitions,
-	isByokProviderId,
-	normalizeProviderId,
-} from "./registry";
+export { BYOK_PROVIDER_IDS, isByokProviderId, normalizeProviderId } from "./registry";
 export { BYOK_PROVIDER_API_KEY_ENV_VARS, resolveByokEnvCredential } from "./credentials";
 export { createByok, generateText, listModels } from "./client";
 export type {
@@ -16,8 +10,6 @@ export type {
 	ByokCloudProviderConfig,
 	ByokConnectionState,
 	ByokCoreProviderConfig,
-	ByokCredentialFieldDefinition,
-	ByokCredentialKind,
 	ByokEnvCloudProviderConfig,
 	ByokEnvCredential,
 	ByokEnvironment,
@@ -27,17 +19,12 @@ export type {
 	ByokHttpResponse,
 	ByokGenerateTextOptions,
 	ByokListModelsOptions,
-	ByokModelBehavior,
-	ByokModelFieldDefinition,
 	ByokModelOption,
 	ByokModelRefreshResult,
 	ByokObjectGenerationInput,
 	ByokOllamaProviderConfig,
 	ByokProviderConfig,
-	ByokProviderDefinition,
 	ByokProviderDeps,
-	ByokProviderIconDefinition,
-	ByokProviderIconSource,
 	ByokProviderId,
 	ByokProviderRuntime,
 	ByokProviderStatus,

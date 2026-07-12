@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod/v3";
 import * as byok from "../src";
 import { ProviderError, ProviderRateLimitError } from "../src/providers/types";
-import type { ByokProviderConfig, ByokProviderDefinition, ByokProviderRuntime } from "../src";
+import type { ByokProviderConfig, ByokProviderRuntime } from "../src";
 
 const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
@@ -17,8 +17,6 @@ describe("BYOK public contract", () => {
 			"ByokProvider",
 			"ByokProviderError",
 			"ByokProviderRateLimitError",
-			"byokProviderDefinition",
-			"byokProviderDefinitions",
 			"createByok",
 			"generateText",
 			"isByokProviderId",
@@ -34,8 +32,15 @@ describe("BYOK public contract", () => {
 	it("does not expose removed provider-specific type-only model APIs", () => {
 		const indexSource = readFileSync(join(PACKAGE_ROOT, "src", "index.ts"), "utf8");
 		for (const forbiddenName of [
+			"ByokCredentialFieldDefinition",
+			"ByokCredentialKind",
 			"ByokListedModel",
+			"ByokModelBehavior",
+			"ByokModelFieldDefinition",
 			"ByokModelOptionSource",
+			"ByokProviderDefinition",
+			"ByokProviderIconDefinition",
+			"ByokProviderIconSource",
 			"ModelOptionSource",
 			"OpenRouterRawModel",
 			"StructuredOutputSupport",
@@ -132,86 +137,10 @@ describe("BYOK public contract", () => {
 		).resolves.toEqual({ ok: true });
 	});
 
-	it("exposes every provider with stable labels and capability metadata", () => {
-		const definitions = byok.byokProviderDefinitions();
-		const byId = new Map(definitions.map((definition) => [definition.id, definition]));
-
-		expect(definitions).toHaveLength(9);
-		for (const definition of definitions) {
-			expect(definition.supportsModelListing).toBe(true);
-			expect(definition.shortLabel.length).toBeGreaterThan(0);
-			expect(definition.productLabel.length).toBeGreaterThan(0);
-			expect(definition.icon.viewBox.length).toBeGreaterThan(0);
-			expect(definition.icon.svg).toContain("<");
-			expect(definition.icon.sourceUrl.length).toBeGreaterThan(0);
-			expect(definition.credentialField.label.length).toBeGreaterThan(0);
-			expect(definition.credentialField.placeholder.length).toBeGreaterThan(0);
-			expect(definition.credentialField.missingMessage.length).toBeGreaterThan(0);
-			expect(definition.credentialField.description).not.toMatch(
-				/Obsidian|Secret Storage|HostApp/i
-			);
-			expect(definition.modelField.label.length).toBeGreaterThan(0);
-			expect(definition.modelField.placeholder.length).toBeGreaterThan(0);
-		}
-		expect(byId.get("ollama")).toMatchObject({
-			label: "Ollama",
-			shortLabel: "Ollama",
-			productLabel: "Ollama",
-			credentialKind: "url",
-			credentialField: {
-				label: "Ollama URL",
-				secret: false,
-			},
-			requiresNetwork: false,
-			supportsModelListing: true,
-		} satisfies Partial<ByokProviderDefinition>);
-		expect(byId.get("openrouter")).toMatchObject({
-			label: "OpenRouter",
-			shortLabel: "OpenRouter",
-			credentialKind: "api-key",
-			icon: {
-				source: "custom",
-			},
-			supportsModelListing: true,
-		} satisfies Partial<ByokProviderDefinition>);
-		expect(byId.get("lm-studio")).toMatchObject({
-			label: "LM Studio",
-			shortLabel: "LM Studio",
-			credentialKind: "url",
-			credentialField: {
-				label: "LM Studio URL",
-				secret: false,
-			},
-			requiresNetwork: false,
-			supportsModelListing: true,
-		} satisfies Partial<ByokProviderDefinition>);
-		expect(byId.get("anthropic")?.icon.source).toBe("svgl");
-		expect(byId.get("openai")?.icon.source).toBe("svgl");
-		expect(byId.get("codex-cli")).toMatchObject({
-			label: "Codex CLI",
-			credentialKind: "command",
-			modelField: expect.objectContaining({
-				placeholder: "CLI default",
-			}),
-			modelBehavior: "optional",
-			supportsModelListing: true,
-		} satisfies Partial<ByokProviderDefinition>);
-		expect(byId.get("claude-cli")).toMatchObject({
-			label: "Claude CLI",
-			credentialKind: "command",
-			modelField: expect.objectContaining({
-				placeholder: "CLI default",
-			}),
-			modelBehavior: "optional",
-			supportsModelListing: true,
-		} satisfies Partial<ByokProviderDefinition>);
-	});
-
 	it("keeps provider ID guards in the public barrel", () => {
 		expect(byok.isByokProviderId("anthropic")).toBe(true);
 		expect(byok.isByokProviderId("claude")).toBe(false);
 		expect(byok.normalizeProviderId("claude")).toBe("claude-cli");
-		expect(byok.byokProviderDefinition("google").label).toBe("Google (Gemini)");
 	});
 
 	it("keeps provider failures catchable through public error classes", () => {
