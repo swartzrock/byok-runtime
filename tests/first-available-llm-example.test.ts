@@ -38,13 +38,12 @@ describe("first available LLM example", () => {
 	});
 
 	it("prefers a running Ollama server over an installed CLI", async () => {
-		await executable(directory, "curl", "exit 0");
-		await executable(directory, "codex", "exit 0");
 		await executable(
 			directory,
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
+	*" detect"*) printf 'ollama\\nlm-studio\\ncodex-cli\\n' ;;
   *" models --provider ollama"*) printf 'llama3.2\\nqwen3\\n' ;;
   *" generate --provider ollama "*) printf 'Local answer.\\n' ;;
   *) exit 1 ;;
@@ -56,22 +55,21 @@ esac`
 		expect(result.status).toBe(0);
 		expect(result.stdout).toBe("Local answer.\n");
 		const invocations = (await readFile(log, "utf8")).trim().split("\n");
-		expect(invocations).toHaveLength(2);
-		expect(invocations[0]).toContain("models --provider ollama");
-		expect(invocations[1]).toMatch(
+		expect(invocations).toHaveLength(3);
+		expect(invocations[0]).toContain("provider-smoke/src/cli.ts detect");
+		expect(invocations[1]).toContain("models --provider ollama");
+		expect(invocations[2]).toMatch(
 			/generate --provider ollama --model (?:llama3\.2|qwen3) --input What is BYOK\?/
 		);
 	});
 
 	it("uses an installed Codex CLI and prints only its generated response", async () => {
-		await executable(directory, "curl", "exit 1");
-		await executable(directory, "codex", "exit 0");
-		await executable(directory, "claude", "exit 0");
 		await executable(
 			directory,
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
+	*" detect"*) printf 'codex-cli\\nclaude-cli\\nanthropic\\n' ;;
   *" models --provider codex-cli"*) printf 'gpt-5\\ngpt-5-mini\\n' ;;
   *" generate --provider codex-cli "*) printf 'Generated answer.\\n' ;;
   *) exit 1 ;;
@@ -86,9 +84,10 @@ esac`
 		expect(result.stdout).toBe("Generated answer.\n");
 		expect(result.stderr).toBe("");
 		const invocations = (await readFile(log, "utf8")).trim().split("\n");
-		expect(invocations).toHaveLength(2);
-		expect(invocations[0]).toContain("models --provider codex-cli");
-		expect(invocations[1]).toMatch(
+		expect(invocations).toHaveLength(3);
+		expect(invocations[0]).toContain("provider-smoke/src/cli.ts detect");
+		expect(invocations[1]).toContain("models --provider codex-cli");
+		expect(invocations[2]).toMatch(
 			/generate --provider codex-cli --model gpt-5(?:-mini)? --input What is BYOK\?/
 		);
 	});
@@ -96,18 +95,10 @@ esac`
 	it("falls through when an earlier detected provider cannot list models", async () => {
 		await executable(
 			directory,
-			"curl",
-			`case "$*" in
-  *"127.0.0.1:11434/api/tags"*) exit 0 ;;
-  *) exit 1 ;;
-esac`
-		);
-		await executable(directory, "codex", "exit 0");
-		await executable(
-			directory,
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
+	*" detect"*) printf 'ollama\\ncodex-cli\\n' ;;
   *" models --provider ollama"*) exit 1 ;;
   *" models --provider codex-cli"*) printf 'gpt-5\\n' ;;
   *" generate --provider codex-cli "*) printf 'Fallback answer.\\n' ;;
@@ -121,18 +112,19 @@ esac`
 		expect(result.stdout).toBe("Fallback answer.\n");
 		expect(result.stderr).toBe("");
 		const invocations = (await readFile(log, "utf8")).trim().split("\n");
-		expect(invocations).toHaveLength(3);
-		expect(invocations[0]).toContain("models --provider ollama");
-		expect(invocations[1]).toContain("models --provider codex-cli");
+		expect(invocations).toHaveLength(4);
+		expect(invocations[0]).toContain("provider-smoke/src/cli.ts detect");
+		expect(invocations[1]).toContain("models --provider ollama");
+		expect(invocations[2]).toContain("models --provider codex-cli");
 	});
 
 	it("uses the first API-key provider after local and CLI checks", async () => {
-		await executable(directory, "curl", "exit 1");
 		await executable(
 			directory,
 			"bun",
 			`printf '%s\\n' "$*" >> "$BUN_LOG"
 case "$*" in
+	*" detect"*) printf 'anthropic\\nopenai\\n' ;;
   *" models --provider anthropic"*) printf 'claude-test\\n' ;;
   *" generate --provider anthropic "*) printf 'Cloud answer.\\n' ;;
   *) exit 1 ;;
@@ -147,14 +139,12 @@ esac`
 		expect(result.status).toBe(0);
 		expect(result.stdout).toBe("Cloud answer.\n");
 		const invocations = (await readFile(log, "utf8")).trim().split("\n");
-		expect(invocations).toHaveLength(2);
-		expect(invocations[0]).toContain("models --provider anthropic");
+		expect(invocations).toHaveLength(3);
+		expect(invocations[0]).toContain("provider-smoke/src/cli.ts detect");
+		expect(invocations[1]).toContain("models --provider anthropic");
 	});
 
-	it("returns 127 when a provider is detected but Bun is unavailable", async () => {
-		await executable(directory, "curl", "exit 1");
-		await executable(directory, "codex", "exit 0");
-
+	it("returns 127 before discovery when Bun is unavailable", async () => {
 		const result = runExample();
 
 		expect(result.status).toBe(127);
@@ -163,15 +153,41 @@ esac`
 		await expect(readFile(log, "utf8")).rejects.toThrow();
 	});
 
-	it("exits nonzero without invoking BYOK when no provider is detected", async () => {
-		await executable(directory, "curl", "exit 1");
-		await executable(directory, "bun", `printf 'called\\n' >> "$BUN_LOG"`);
+	it("exits nonzero when discovery returns no providers", async () => {
+		await executable(
+			directory,
+			"bun",
+			`printf '%s\\n' "$*" >> "$BUN_LOG"
+case "$*" in
+	*" detect"*) exit 0 ;;
+	*) exit 1 ;;
+esac`
+		);
 
 		const result = runExample();
 
 		expect(result.status).toBe(1);
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toContain("No available LLM provider found.");
-		await expect(readFile(log, "utf8")).rejects.toThrow();
+		expect(await readFile(log, "utf8")).toContain("provider-smoke/src/cli.ts detect");
+	});
+
+	it("exits nonzero when provider discovery fails", async () => {
+		await executable(
+			directory,
+			"bun",
+			`printf '%s\n' "$*" >> "$BUN_LOG"
+case "$*" in
+	*" detect"*) exit 2 ;;
+	*) exit 1 ;;
+esac`
+		);
+
+		const result = runExample();
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("LLM provider discovery failed.");
+		expect(await readFile(log, "utf8")).toContain("provider-smoke/src/cli.ts detect");
 	});
 });

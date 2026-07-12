@@ -1,6 +1,7 @@
 import {
 	ByokProvider,
 	createByokNodeProvider,
+	findAvailableProviders,
 	type ByokHttpClient,
 	type ByokProviderConfig,
 	type ByokProviderDeps,
@@ -24,5 +25,7 @@ const config: ByokProviderConfig = {
 };
 
 const provider = createByokNodeProvider(config, deps);
+const availableProviders = findAvailableProviders({ env: process.env });
 
 void provider.testConnection;
+void availableProviders;

@@ -12,7 +12,7 @@ import {
 	type ByokListModelsOptions,
 	type ByokProviderId,
 } from "../../../src";
-import { createByokNodeProvider } from "../../../src/node";
+import { createByokNodeProvider, findAvailableProviders } from "../../../src/node";
 
 const CLI_PROVIDER_COMMANDS: Record<ByokCliProviderId, string> = {
 	"codex-cli": "codex",
@@ -30,6 +30,11 @@ interface RunProviderSmokeCliOptions {
 	stderr?: (line: string) => void;
 	byok?: SmokeByok;
 	createNodeProvider?: typeof createByokNodeProvider;
+	findProviders?: typeof findAvailableProviders;
+}
+
+interface ParsedDetectFlags {
+	command: "detect";
 }
 
 interface ParsedBaseFlags {
@@ -46,9 +51,11 @@ interface ParsedModelsFlags extends ParsedBaseFlags {
 	command: "models";
 }
 
-type ParsedFlags = ParsedGenerateFlags | ParsedModelsFlags;
+type ParsedProviderFlags = ParsedGenerateFlags | ParsedModelsFlags;
+type ParsedFlags = ParsedDetectFlags | ParsedProviderFlags;
 
 const USAGE = `Usage:
+	bun run provider-smoke detect
   bun run provider-smoke models --provider <provider>
   bun run provider-smoke generate --provider <provider> --model <model> --input <text>
 
@@ -62,6 +69,7 @@ export async function runProviderSmokeCli(
 	const stdout = options.stdout ?? console.log;
 	const byok = options.byok ?? { generateText, listModels };
 	const createNodeProvider = options.createNodeProvider ?? createByokNodeProvider;
+	const findProviders = options.findProviders ?? findAvailableProviders;
 	const env = options.env ?? process.env;
 	const parsed = parseCliArgs(args);
 
@@ -72,6 +80,13 @@ export async function runProviderSmokeCli(
 	}
 
 	try {
+		if (parsed.flags.command === "detect") {
+			for (const provider of await findProviders({ env })) {
+				stdout(provider);
+			}
+			return 0;
+		}
+
 		if (parsed.flags.command === "models") {
 			const models = isSmokeCliProvider(parsed.flags.provider)
 				? await createNodeProvider(cliProviderConfig(parsed.flags)).listModels()
@@ -102,7 +117,7 @@ export async function runProviderSmokeCli(
 	}
 }
 
-function cliProviderConfig(flags: ParsedFlags): ByokCliProviderConfig {
+function cliProviderConfig(flags: ParsedProviderFlags): ByokCliProviderConfig {
 	if (!isSmokeCliProvider(flags.provider)) {
 		throw new Error("Expected a CLI provider.");
 	}
@@ -130,6 +145,11 @@ function parseCliArgs(
 	args: string[]
 ): { ok: true; flags: ParsedFlags } | { ok: false; error: string } {
 	const [command, ...rest] = args;
+	if (command === "detect") {
+		return rest.length === 0
+			? { ok: true, flags: { command } }
+			: { ok: false, error: "Detect does not accept options." };
+	}
 	if (command !== "generate" && command !== "models") {
 		return { ok: false, error: "Missing command." };
 	}

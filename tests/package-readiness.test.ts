@@ -105,6 +105,7 @@ describe("BYOK package readiness", () => {
 			"format:check": "prettier --check .",
 			lint: "eslint . --max-warnings=0",
 			"pack:check": "npm pack --dry-run",
+			"provider-smoke": "bun run examples/provider-smoke/src/cli.ts",
 			publint: "publint",
 			attw: "attw --pack --profile esm-only --ignore-rules cjs-resolves-to-esm no-resolution",
 		});
@@ -144,6 +145,7 @@ describe("BYOK package readiness", () => {
 
 	it("keeps the Node subpath as the only local CLI entrypoint", () => {
 		const nodeSource = readFileSync(fromPackage("src/node.ts"), "utf8");
+		expect(nodeSource).toContain("./provider-discovery");
 		expect(nodeSource).toContain("./providers/local-command-runner");
 		expect(nodeSource).toContain("./providers/codex-cli-provider");
 		expect(nodeSource).toContain("./providers/claude-cli-provider");

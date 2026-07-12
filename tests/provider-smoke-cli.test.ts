@@ -2,6 +2,37 @@ import { describe, expect, it, vi } from "vitest";
 import { runProviderSmokeCli } from "../examples/provider-smoke/src/cli";
 
 describe("provider smoke CLI", () => {
+	it("prints providers detected by the Node runtime", async () => {
+		const output: string[] = [];
+		const findProviders = vi.fn().mockResolvedValue(["ollama", "codex-cli", "anthropic"]);
+
+		const code = await runProviderSmokeCli(["detect"], {
+			env: { ANTHROPIC_API_KEY: "anthropic-test" },
+			stdout: (line) => output.push(line),
+			findProviders,
+		});
+
+		expect(code).toBe(0);
+		expect(output).toEqual(["ollama", "codex-cli", "anthropic"]);
+		expect(findProviders).toHaveBeenCalledWith({
+			env: { ANTHROPIC_API_KEY: "anthropic-test" },
+		});
+	});
+
+	it("rejects options passed to detect", async () => {
+		const errors: string[] = [];
+		const findProviders = vi.fn();
+
+		const code = await runProviderSmokeCli(["detect", "--provider", "ollama"], {
+			stderr: (line) => errors.push(line),
+			findProviders,
+		});
+
+		expect(code).toBe(1);
+		expect(errors.join("\n")).toContain("Detect does not accept options.");
+		expect(findProviders).not.toHaveBeenCalled();
+	});
+
 	it("delegates OpenAI generation to env-backed BYOK credentials", async () => {
 		const output: string[] = [];
 		const generateText = vi.fn().mockResolvedValue({ text: "Hello from OpenAI." });

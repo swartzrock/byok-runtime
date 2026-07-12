@@ -4,6 +4,12 @@ Run real provider smoke checks from the repository root with BYOK's public facad
 Cloud providers use BYOK's env-backed credential mode with the standard provider environment variables.
 Ollama and LM Studio use their default local server URLs. Codex and Claude use their installed, authenticated CLI commands.
 
+```bash
+bun run provider-smoke detect
+```
+
+`detect` delegates to the Node runtime's `findAvailableProviders` function and prints provider IDs in fallback order.
+
 | Provider   | Env-backed API key names             |
 | ---------- | ------------------------------------ |
 | Anthropic  | `ANTHROPIC_API_KEY`                  |
@@ -41,7 +47,7 @@ bun run provider-smoke generate \
 	--input "Reply with one short sentence."
 ```
 
-To detect providers in priority order, choose a random available model, and print one generated response:
+To detect providers through the library, choose a random available model, and print one generated response:
 
 ```bash
 ./examples/first-available-llm.sh "What is BYOK?"
