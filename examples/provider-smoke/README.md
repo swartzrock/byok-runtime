@@ -20,7 +20,7 @@ bun run provider-smoke detect
 | Groq       | `GROQ_API_KEY`                       |
 | Mistral    | `MISTRAL_API_KEY`                    |
 | DeepSeek   | `DEEPSEEK_API_KEY`                   |
-| DeepInfra  | `DEEPINFRA_API_KEY`                  |
+| DeepInfra  | `DEEPINFRA_TOKEN`                    |
 | Ollama     | n/a                                  |
 | LM Studio  | n/a                                  |
 | Codex CLI  | n/a                                  |

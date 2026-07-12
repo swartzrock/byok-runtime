@@ -133,7 +133,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 	{
 		family: "cloud",
 		id: ByokProvider.DeepInfra,
-		apiKeyEnvVars: ["DEEPINFRA_API_KEY"],
+		apiKeyEnvVars: ["DEEPINFRA_TOKEN"],
 		runtime: {
 			label: "DeepInfra",
 			vendor: "DeepInfra",

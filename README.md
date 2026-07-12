@@ -212,7 +212,7 @@ const { text } = await generateText({
 });
 ```
 
-Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
+Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_TOKEN`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
 
 BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
 

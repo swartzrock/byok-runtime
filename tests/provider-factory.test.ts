@@ -287,6 +287,10 @@ describe("createByokProvider", () => {
 				expect(headers.get("x-api-key")).toBe("key");
 				expect(headers.get("anthropic-version")).toBe("2023-06-01");
 				expect(headers.has("authorization")).toBe(false);
+			} else if (provider !== "lm-studio") {
+				const headers = new Headers(requests[0]?.headers);
+				expect(headers.get("authorization")).toBe("Bearer key");
+				expect(headers.has("x-api-key")).toBe(false);
 			}
 		}
 	);

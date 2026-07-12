@@ -24,7 +24,7 @@ describe("findAvailableProviders", () => {
 					GROQ_API_KEY: "groq-test",
 					MISTRAL_API_KEY: "mistral-test",
 					DEEPSEEK_API_KEY: "deepseek-test",
-					DEEPINFRA_API_KEY: "deepinfra-test",
+					DEEPINFRA_TOKEN: "deepinfra-test",
 				},
 			},
 			{ fetchImpl, commandExists }

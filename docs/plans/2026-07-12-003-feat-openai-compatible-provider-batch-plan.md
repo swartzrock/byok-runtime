@@ -36,7 +36,7 @@ AIChat already treats these four services as named OpenAI-compatible providers, 
 - R1. Add stable provider IDs `groq`, `mistral`, `deepseek`, and `deepinfra` to the public enum, provider ID union, ordered inventory, and cloud config types.
 - R2. Configure each provider declaratively with bearer authentication, default model normalization, its official base URL, exact diagnostic label/vendor, and one standard API-key environment variable.
 - R3. Reuse `OpenAiCompatibleProvider` unchanged for text generation, object generation, connection testing, model listing, rate-limit retries, and provider error normalization.
-- R4. Env-backed credential resolution and provider discovery recognize `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_API_KEY` without adding duplicated runtime provider maps.
+- R4. Env-backed credential resolution and provider discovery recognize `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_TOKEN` without adding duplicated runtime provider maps.
 - R5. Public provider IDs and environment-variable maps retain exact literal tuple/map types after the four additions.
 - R6. The Node provider smoke example accepts the four provider IDs and classifies them as cloud providers without depending on UI metadata.
 - R7. Published README/API documentation lists the new providers, credentials, and capabilities without claiming full OpenAI API parity.

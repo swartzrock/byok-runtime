@@ -126,7 +126,7 @@ const googleEnvVars: readonly ["GOOGLE_API_KEY", "GEMINI_API_KEY"] =
 const groqEnvVars: readonly ["GROQ_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.groq;
 const mistralEnvVars: readonly ["MISTRAL_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.mistral;
 const deepSeekEnvVars: readonly ["DEEPSEEK_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepseek;
-const deepInfraEnvVars: readonly ["DEEPINFRA_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepinfra;
+const deepInfraEnvVars: readonly ["DEEPINFRA_TOKEN"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepinfra;
 const providerIds: readonly [
 	"anthropic",
 	"openai",
