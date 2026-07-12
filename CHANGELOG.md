@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- 7466e52: Add ordered provider discovery to the Node runtime for local servers, installed AI CLIs, and environment-backed cloud providers.
+
 ## 1.0.0
 
 ### Major Changes
