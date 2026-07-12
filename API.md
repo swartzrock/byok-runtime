@@ -12,7 +12,7 @@ import {
 	listModels,
 	resolveByokEnvCredential,
 } from "@swartzrock/byok-runtime";
-import { createByokNodeProvider } from "@swartzrock/byok-runtime/node";
+import { createByokNodeProvider, findAvailableProviders } from "@swartzrock/byok-runtime/node";
 ```
 
 Provider implementation files, model sorting helpers, Anthropic picker helpers, and setup-state helpers are package internals.
@@ -42,6 +42,7 @@ Type exports include the public provider config, transport, model, generation, r
 The Node subpath re-exports the main entrypoint and adds runtime APIs for trusted Node or desktop backends:
 
 - `createByokNodeProvider`
+- `findAvailableProviders`
 - `ClaudeCliProvider`
 - `CodexCliProvider`
 - `LocalCommandRunner`
@@ -126,6 +127,18 @@ const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
 `BYOK_PROVIDER_API_KEY_ENV_VARS` contains the standard cloud-provider names: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, and OpenRouter `OPENROUTER_API_KEY`.
 
 ## Node Runtime
+
+### `findAvailableProviders({ env }, deps?)`
+
+Performs lightweight provider discovery in fallback order: running Ollama and LM Studio servers, installed Codex and Claude CLIs, then cloud providers with keys in the supplied environment.
+
+```ts
+import { findAvailableProviders } from "@swartzrock/byok-runtime/node";
+
+const providers = await findAvailableProviders({ env: process.env });
+```
+
+The result is an ordered array of provider IDs. Discovery checks reachability, executable files on the supplied `env.PATH` (without launching the CLIs), or key presence; callers should still use `listModels` or a provider runtime before treating a provider as authenticated and ready for generation. BYOK reads only the `env` object supplied by the caller.
 
 ### `createByokNodeProvider(config, deps?)`
 

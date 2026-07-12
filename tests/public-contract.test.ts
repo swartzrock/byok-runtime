@@ -25,6 +25,7 @@ describe("BYOK public contract", () => {
 			"resolveByokEnvCredential",
 		]);
 		expect("createByokNodeProvider" in byok).toBe(false);
+		expect("findAvailableProviders" in byok).toBe(false);
 		expect("createByokProvider" in byok).toBe(false);
 		expect("LocalCommandRunner" in byok).toBe(false);
 	});
