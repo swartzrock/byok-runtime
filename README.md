@@ -42,7 +42,7 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 ## Why BYOK Runtime?
 
 - One generation API across cloud keys, local model servers, and authenticated CLI tools.
-- Model discovery and provider metadata for building account and model settings UIs.
+- Model discovery through a provider-neutral runtime API.
 - Connection testing with user-readable provider errors and rate-limit handling.
 - Reusable clients that bind a credential or local provider URL while keeping the model per call.
 - Optional structured output and custom transports through the lower-level provider runtime.
@@ -100,18 +100,6 @@ const models = await listModels({
 ```
 
 Model discovery returns portable `ByokModelOption` values with `id` and `label`. Provider-specific pricing, context length, and recommendation metadata belong in provider-specific APIs or the host application.
-
-### Build a Provider Settings UI
-
-Provider definitions expose labels, credential and model fields, icons, setup requirements, and model-list capabilities.
-
-```ts
-import { byokProviderDefinitions } from "@swartzrock/byok-runtime";
-
-for (const provider of byokProviderDefinitions()) {
-	console.log(provider.id, provider.label, provider.supportsModelListing);
-}
-```
 
 ### Test a Connection
 

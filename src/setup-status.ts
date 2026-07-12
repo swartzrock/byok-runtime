@@ -1,4 +1,8 @@
-import { byokProviderDefinition, isByokProviderId } from "./registry";
+import {
+	isCliProviderId as isManifestCliProviderId,
+	isCloudProviderId as isManifestCloudProviderId,
+} from "./provider-manifest";
+import { isByokProviderId } from "./registry";
 import type {
 	ByokProviderId,
 	ByokSetupStatus,
@@ -26,15 +30,11 @@ function trimValue(value: unknown): string {
 }
 
 function isCliProvider(provider: unknown): boolean {
-	return (
-		isByokProviderId(provider) && byokProviderDefinition(provider).credentialKind === "command"
-	);
+	return isByokProviderId(provider) && isManifestCliProviderId(provider);
 }
 
 function isCloudProvider(provider: unknown): boolean {
-	return (
-		isByokProviderId(provider) && byokProviderDefinition(provider).credentialKind === "api-key"
-	);
+	return isByokProviderId(provider) && isManifestCloudProviderId(provider);
 }
 
 function selectedProvider(settings: ProviderSetupStatusSettings): ProviderSetupStatusId | null {

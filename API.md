@@ -26,8 +26,6 @@ Runtime exports:
 - `ByokProvider`
 - `BYOK_PROVIDER_IDS`
 - `BYOK_PROVIDER_API_KEY_ENV_VARS`
-- `byokProviderDefinition`
-- `byokProviderDefinitions`
 - `isByokProviderId`
 - `normalizeProviderId`
 - `generateText`
@@ -37,7 +35,7 @@ Runtime exports:
 - `ByokProviderError`
 - `ByokProviderRateLimitError`
 
-Type exports include the public provider config, provider metadata, transport, model, generation, runtime, verification, and stored-settings types.
+Type exports include the public provider config, transport, model, generation, runtime, verification, and stored-settings types.
 
 ## `@swartzrock/byok-runtime/node`
 
@@ -202,17 +200,9 @@ enum ByokProvider {
 }
 ```
 
-### Provider Metadata
+### Provider Inventory
 
-Use registry helpers for settings UIs and allowlists:
-
-```ts
-for (const provider of byokProviderDefinitions()) {
-	console.log(provider.id, provider.label, provider.supportsModelListing);
-}
-```
-
-`BYOK_PROVIDER_IDS` contains provider IDs in display order. `byokProviderDefinition(id)` returns metadata for one provider. The raw provider-definition map is not exported.
+`BYOK_PROVIDER_IDS` contains the supported provider IDs in stable order. Host applications own provider presentation, form fields, and settings copy.
 
 ## Model Options
 

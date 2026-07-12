@@ -1,7 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import {
-	byokProviderDefinition,
 	generateText,
 	isByokProviderId,
 	listModels,
@@ -217,11 +216,17 @@ function parseCliArgs(
 }
 
 function isSmokeCliProvider(provider: ByokProviderId): provider is ByokCliProviderId {
-	return byokProviderDefinition(provider).credentialKind === "command";
+	return Object.hasOwn(CLI_PROVIDER_COMMANDS, provider);
 }
 
 function isSmokeCloudProvider(provider: ByokProviderId): provider is ByokCloudProviderId {
-	return byokProviderDefinition(provider).credentialKind === "api-key";
+	return (
+		provider === "anthropic" ||
+		provider === "openai" ||
+		provider === "google" ||
+		provider === "xai" ||
+		provider === "openrouter"
+	);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
