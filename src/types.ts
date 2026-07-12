@@ -35,15 +35,6 @@ export type ByokLmStudioProviderId = "lm-studio";
 
 export type ByokCliProviderId = "codex-cli" | "claude-cli";
 
-export type ByokProviderIconSource = "svgl" | "custom";
-
-export interface ByokProviderIconDefinition {
-	source: ByokProviderIconSource;
-	sourceUrl: string;
-	viewBox: string;
-	svg: string;
-}
-
 export type ByokEnvironment = Readonly<Record<string, string | undefined>>;
 
 export interface ByokEnvCredential {

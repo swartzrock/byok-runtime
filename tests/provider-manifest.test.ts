@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { BYOK_PROVIDER_ICONS } from "../src/provider-icons";
 import { BYOK_CLOUD_PROVIDER_MANIFEST, BYOK_PROVIDER_MANIFEST } from "../src/provider-manifest";
 
 describe("provider manifest", () => {
@@ -21,9 +20,6 @@ describe("provider manifest", () => {
 			"claude-cli",
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
-		for (const iconId of Object.keys(BYOK_PROVIDER_ICONS)) {
-			expect(ids).toContain(iconId);
-		}
 	});
 
 	it("preserves cloud runtime diagnostics", () => {

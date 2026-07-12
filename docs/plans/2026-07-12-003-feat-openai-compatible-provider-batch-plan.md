@@ -40,7 +40,7 @@ AIChat already treats these four services as named OpenAI-compatible providers, 
 - R5. Public provider IDs and environment-variable maps retain exact literal tuple/map types after the four additions.
 - R6. The Node provider smoke example accepts the four provider IDs and classifies them as cloud providers without depending on UI metadata.
 - R7. Published README/API documentation lists the new providers, credentials, and capabilities without claiming full OpenAI API parity.
-- R8. `provider-icons.ts` remains internal and is not expanded with new UI assets; its type and inventory test allow a valid subset of supported provider IDs while rejecting unknown IDs.
+- R8. Remove the internal `provider-icons.ts` module and its icon-only types so the runtime carries no unused provider presentation assets.
 - R9. Add a minor changeset describing the four new provider capabilities.
 
 ### Acceptance Examples
@@ -118,14 +118,14 @@ Complete U1 through U4 on `feat/openai-compatible-provider-batch`, run the full 
 - **Requirements:** R1, R2, R3, R8; AE1, AE3.
 - **Dependencies:** None.
 - **Files:** `src/types.ts`, `src/provider-manifest.ts`, `src/provider-icons.ts`, `tests/provider-manifest.test.ts`, `tests/provider-factory.test.ts`, `tests/openai-compatible-provider.test.ts`.
-- **Approach:** Add enum/union members and four cloud manifest entries; retain the common factory path; change the icon map to a partial internal record and replace exact icon parity with valid-subset coverage.
+- **Approach:** Add enum/union members and four cloud manifest entries; retain the common factory path; remove the unused internal icon module and its icon-only types.
 - **Execution note:** Strengthen the exact inventory and factory matrices first and observe failures before changing production code.
 - **Patterns to follow:** Existing xAI/OpenAI manifest entries, table-driven provider factory tests, exact diagnostic contract tests.
 - **Test scenarios:**
   - Covers AE1. Each new ID creates an OpenAI-compatible provider with its exact label, vendor, and base URL.
   - Covers AE3. Each provider accepts a standard model-list response and returns portable model options.
   - The ordered manifest contains all thirteen providers exactly once.
-  - Existing icon keys remain valid provider IDs, and absence of a new provider icon does not affect runtime completeness.
+  - Runtime completeness has no dependency on provider icon assets or icon-only types.
 - **Verification:** Focused manifest, factory, and OpenAI-compatible tests pass with no new provider transport class.
 
 ### U2. Extend credentials and provider discovery
@@ -188,7 +188,7 @@ Complete U1 through U4 on `feat/openai-compatible-provider-batch`, run the full 
 - Direct and env-backed credentials, model listing, text/object generation, connection testing, error normalization, and provider discovery work through existing runtime paths.
 - Exact provider IDs, env variables, endpoints, labels/vendors, and literal types are protected by tests.
 - The smoke CLI and published docs include all four providers.
-- No custom transport, UI metadata, or new icon asset is added.
+- No custom transport, UI metadata, or provider icon asset remains.
 - A minor changeset exists and the full local/CI verification contracts pass.
 
 ---
