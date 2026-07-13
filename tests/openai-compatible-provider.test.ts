@@ -14,7 +14,17 @@ type FetchCall = {
 };
 
 function provider(opts: {
-	id?: "anthropic" | "openai" | "google" | "xai" | "openrouter" | "lm-studio";
+	id?:
+		| "anthropic"
+		| "openai"
+		| "google"
+		| "xai"
+		| "openrouter"
+		| "groq"
+		| "mistral"
+		| "deepseek"
+		| "deepinfra"
+		| "lm-studio";
 	label?: string;
 	vendor?: string;
 	baseURL?: string;
@@ -77,6 +87,10 @@ describe("OpenAiCompatibleProvider", () => {
 		["google", "Google (Gemini)", "Google"],
 		["xai", "xAI (Grok)", "xAI"],
 		["openrouter", "OpenRouter", "OpenRouter"],
+		["groq", "Groq", "Groq"],
+		["mistral", "Mistral", "Mistral"],
+		["deepseek", "DeepSeek", "DeepSeek"],
+		["deepinfra", "DeepInfra", "DeepInfra"],
 		["lm-studio", "LM Studio", "LM Studio"],
 	] as const)("exposes provider metadata for %s", (id, label, vendor) => {
 		const p = provider({ id, label, vendor });

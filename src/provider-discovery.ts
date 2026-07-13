@@ -21,6 +21,10 @@ const CLOUD_PROVIDERS = [
 	"google",
 	"xai",
 	"openrouter",
+	"groq",
+	"mistral",
+	"deepseek",
+	"deepinfra",
 ] as const satisfies readonly ByokCloudProviderId[];
 
 export interface FindAvailableProvidersOptions {

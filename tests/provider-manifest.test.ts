@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { BYOK_PROVIDER_ICONS } from "../src/provider-icons";
 import { BYOK_CLOUD_PROVIDER_MANIFEST, BYOK_PROVIDER_MANIFEST } from "../src/provider-manifest";
 
 describe("provider manifest", () => {
@@ -11,13 +10,16 @@ describe("provider manifest", () => {
 			"google",
 			"xai",
 			"openrouter",
+			"groq",
+			"mistral",
+			"deepseek",
+			"deepinfra",
 			"ollama",
 			"lm-studio",
 			"codex-cli",
 			"claude-cli",
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
-		expect(Object.keys(BYOK_PROVIDER_ICONS).sort()).toEqual([...ids].sort());
 	});
 
 	it("preserves cloud runtime diagnostics", () => {
@@ -34,6 +36,10 @@ describe("provider manifest", () => {
 			google: { label: "Google (Gemini)", vendor: "Google" },
 			xai: { label: "xAI (Grok)", vendor: "xAI" },
 			openrouter: { label: "OpenRouter", vendor: "OpenRouter" },
+			groq: { label: "Groq", vendor: "Groq" },
+			mistral: { label: "Mistral", vendor: "Mistral" },
+			deepseek: { label: "DeepSeek", vendor: "DeepSeek" },
+			deepinfra: { label: "DeepInfra", vendor: "DeepInfra" },
 		});
 	});
 

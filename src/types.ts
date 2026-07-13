@@ -7,6 +7,10 @@ export enum ByokProvider {
 	Google = "google",
 	Xai = "xai",
 	OpenRouter = "openrouter",
+	Groq = "groq",
+	Mistral = "mistral",
+	DeepSeek = "deepseek",
+	DeepInfra = "deepinfra",
 	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
@@ -14,22 +18,22 @@ export enum ByokProvider {
 
 export type ByokProviderId = `${ByokProvider}`;
 
-export type ByokCloudProviderId = "anthropic" | "openai" | "google" | "xai" | "openrouter";
+export type ByokCloudProviderId =
+	| "anthropic"
+	| "openai"
+	| "google"
+	| "xai"
+	| "openrouter"
+	| "groq"
+	| "mistral"
+	| "deepseek"
+	| "deepinfra";
 
 export type ByokOllamaProviderId = "ollama";
 
 export type ByokLmStudioProviderId = "lm-studio";
 
 export type ByokCliProviderId = "codex-cli" | "claude-cli";
-
-export type ByokProviderIconSource = "svgl" | "custom";
-
-export interface ByokProviderIconDefinition {
-	source: ByokProviderIconSource;
-	sourceUrl: string;
-	viewBox: string;
-	svg: string;
-}
 
 export type ByokEnvironment = Readonly<Record<string, string | undefined>>;
 

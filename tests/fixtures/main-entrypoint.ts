@@ -123,12 +123,20 @@ const googleApiKey = resolveByokEnvCredential(ByokProvider.Google, {
 const anthropicEnvVars: readonly ["ANTHROPIC_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.anthropic;
 const googleEnvVars: readonly ["GOOGLE_API_KEY", "GEMINI_API_KEY"] =
 	BYOK_PROVIDER_API_KEY_ENV_VARS.google;
+const groqEnvVars: readonly ["GROQ_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.groq;
+const mistralEnvVars: readonly ["MISTRAL_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.mistral;
+const deepSeekEnvVars: readonly ["DEEPSEEK_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepseek;
+const deepInfraEnvVars: readonly ["DEEPINFRA_TOKEN"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepinfra;
 const providerIds: readonly [
 	"anthropic",
 	"openai",
 	"google",
 	"xai",
 	"openrouter",
+	"groq",
+	"mistral",
+	"deepseek",
+	"deepinfra",
 	"ollama",
 	"lm-studio",
 	"codex-cli",
@@ -145,4 +153,8 @@ void envClientText;
 void googleApiKey;
 void anthropicEnvVars;
 void googleEnvVars;
+void groqEnvVars;
+void mistralEnvVars;
+void deepSeekEnvVars;
+void deepInfraEnvVars;
 void providerIds;
