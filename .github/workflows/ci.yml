@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
   push:
     branches:
       - main
@@ -12,6 +14,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Only run on pull_request_target if the PR is from github-actions[bot]
+    if: github.event_name != 'pull_request_target' || github.actor == 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -19,3 +23,4 @@ jobs:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
       - run: bun run check
+      - run: bun run test
