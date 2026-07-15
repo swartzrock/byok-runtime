@@ -23,6 +23,12 @@ function apiKeyEnvVars(): ProviderApiKeyEnvVars {
 
 export const BYOK_PROVIDER_API_KEY_ENV_VARS = apiKeyEnvVars();
 
+type ApiKeyEnvVar = ProviderApiKeyEnvVars[keyof ProviderApiKeyEnvVars][number];
+
+export const BYOK_API_KEY_ENV_VARS = Object.values(
+	BYOK_PROVIDER_API_KEY_ENV_VARS
+).flat() as readonly ApiKeyEnvVar[];
+
 export function resolveByokEnvCredential(
 	provider: ByokCloudProviderId,
 	credential: ByokEnvCredential
