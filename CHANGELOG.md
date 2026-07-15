@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- 1fcd6bc: Expose `BYOK_API_KEY_ENV_VARS` as a flat list of supported API-key environment variables.
+
 ## 2.0.0
 
 ### Major Changes
