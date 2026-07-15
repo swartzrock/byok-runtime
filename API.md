@@ -25,6 +25,7 @@ Runtime exports:
 
 - `ByokProvider`
 - `BYOK_PROVIDER_IDS`
+- `BYOK_API_KEY_ENV_VARS`
 - `BYOK_PROVIDER_API_KEY_ENV_VARS`
 - `isByokProviderId`
 - `normalizeProviderId`
@@ -124,7 +125,7 @@ const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
 });
 ```
 
-`BYOK_PROVIDER_API_KEY_ENV_VARS` contains the standard cloud-provider names: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, OpenRouter `OPENROUTER_API_KEY`, Groq `GROQ_API_KEY`, Mistral `MISTRAL_API_KEY`, DeepSeek `DEEPSEEK_API_KEY`, and DeepInfra `DEEPINFRA_TOKEN`.
+`BYOK_API_KEY_ENV_VARS` contains the supported names as a flat, stably ordered list for callers that need to inspect or filter environment keys. `BYOK_PROVIDER_API_KEY_ENV_VARS` groups the same names by cloud provider and preserves credential fallback order: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, OpenRouter `OPENROUTER_API_KEY`, Groq `GROQ_API_KEY`, Mistral `MISTRAL_API_KEY`, DeepSeek `DEEPSEEK_API_KEY`, and DeepInfra `DEEPINFRA_TOKEN`.
 
 ## Node Runtime
 

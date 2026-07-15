@@ -8,6 +8,7 @@ import {
 	resolveByokEnvCredential,
 	type ByokHttpClient,
 	type ByokProviderDeps,
+	type BYOK_API_KEY_ENV_VARS,
 } from "../../src";
 
 const http: ByokHttpClient = async () => ({
@@ -120,6 +121,9 @@ const googleApiKey = resolveByokEnvCredential(ByokProvider.Google, {
 	source: "env",
 	env,
 });
+const supportedApiKeyEnvVar: (typeof BYOK_API_KEY_ENV_VARS)[number] = "OPENAI_API_KEY";
+// @ts-expect-error Unsupported names are excluded from the literal env-key union.
+const unsupportedApiKeyEnvVar: (typeof BYOK_API_KEY_ENV_VARS)[number] = "UNSUPPORTED_API_KEY";
 const anthropicEnvVars: readonly ["ANTHROPIC_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.anthropic;
 const googleEnvVars: readonly ["GOOGLE_API_KEY", "GEMINI_API_KEY"] =
 	BYOK_PROVIDER_API_KEY_ENV_VARS.google;
@@ -151,6 +155,8 @@ void envModelOptions;
 void clientText;
 void envClientText;
 void googleApiKey;
+void supportedApiKeyEnvVar;
+void unsupportedApiKeyEnvVar;
 void anthropicEnvVars;
 void googleEnvVars;
 void groqEnvVars;

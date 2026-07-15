@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	ByokProviderError,
+	BYOK_API_KEY_ENV_VARS,
 	BYOK_PROVIDER_API_KEY_ENV_VARS,
 	resolveByokEnvCredential,
 	type ByokEnvCredential,
@@ -66,5 +67,21 @@ describe("BYOK env credentials", () => {
 		});
 		expect("ollama" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
 		expect("lm-studio" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
+	});
+
+	it("exports the supported API-key environment variables as a flat list", () => {
+		expect(BYOK_API_KEY_ENV_VARS).toEqual(Object.values(BYOK_PROVIDER_API_KEY_ENV_VARS).flat());
+		expect(BYOK_API_KEY_ENV_VARS).toEqual([
+			"ANTHROPIC_API_KEY",
+			"OPENAI_API_KEY",
+			"GOOGLE_API_KEY",
+			"GEMINI_API_KEY",
+			"XAI_API_KEY",
+			"OPENROUTER_API_KEY",
+			"GROQ_API_KEY",
+			"MISTRAL_API_KEY",
+			"DEEPSEEK_API_KEY",
+			"DEEPINFRA_TOKEN",
+		]);
 	});
 });
