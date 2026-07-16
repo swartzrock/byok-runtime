@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Ideation: OpenAI-Compatible Provider Expansion</title>
+		<style>
+			:root {
+				--bg: #f6f3ed;
+				--paper: #fffdf8;
+				--ink: #18201d;
+				--muted: #59645f;
+				--line: #d8d4ca;
+				--accent: #0b6b57;
+				--accent-soft: #dff1eb;
+				--accent-text: #07483b;
+				--blue-soft: #e4edf8;
+				--blue-text: #274663;
+				--gold-soft: #f7edca;
+				--gold-text: #664d00;
+				--rose-soft: #f8e6e2;
+				--rose-text: #6e332a;
+				--shadow: 0 12px 34px rgba(35, 48, 42, 0.08);
+				--radius: 18px;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html {
+				scroll-behavior: smooth;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--ink);
+				font:
+					15px/1.58 ui-sans-serif,
+					-apple-system,
+					BlinkMacSystemFont,
+					"Segoe UI",
+					sans-serif;
+			}
+			a {
+				color: var(--accent);
+				text-underline-offset: 3px;
+			}
+			code {
+				font:
+					0.91em/1.4 ui-monospace,
+					SFMono-Regular,
+					Menlo,
+					Consolas,
+					monospace;
+				background: #eeeae1;
+				border-radius: 5px;
+				padding: 0.08rem 0.32rem;
+			}
+			.page {
+				width: min(94vw, 960px);
+				margin: 0 auto;
+				padding: 42px 0 72px;
+			}
+			header.hero {
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: 24px;
+				padding: 34px;
+				box-shadow: var(--shadow);
+			}
+			.eyebrow {
+				margin: 0 0 8px;
+				color: var(--accent);
+				font-size: 0.75rem;
+				font-weight: 800;
+				letter-spacing: 0.13em;
+				text-transform: uppercase;
+			}
+			h1,
+			h2,
+			h3 {
+				line-height: 1.18;
+				letter-spacing: -0.025em;
+			}
+			h1 {
+				margin: 0;
+				font-size: clamp(2rem, 5vw, 3.25rem);
+				max-width: 19ch;
+			}
+			h2 {
+				margin: 0 0 16px;
+				font-size: 1.62rem;
+			}
+			h3 {
+				margin: 0;
+				font-size: 1.24rem;
+			}
+			.lede {
+				max-width: 70ch;
+				margin: 18px 0 0;
+				color: var(--muted);
+				font-size: 1.05rem;
+			}
+			.metadata,
+			.stats,
+			.chips {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 9px;
+			}
+			.metadata {
+				margin-top: 22px;
+			}
+			.chip,
+			.stat {
+				display: inline-flex;
+				align-items: center;
+				border: 1px solid transparent;
+				border-radius: 999px;
+				font-size: 0.78rem;
+				font-weight: 750;
+			}
+			.chip {
+				padding: 6px 10px;
+				background: var(--accent-soft);
+				color: var(--accent-text);
+			}
+			.chip.blue {
+				background: var(--blue-soft);
+				color: var(--blue-text);
+			}
+			.chip.gold {
+				background: var(--gold-soft);
+				color: var(--gold-text);
+			}
+			.chip.rose {
+				background: var(--rose-soft);
+				color: var(--rose-text);
+			}
+			.stats {
+				margin-top: 22px;
+			}
+			.stat {
+				min-width: 125px;
+				padding: 11px 14px;
+				background: #f3f0e8;
+				color: var(--ink);
+			}
+			.stat b {
+				font-size: 1.2rem;
+				margin-right: 7px;
+			}
+			nav.toc {
+				margin: 18px 0 0;
+				padding: 14px 18px;
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: rgba(255, 253, 248, 0.8);
+			}
+			nav.toc a {
+				margin-right: 17px;
+				font-size: 0.9rem;
+				font-weight: 700;
+			}
+			section {
+				margin-top: 44px;
+				scroll-margin-top: 20px;
+			}
+			.section-intro {
+				max-width: 72ch;
+				color: var(--muted);
+				margin: -5px 0 20px;
+			}
+			.callout {
+				border-radius: var(--radius);
+				padding: 19px 21px;
+				background: var(--accent-soft);
+				color: var(--accent-text);
+				margin: 20px 0;
+			}
+			.callout.warn {
+				background: var(--gold-soft);
+				color: var(--gold-text);
+			}
+			.callout p {
+				margin: 0;
+				max-width: 72ch;
+			}
+			.table-wrap {
+				overflow-x: auto;
+				border: 1px solid var(--line);
+				border-radius: 16px;
+				background: var(--paper);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 0.87rem;
+			}
+			th,
+			td {
+				padding: 11px 12px;
+				text-align: left;
+				vertical-align: top;
+				border-bottom: 1px solid var(--line);
+			}
+			th {
+				color: var(--muted);
+				font-size: 0.72rem;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				background: #f1eee7;
+			}
+			tr:last-child td {
+				border-bottom: 0;
+			}
+			.provider {
+				font-weight: 800;
+				white-space: nowrap;
+			}
+			.small {
+				font-size: 0.82rem;
+				color: var(--muted);
+			}
+			.axes {
+				display: grid;
+				gap: 10px;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			}
+			.axis {
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				padding: 15px;
+			}
+			.axis b {
+				display: block;
+				margin-bottom: 3px;
+			}
+			.jump-list {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 8px;
+				margin: 0 0 20px;
+				padding: 0;
+				list-style: none;
+			}
+			.jump-list a {
+				display: block;
+				padding: 10px 12px;
+				border: 1px solid var(--line);
+				border-radius: 11px;
+				background: var(--paper);
+				font-weight: 700;
+				text-decoration: none;
+			}
+			.idea {
+				margin: 16px 0;
+				padding: 24px;
+				background: var(--paper);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				scroll-margin-top: 20px;
+			}
+			.idea-head {
+				display: flex;
+				gap: 13px;
+				align-items: flex-start;
+			}
+			.rank {
+				flex: 0 0 auto;
+				display: grid;
+				place-items: center;
+				width: 35px;
+				height: 35px;
+				border-radius: 50%;
+				background: var(--accent);
+				color: white;
+				font-weight: 850;
+			}
+			.idea .chips {
+				margin-top: 10px;
+			}
+			.idea p {
+				max-width: 74ch;
+			}
+			.fields {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr);
+				gap: 10px;
+				margin-top: 16px;
+			}
+			.field {
+				border-radius: 12px;
+				padding: 13px 15px;
+				background: #f3f0e8;
+			}
+			.field dt {
+				color: var(--muted);
+				font-size: 0.72rem;
+				font-weight: 850;
+				letter-spacing: 0.09em;
+				text-transform: uppercase;
+			}
+			.field dd {
+				margin: 4px 0 0;
+			}
+			.diagram {
+				margin: 19px 0 3px;
+				padding: 15px;
+				border-radius: 15px;
+				background: #f2f0e9;
+				overflow-x: auto;
+			}
+			.diagram svg {
+				display: block;
+				min-width: 660px;
+				width: 100%;
+				height: auto;
+			}
+			.diagram figcaption {
+				margin-top: 8px;
+				color: var(--muted);
+				font-size: 0.8rem;
+			}
+			.sources {
+				columns: 2;
+				column-gap: 30px;
+			}
+			.sources li {
+				break-inside: avoid;
+				margin: 0 0 8px;
+			}
+			footer.composition-signal {
+				margin-top: 48px;
+				padding-top: 18px;
+				border-top: 1px solid var(--line);
+				color: var(--muted);
+				font-size: 0.78rem;
+			}
+			@media (max-width: 700px) {
+				.page {
+					width: min(94vw, 960px);
+					padding-top: 18px;
+				}
+				header.hero,
+				.idea {
+					padding: 21px;
+				}
+				.sources {
+					columns: 1;
+				}
+				nav.toc a {
+					display: inline-block;
+					margin-bottom: 6px;
+				}
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--bg: #111815;
+					--paper: #18211d;
+					--ink: #edf3ef;
+					--muted: #a9b7b0;
+					--line: #34423b;
+					--accent: #66d2b4;
+					--accent-soft: #173d34;
+					--accent-text: #a7ead5;
+					--blue-soft: #203346;
+					--blue-text: #bad4ee;
+					--gold-soft: #44391c;
+					--gold-text: #f4dc88;
+					--rose-soft: #452b2a;
+					--rose-text: #f1b9b1;
+					--shadow: none;
+				}
+				code,
+				.stat,
+				.field,
+				.diagram,
+				th {
+					background: #202a25;
+				}
+				nav.toc {
+					background: rgba(24, 33, 29, 0.86);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main class="page">
+			<header class="hero">
+				<p class="eyebrow">Repo-grounded ideation</p>
+				<h1>OpenAI-Compatible Provider Expansion</h1>
+				<p class="lede">
+					A current inventory of BYOK Runtime’s 13 providers and a ranked direction for adding 15
+					more APIs without confusing “OpenAI-compatible chat” with a complete, usable
+					model-selection contract.
+				</p>
+				<div class="metadata">
+					<span class="chip">Date · <time datetime="2026-07-16">2026-07-16</time></span>
+					<span class="chip blue">Topic · openai-compatible-provider-expansion</span>
+					<span class="chip gold">Mode · repo-grounded</span>
+				</div>
+				<p class="small">
+					<strong>Focus:</strong> list all currently supported APIs and recommend roughly 12–24 more
+					that can generate text and list models through the OpenAI-library path or one narrowly
+					defined catalog adapter.
+				</p>
+				<div class="stats">
+					<span class="stat"><b>13</b> current</span>
+					<span class="stat"><b>15</b> recommended</span>
+					<span class="stat"><b>7</b> ranked ideas</span>
+					<span class="stat"><b>5</b> topic axes</span>
+				</div>
+			</header>
+
+			<nav class="toc" aria-label="Document navigation">
+				<a href="#grounding-context">Grounding Context</a>
+				<a href="#topic-axes">Topic Axes</a>
+				<a href="#ranked-ideas">Ranked Ideas</a>
+				<a href="#rejection-summary">Rejection Summary</a>
+				<a href="#sources">Sources</a>
+			</nav>
+
+			<section id="grounding-context">
+				<p class="eyebrow">What the repository and current docs establish</p>
+				<h2>Grounding Context</h2>
+				<p class="section-intro">
+					BYOK Runtime’s reusable compatibility floor is narrow and useful: send one text prompt
+					through OpenAI-style chat completions and populate a portable model picker. The provider
+					matrix should be evaluated against those operations independently.
+				</p>
+
+				<div class="callout">
+					<p>
+						<strong>Minimum contract:</strong> generation calls
+						<code>chat.completions.create({ model, messages })</code> and extracts assistant text;
+						discovery yields model entries with a nonblank <code>id</code>, normalized to
+						<code>{ id, label }</code>. Bearer auth and <code>{baseURL}/models</code> are defaults,
+						not universal truths.
+					</p>
+				</div>
+
+				<h3>Currently supported providers</h3>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Provider</th>
+								<th>Family</th>
+								<th>Generation / discovery path</th>
+								<th>Credential or endpoint</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td class="provider">Anthropic</td>
+								<td>Cloud</td>
+								<td>Shared cloud runtime; model listing uses Anthropic headers</td>
+								<td>
+									<code>ANTHROPIC_API_KEY</code><br /><span class="small"
+										>api.anthropic.com/v1</span
+									>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">OpenAI</td>
+								<td>Cloud</td>
+								<td>OpenAI chat completions + models</td>
+								<td>
+									<code>OPENAI_API_KEY</code><br /><span class="small">api.openai.com/v1</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">Google Gemini</td>
+								<td>Cloud</td>
+								<td>Google’s OpenAI compatibility surface</td>
+								<td>
+									<code>GOOGLE_API_KEY</code> / <code>GEMINI_API_KEY</code><br /><span class="small"
+										>generativelanguage.googleapis.com/v1beta/openai</span
+									>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">xAI</td>
+								<td>Cloud</td>
+								<td>OpenAI-compatible chat + models</td>
+								<td><code>XAI_API_KEY</code><br /><span class="small">api.x.ai/v1</span></td>
+							</tr>
+							<tr>
+								<td class="provider">OpenRouter</td>
+								<td>Gateway</td>
+								<td>OpenAI-compatible chat + rich model catalog</td>
+								<td>
+									<code>OPENROUTER_API_KEY</code><br /><span class="small"
+										>openrouter.ai/api/v1</span
+									>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">Groq</td>
+								<td>Cloud</td>
+								<td>OpenAI-compatible chat + models</td>
+								<td>
+									<code>GROQ_API_KEY</code><br /><span class="small">api.groq.com/openai/v1</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">Mistral</td>
+								<td>Cloud</td>
+								<td>OpenAI-compatible chat + models</td>
+								<td>
+									<code>MISTRAL_API_KEY</code><br /><span class="small">api.mistral.ai/v1</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">DeepSeek</td>
+								<td>Cloud</td>
+								<td>OpenAI-compatible chat + models</td>
+								<td>
+									<code>DEEPSEEK_API_KEY</code><br /><span class="small">api.deepseek.com</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">DeepInfra</td>
+								<td>Cloud</td>
+								<td>OpenAI-compatible chat; catalog behavior deserves separate proof</td>
+								<td>
+									<code>DEEPINFRA_TOKEN</code><br /><span class="small"
+										>api.deepinfra.com/v1/openai</span
+									>
+								</td>
+							</tr>
+							<tr>
+								<td class="provider">Ollama</td>
+								<td>Local server</td>
+								<td>Native <code>/api/generate</code> + <code>/api/tags</code></td>
+								<td><span class="small">localhost:11434</span></td>
+							</tr>
+							<tr>
+								<td class="provider">LM Studio</td>
+								<td>Local server</td>
+								<td>OpenAI-compatible chat + models</td>
+								<td><span class="small">localhost:1234/v1</span></td>
+							</tr>
+							<tr>
+								<td class="provider">Codex CLI</td>
+								<td>Node CLI</td>
+								<td>Local command; models from <code>codex debug models</code></td>
+								<td>Authenticated Codex session</td>
+							</tr>
+							<tr>
+								<td class="provider">Claude CLI</td>
+								<td>Node CLI</td>
+								<td>Local command; Anthropic IDs derived from public OpenRouter catalog</td>
+								<td>Authenticated Claude session</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h3 style="margin-top: 28px">Recommended provider portfolio</h3>
+				<p class="section-intro">
+					These are evidence-backed recommendations, not claims of live conformance. “Documented
+					candidate” means official docs cover the required surface; each still needs the admission
+					certificate in Ranked Idea 2.
+				</p>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Provider</th>
+								<th>Lane</th>
+								<th>Generation base</th>
+								<th>Model discovery</th>
+								<th>Current recommendation</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td class="provider">Together AI</td>
+								<td>Direct</td>
+								<td><code>api.together.ai/v1</code></td>
+								<td>OpenAI SDK <code>models.list</code> documented</td>
+								<td>High-priority documented candidate; verify exact wire shape</td>
+							</tr>
+							<tr>
+								<td class="provider">Cerebras</td>
+								<td>Direct</td>
+								<td><code>api.cerebras.ai/v1</code></td>
+								<td><code>GET /v1/models</code></td>
+								<td>High-priority; exact two-operation fit</td>
+							</tr>
+							<tr>
+								<td class="provider">SambaNova Cloud</td>
+								<td>Direct</td>
+								<td><code>api.sambanova.ai/v1</code></td>
+								<td>OpenAI-shaped model list documented</td>
+								<td>High-priority; credentialed probe needed</td>
+							</tr>
+							<tr>
+								<td class="provider">Novita AI</td>
+								<td>Direct</td>
+								<td><code>api.novita.ai/openai</code></td>
+								<td>Models API documented</td>
+								<td>Recommended; verify base-path joining</td>
+							</tr>
+							<tr>
+								<td class="provider">MiniMax</td>
+								<td>Direct</td>
+								<td><code>api.minimax.io/v1</code></td>
+								<td>Models endpoint documented</td>
+								<td>Incubator; newer compatibility surface</td>
+							</tr>
+							<tr>
+								<td class="provider">SiliconFlow</td>
+								<td>Direct</td>
+								<td><code>api.siliconflow.com/v1</code></td>
+								<td><code>GET /v1/models</code></td>
+								<td>High-priority; text filtering available</td>
+							</tr>
+							<tr>
+								<td class="provider">NVIDIA API Catalog / NIM</td>
+								<td>Direct / self-hosted</td>
+								<td><code>integrate.api.nvidia.com/v1</code> or NIM URL</td>
+								<td><code>GET /v1/models</code></td>
+								<td>High-value; verify entitlements and duplicates</td>
+							</tr>
+							<tr>
+								<td class="provider">Hugging Face Inference Providers</td>
+								<td>Gateway</td>
+								<td><code>router.huggingface.co/v1</code></td>
+								<td><code>GET /v1/models</code> with provider metadata</td>
+								<td>High-priority; broad routed catalog</td>
+							</tr>
+							<tr>
+								<td class="provider">Nebius Token Factory</td>
+								<td>Direct</td>
+								<td><code>api.tokenfactory.nebius.com/v1</code></td>
+								<td>OpenAI-shaped <code>data</code> list</td>
+								<td>High-priority; clean documented fit</td>
+							</tr>
+							<tr>
+								<td class="provider">Scaleway Generative APIs</td>
+								<td>Direct</td>
+								<td><code>api.scaleway.ai/v1</code></td>
+								<td><code>GET /v1/models</code></td>
+								<td>High-priority; sovereign EU option</td>
+							</tr>
+							<tr>
+								<td class="provider">Vercel AI Gateway</td>
+								<td>Gateway</td>
+								<td><code>ai-gateway.vercel.sh/v1</code></td>
+								<td>OpenAI-compatible catalog documented</td>
+								<td>Recommended as leverage multiplier</td>
+							</tr>
+							<tr>
+								<td class="provider">AWS Bedrock Mantle</td>
+								<td>Gateway</td>
+								<td>Region/account-specific OpenAI endpoint</td>
+								<td>OpenAI-compatible models surface documented</td>
+								<td>Incubator; endpoint construction needs design</td>
+							</tr>
+							<tr>
+								<td class="provider">Fireworks AI</td>
+								<td>Catalog adapter</td>
+								<td><code>api.fireworks.ai/inference/v1</code></td>
+								<td><code>/v1/accounts/{account}/models</code>, native shape</td>
+								<td>Recommend after bounded catalog seam</td>
+							</tr>
+							<tr>
+								<td class="provider">GitHub Models</td>
+								<td>Catalog adapter</td>
+								<td><code>models.github.ai/inference</code></td>
+								<td><code>models.github.ai/catalog/models</code>, native array</td>
+								<td>Recommend after catalog seam</td>
+							</tr>
+							<tr>
+								<td class="provider">Cloudflare Workers AI</td>
+								<td>Catalog adapter</td>
+								<td>Account-scoped <code>/ai/v1</code></td>
+								<td>Cloudflare-native catalog</td>
+								<td>Recommend after account/catalog seam</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="callout warn">
+					<p>
+						<strong>Verification queue, not main recommendations:</strong> Z.AI, Hyperbolic,
+						Moonshot/Kimi, Perplexity, Azure OpenAI, DashScope, and Chutes. Text-generation
+						compatibility is plausible or documented, but model-list behavior still needs
+						authoritative confirmation or a live proof matching BYOK’s needs.
+					</p>
+				</div>
+			</section>
+
+			<section id="topic-axes">
+				<p class="eyebrow">Surface coverage</p>
+				<h2>Topic Axes</h2>
+				<div class="axes">
+					<div class="axis">
+						<b>Current inventory and compatibility contract</b
+						><span class="small">What support means today, operation by operation.</span>
+					</div>
+					<div class="axis">
+						<b>Drop-in provider expansion</b
+						><span class="small">APIs that should reuse the shared OpenAI client.</span>
+					</div>
+					<div class="axis">
+						<b>Adapter-required provider expansion</b
+						><span class="small">Catalog URLs, auth, and response shapes that diverge.</span>
+					</div>
+					<div class="axis">
+						<b>Verification and catalog quality</b
+						><span class="small">Proof that listed models really generate text.</span>
+					</div>
+					<div class="axis">
+						<b>Rollout and maintenance</b
+						><span class="small">How a 28-provider matrix stays coherent.</span>
+					</div>
+				</div>
+			</section>
+
+			<section id="ranked-ideas">
+				<p class="eyebrow">7 survivors from 20 consolidated candidates</p>
+				<h2>Ranked Ideas</h2>
+				<ul class="jump-list">
+					<li><a href="#idea-1">1. Compatibility-led 15-provider program</a></li>
+					<li><a href="#idea-2">2. Executable admission certificates</a></li>
+					<li><a href="#idea-3">3. Bounded catalog strategy seam</a></li>
+					<li><a href="#idea-4">4. Manifest as expansion engine</a></li>
+					<li><a href="#idea-5">5. Evidence tiers and hold queue</a></li>
+					<li><a href="#idea-6">6. Failure-domain rollout trains</a></li>
+					<li><a href="#idea-7">7. Generic custom endpoint</a></li>
+				</ul>
+
+				<article class="idea" id="idea-1">
+					<div class="idea-head">
+						<span class="rank">1</span>
+						<div>
+							<h3>Compatibility-led 15-provider expansion program</h3>
+							<div class="chips">
+								<span class="chip">Axis · Current contract</span
+								><span class="chip blue">Confidence · 88%</span
+								><span class="chip gold">Complexity · Medium</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Make the 13-provider compatibility ledger the front door,
+						then pursue 12 documented same-family candidates and three catalog-adapter candidates.
+						Label direct vendors, gateways, local servers, and CLI adapters explicitly;
+						documentation earns candidacy, while live admission certificates earn support.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> <code>src/provider-manifest.ts</code>,
+								<code>src/providers/openai-compatible-provider.ts</code>, and the README establish
+								the current 13-provider families and the two-operation subset.
+								<strong>external:</strong> official docs support the 15-provider candidate portfolio
+								shown above, with catalog caveats preserved.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								This meets the requested provider breadth without treating every “OpenAI-compatible”
+								claim as identical. It also gives future provider research a reusable decision
+								system instead of another one-off list.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								The portfolio is documentation-qualified, not credentialed proof. Some candidates
+								may move lanes or drop out after smoke testing.
+							</dd>
+						</div>
+					</dl>
+					<figure class="diagram">
+						<svg
+							viewBox="0 0 760 205"
+							role="img"
+							aria-label="Compatibility ledger routes candidates into drop-in, adapter, or verification lanes"
+						>
+							<defs>
+								<marker
+									id="arrow1"
+									markerWidth="8"
+									markerHeight="8"
+									refX="7"
+									refY="4"
+									orient="auto"
+								>
+									<path d="M0,0 L8,4 L0,8 Z" fill="#0b6b57" />
+								</marker>
+							</defs>
+							<rect x="18" y="68" width="160" height="70" rx="14" fill="#dff1eb" stroke="#0b6b57" />
+							<text
+								x="98"
+								y="94"
+								text-anchor="middle"
+								font-size="15"
+								font-weight="700"
+								fill="#07483b"
+							>
+								Compatibility ledger
+							</text>
+							<text x="98" y="116" text-anchor="middle" font-size="12" fill="#07483b">
+								chat + models, separately
+							</text>
+							<path d="M178 103 H246" stroke="#0b6b57" stroke-width="3" marker-end="url(#arrow1)" />
+							<rect
+								x="265"
+								y="16"
+								width="210"
+								height="50"
+								rx="12"
+								fill="#e4edf8"
+								stroke="#587a9d"
+							/>
+							<text
+								x="370"
+								y="46"
+								text-anchor="middle"
+								font-size="14"
+								font-weight="700"
+								fill="#274663"
+							>
+								12 documented same-family
+							</text>
+							<rect
+								x="265"
+								y="78"
+								width="210"
+								height="50"
+								rx="12"
+								fill="#f7edca"
+								stroke="#9a7a19"
+							/>
+							<text
+								x="370"
+								y="108"
+								text-anchor="middle"
+								font-size="14"
+								font-weight="700"
+								fill="#664d00"
+							>
+								3 catalog adapters
+							</text>
+							<rect
+								x="265"
+								y="140"
+								width="210"
+								height="50"
+								rx="12"
+								fill="#f8e6e2"
+								stroke="#a35a50"
+							/>
+							<text
+								x="370"
+								y="170"
+								text-anchor="middle"
+								font-size="14"
+								font-weight="700"
+								fill="#6e332a"
+							>
+								verification queue
+							</text>
+							<path d="M475 41 H550" stroke="#0b6b57" stroke-width="3" marker-end="url(#arrow1)" />
+							<path d="M475 103 H550" stroke="#0b6b57" stroke-width="3" marker-end="url(#arrow1)" />
+							<path d="M475 165 H550" stroke="#0b6b57" stroke-width="3" marker-end="url(#arrow1)" />
+							<rect
+								x="570"
+								y="68"
+								width="170"
+								height="70"
+								rx="14"
+								fill="#dff1eb"
+								stroke="#0b6b57"
+							/>
+							<text
+								x="655"
+								y="96"
+								text-anchor="middle"
+								font-size="15"
+								font-weight="700"
+								fill="#07483b"
+							>
+								Support promise
+							</text>
+							<text x="655" y="118" text-anchor="middle" font-size="12" fill="#07483b">
+								only after live proof
+							</text>
+						</svg>
+						<figcaption>
+							Directional overview: provider names enter through an operation-level contract, not a
+							blanket compatibility badge.
+						</figcaption>
+					</figure>
+				</article>
+
+				<article class="idea" id="idea-2">
+					<div class="idea-head">
+						<span class="rank">2</span>
+						<div>
+							<h3>Executable list-then-generate admission certificates</h3>
+							<div class="chips">
+								<span class="chip">Axis · Verification</span
+								><span class="chip blue">Confidence · 94%</span
+								><span class="chip gold">Complexity · Medium</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Require each candidate to authenticate, list models,
+						select a documented chat-capable ID, and generate plain text using that exact result.
+						Store endpoint, catalog shape, tested model, verification date, and outcome as a
+						compatibility receipt; structured-object behavior is a separate capability, not the
+						admission floor.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> BYOK exposes separate <code>models</code> and
+								<code>generate</code> smoke commands, while <code>testConnection()</code> currently
+								requires JSON-object generation beyond the requested text floor.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								The sequence catches both false positives: a catalog with no usable chat model and a
+								chat-compatible API with a broken model picker. Dated receipts make later
+								re-verification targeted.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Live testing requires credentials, billable calls, model-selection rules, and
+								maintenance when catalogs deprecate IDs.
+							</dd>
+						</div>
+					</dl>
+					<figure class="diagram">
+						<svg
+							viewBox="0 0 760 150"
+							role="img"
+							aria-label="Admission certificate flow from authentication through model listing and text generation to a receipt"
+						>
+							<defs>
+								<marker
+									id="arrow2"
+									markerWidth="8"
+									markerHeight="8"
+									refX="7"
+									refY="4"
+									orient="auto"
+								>
+									<path d="M0,0 L8,4 L0,8 Z" fill="#0b6b57" />
+								</marker>
+							</defs>
+							<g font-family="ui-sans-serif, sans-serif" font-size="13" text-anchor="middle">
+								<rect
+									x="15"
+									y="44"
+									width="120"
+									height="54"
+									rx="12"
+									fill="#e4edf8"
+									stroke="#587a9d"
+								/>
+								<text x="75" y="76" fill="#274663" font-weight="700">Authenticate</text>
+								<path
+									d="M135 71 H172"
+									stroke="#0b6b57"
+									stroke-width="3"
+									marker-end="url(#arrow2)"
+								/>
+								<rect
+									x="190"
+									y="44"
+									width="120"
+									height="54"
+									rx="12"
+									fill="#dff1eb"
+									stroke="#0b6b57"
+								/>
+								<text x="250" y="68" fill="#07483b" font-weight="700">GET models</text>
+								<text x="250" y="85" fill="#07483b" font-size="11">normalize IDs</text>
+								<path
+									d="M310 71 H347"
+									stroke="#0b6b57"
+									stroke-width="3"
+									marker-end="url(#arrow2)"
+								/>
+								<rect
+									x="365"
+									y="44"
+									width="120"
+									height="54"
+									rx="12"
+									fill="#f7edca"
+									stroke="#9a7a19"
+								/>
+								<text x="425" y="68" fill="#664d00" font-weight="700">Select chat ID</text>
+								<text x="425" y="85" fill="#664d00" font-size="11">same catalog result</text>
+								<path
+									d="M485 71 H522"
+									stroke="#0b6b57"
+									stroke-width="3"
+									marker-end="url(#arrow2)"
+								/>
+								<rect
+									x="540"
+									y="44"
+									width="120"
+									height="54"
+									rx="12"
+									fill="#dff1eb"
+									stroke="#0b6b57"
+								/>
+								<text x="600" y="68" fill="#07483b" font-weight="700">POST chat</text>
+								<text x="600" y="85" fill="#07483b" font-size="11">plain text</text>
+								<path
+									d="M660 71 H687"
+									stroke="#0b6b57"
+									stroke-width="3"
+									marker-end="url(#arrow2)"
+								/>
+								<rect
+									x="703"
+									y="31"
+									width="45"
+									height="80"
+									rx="8"
+									fill="#fffdf8"
+									stroke="#0b6b57"
+								/>
+								<text x="725" y="65" fill="#07483b" font-size="10">dated</text>
+								<text x="725" y="80" fill="#07483b" font-size="10">receipt</text>
+							</g>
+						</svg>
+						<figcaption>
+							The catalog result itself must drive a successful text request; prose documentation
+							alone does not certify support.
+						</figcaption>
+					</figure>
+				</article>
+
+				<article class="idea" id="idea-3">
+					<div class="idea-head">
+						<span class="rank">3</span>
+						<div>
+							<h3>One bounded model-catalog strategy seam</h3>
+							<div class="chips">
+								<span class="chip">Axis · Adapter-required</span
+								><span class="chip blue">Confidence · 92%</span
+								><span class="chip gold">Complexity · Medium</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Preserve OpenAI-client generation, but let the manifest
+						select a narrow model-list strategy: URL or path, required headers/account parameters,
+						response shape, optional pagination, and normalization. This unlocks Fireworks, GitHub
+						Models, and Cloudflare without creating three provider transports.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> the internal provider config already exposes
+								<code>listModelsImpl</code>, <code>requestHeaders</code>, and
+								<code>normalizeModel</code>; the public manifest exposes only one base URL and two
+								small enums. <strong>external:</strong> the three candidate catalogs diverge exactly
+								at this operation.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								Model discovery is the common incompatibility. Spending one abstraction there
+								captures the value without generalizing the entire request stack.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Account-scoped URLs may require new provider configuration fields. Pagination and
+								filtering can turn a “small strategy” into a mini framework if not tightly bounded.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-4">
+					<div class="idea-head">
+						<span class="rank">4</span>
+						<div>
+							<h3>Make the manifest the provider expansion engine</h3>
+							<div class="chips">
+								<span class="chip">Axis · Rollout</span
+								><span class="chip blue">Confidence · 91%</span
+								><span class="chip gold">Complexity · Medium</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Before multiplying providers, derive or mechanically
+						validate discovery order, credential maps, public inventories, smoke-test matrices, and
+						provider documentation from the manifest. Keep repeated lists only when they are
+						intentional public contracts.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> the registry and credential maps already derive from the
+								manifest, but <code>provider-discovery.ts</code>, exact-array tests, fixtures,
+								README/API tables, and release metadata still repeat the provider inventory.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								Without this, adding 15 providers is mostly synchronized bookkeeping. A stronger
+								manifest makes the first expansion compound into cheaper, safer future additions.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Not every artifact should be generated, and exact public ordering still deserves
+								explicit tests. Over-generation can make docs harder to curate.
+							</dd>
+						</div>
+					</dl>
+					<figure class="diagram">
+						<svg
+							viewBox="0 0 760 205"
+							role="img"
+							aria-label="One provider manifest feeds runtime, discovery, tests, smoke matrix, and documentation"
+						>
+							<defs>
+								<marker
+									id="arrow4"
+									markerWidth="8"
+									markerHeight="8"
+									refX="7"
+									refY="4"
+									orient="auto"
+								>
+									<path d="M0,0 L8,4 L0,8 Z" fill="#0b6b57" />
+								</marker>
+							</defs>
+							<rect
+								x="285"
+								y="68"
+								width="190"
+								height="68"
+								rx="15"
+								fill="#dff1eb"
+								stroke="#0b6b57"
+							/>
+							<text
+								x="380"
+								y="96"
+								text-anchor="middle"
+								font-size="15"
+								font-weight="700"
+								fill="#07483b"
+							>
+								Provider manifest
+							</text>
+							<text x="380" y="118" text-anchor="middle" font-size="12" fill="#07483b">
+								identity + per-operation strategy
+							</text>
+							<g font-size="12" text-anchor="middle" font-family="ui-sans-serif, sans-serif">
+								<rect
+									x="25"
+									y="16"
+									width="135"
+									height="44"
+									rx="10"
+									fill="#e4edf8"
+									stroke="#587a9d"
+								/>
+								<text x="92" y="42" fill="#274663" font-weight="700">Runtime factory</text>
+								<rect
+									x="25"
+									y="145"
+									width="135"
+									height="44"
+									rx="10"
+									fill="#e4edf8"
+									stroke="#587a9d"
+								/>
+								<text x="92" y="171" fill="#274663" font-weight="700">Discovery order</text>
+								<rect
+									x="600"
+									y="16"
+									width="135"
+									height="44"
+									rx="10"
+									fill="#f7edca"
+									stroke="#9a7a19"
+								/>
+								<text x="667" y="42" fill="#664d00" font-weight="700">Contract tests</text>
+								<rect
+									x="600"
+									y="80"
+									width="135"
+									height="44"
+									rx="10"
+									fill="#f7edca"
+									stroke="#9a7a19"
+								/>
+								<text x="667" y="106" fill="#664d00" font-weight="700">Smoke matrix</text>
+								<rect
+									x="600"
+									y="145"
+									width="135"
+									height="44"
+									rx="10"
+									fill="#f7edca"
+									stroke="#9a7a19"
+								/>
+								<text x="667" y="171" fill="#664d00" font-weight="700">Provider docs</text>
+							</g>
+							<path
+								d="M285 88 C230 75 205 55 160 42"
+								stroke="#0b6b57"
+								stroke-width="2.5"
+								fill="none"
+								marker-end="url(#arrow4)"
+							/>
+							<path
+								d="M285 117 C230 132 205 153 160 166"
+								stroke="#0b6b57"
+								stroke-width="2.5"
+								fill="none"
+								marker-end="url(#arrow4)"
+							/>
+							<path
+								d="M475 86 C530 71 555 51 600 40"
+								stroke="#0b6b57"
+								stroke-width="2.5"
+								fill="none"
+								marker-end="url(#arrow4)"
+							/>
+							<path
+								d="M475 102 H600"
+								stroke="#0b6b57"
+								stroke-width="2.5"
+								fill="none"
+								marker-end="url(#arrow4)"
+							/>
+							<path
+								d="M475 118 C530 133 555 153 600 166"
+								stroke="#0b6b57"
+								stroke-width="2.5"
+								fill="none"
+								marker-end="url(#arrow4)"
+							/>
+						</svg>
+						<figcaption>
+							A single declarative source feeds the places that currently drift, while curated
+							public contracts remain explicit.
+						</figcaption>
+					</figure>
+				</article>
+
+				<article class="idea" id="idea-5">
+					<div class="idea-head">
+						<span class="rank">5</span>
+						<div>
+							<h3>Evidence tiers and a dated verification queue</h3>
+							<div class="chips">
+								<span class="chip">Axis · Verification</span
+								><span class="chip blue">Confidence · 93%</span
+								><span class="chip gold">Complexity · Low</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Give each candidate one evidence state: live-verified,
+						documented-awaiting-key, adapter-specified, or held. Keep Z.AI, Hyperbolic,
+						Moonshot/Kimi, Perplexity, Azure OpenAI, DashScope, and Chutes visible with explicit
+						promotion conditions instead of padding the main list.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>external:</strong> current official research confirms generation for several
+								held vendors but could not establish a stable, BYOK-usable model-list contract.
+								<strong>reasoned:</strong> documentation and live conformance are different evidence
+								strengths.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								This makes uncertainty actionable and lets the catalog evolve without silently
+								weakening the support promise.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Evidence states need an owner or cadence, or the queue will become stale
+								documentation.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-6">
+					<div class="idea-head">
+						<span class="rank">6</span>
+						<div>
+							<h3>Roll out by failure domain, not provider popularity</h3>
+							<div class="chips">
+								<span class="chip">Axis · Rollout</span
+								><span class="chip blue">Confidence · 89%</span
+								><span class="chip gold">Complexity · Low</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> Use three independent release trains: zero-runtime-change
+						manifest additions, catalog-adapter providers, then unresolved auth/endpoint/catalog
+						cases. Each train completes compatibility receipts, provider inventories,
+						discovery/tests, smoke coverage, docs, changeset, and the full package check before the
+						next begins.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> provider additions currently cross types, manifest,
+								discovery, exact fixtures, docs, smoke tests, and changeset/release checks. These
+								cohorts fail in materially different places.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								A failed adapter no longer blocks the direct cohort, and review stays focused on one
+								compatibility pattern at a time.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Multiple releases create coordination overhead, and provider ordering must be
+								planned before the stack starts.
+							</dd>
+						</div>
+					</dl>
+				</article>
+
+				<article class="idea" id="idea-7">
+					<div class="idea-head">
+						<span class="rank">7</span>
+						<div>
+							<h3>Generic custom OpenAI endpoint for self-hosted servers</h3>
+							<div class="chips">
+								<span class="chip">Axis · Drop-in expansion</span
+								><span class="chip blue">Confidence · 78%</span
+								><span class="chip gold">Complexity · Medium</span>
+							</div>
+						</div>
+					</div>
+					<p>
+						<strong>Description:</strong> After curated presets, consider one caller-configurable
+						base URL, credential, and model-list contract that covers vLLM, llama.cpp, LocalAI,
+						SGLang, and LiteLLM Proxy. LM Studio already proves the configurable-local-URL shape;
+						named engine presets, if ever needed, can remain host presentation rather than new
+						transports.
+					</p>
+					<dl class="fields">
+						<div class="field">
+							<dt>Basis</dt>
+							<dd>
+								<strong>direct:</strong> LM Studio uses the same OpenAI-compatible provider with a
+								configurable URL. <strong>external:</strong> the named servers document
+								OpenAI-compatible chat and models endpoints. <strong>reasoned:</strong> one endpoint
+								escape hatch absorbs future compatible servers more efficiently than an enum entry
+								per engine.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Rationale</dt>
+							<dd>
+								This is the highest-leverage way to reach the upper end of the requested 12–24 range
+								without turning every deployment engine into a permanent vendor preset.
+							</dd>
+						</div>
+						<div class="field">
+							<dt>Downsides</dt>
+							<dd>
+								Custom URLs expand SSRF and trust-boundary concerns; the current library
+								deliberately keeps cloud base URLs fixed. This direction needs a separate security
+								and product-contract discussion.
+							</dd>
+						</div>
+					</dl>
+				</article>
+			</section>
+
+			<section id="rejection-summary">
+				<p class="eyebrow">Adversarial cut</p>
+				<h2>Rejection Summary</h2>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Considered idea</th>
+								<th>Reason rejected or merged</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>1</td>
+								<td>Flat “clean dozen” drop-in claim</td>
+								<td>
+									Basis verifier refuted uniform drop-in status; merged into Idea 1 as documented
+									candidates pending live proof.
+								</td>
+							</tr>
+							<tr>
+								<td>2</td>
+								<td>Direct-vendor versus gateway split</td>
+								<td>
+									Useful portfolio metadata, but not a standalone direction; merged into Idea 1.
+								</td>
+							</tr>
+							<tr>
+								<td>3</td>
+								<td>Three named catalog outliers</td>
+								<td>Duplicate of the broader catalog strategy; merged into Ideas 1 and 3.</td>
+							</tr>
+							<tr>
+								<td>4</td>
+								<td>Text-first admission</td>
+								<td>
+									Essential detail, but strongest as part of the executable certificate in Idea 2.
+								</td>
+							</tr>
+							<tr>
+								<td>5</td>
+								<td>Catalog quality / fail-closed filtering</td>
+								<td>Merged into Idea 2’s admission criteria rather than standing alone.</td>
+							</tr>
+							<tr>
+								<td>6</td>
+								<td>Perishable catalog receipts</td>
+								<td>Merged into Ideas 2 and 5; dates are part of the evidence lifecycle.</td>
+							</tr>
+							<tr>
+								<td>7</td>
+								<td>Preserve public <code>{id,label}</code></td>
+								<td>
+									A design boundary inside Idea 3, not a separate provider-expansion direction.
+								</td>
+							</tr>
+							<tr>
+								<td>8</td>
+								<td>Zero-runtime-change first wave</td>
+								<td>Merged into Idea 6 as the first rollout train.</td>
+							</tr>
+							<tr>
+								<td>9</td>
+								<td>Anti-monoculture portfolio ranking</td>
+								<td>
+									Weakly grounded in stated product priorities; geography and supply diversity were
+									not established acceptance criteria.
+								</td>
+							</tr>
+							<tr>
+								<td>10</td>
+								<td>Named self-hosted presets</td>
+								<td>Duplicates Idea 7 and risks overreaching into host-owned presentation.</td>
+							</tr>
+							<tr>
+								<td>11</td>
+								<td>Evidence-generated provider matrix</td>
+								<td>
+									Merged into Idea 4; useful output of the manifest/receipt system, not a separate
+									direction.
+								</td>
+							</tr>
+							<tr>
+								<td>12</td>
+								<td>Gateway-only expansion</td>
+								<td>Too narrow and redundant with the mixed portfolio in Idea 1.</td>
+							</tr>
+							<tr>
+								<td>13</td>
+								<td>Separate current-family framing</td>
+								<td>Duplicate of the compatibility ledger in Idea 1.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section id="sources">
+				<p class="eyebrow">Primary evidence</p>
+				<h2>Sources &amp; References</h2>
+				<ul class="sources">
+					<li>
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/provider-manifest.ts"
+							>Current provider manifest</a
+						>
+					</li>
+					<li>
+						<a
+							href="https://github.com/swartzrock/byok-runtime/blob/main/src/providers/openai-compatible-provider.ts"
+							>Shared OpenAI-compatible provider</a
+						>
+					</li>
+					<li>
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/src/provider-discovery.ts"
+							>Provider discovery</a
+						>
+					</li>
+					<li>
+						<a href="https://github.com/swartzrock/byok-runtime/blob/main/README.md"
+							>BYOK Runtime provider support</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.together.ai/docs/inference/openai-compatibility"
+							>Together OpenAI compatibility</a
+						>
+					</li>
+					<li>
+						<a href="https://inference-docs.cerebras.ai/resources/openai"
+							>Cerebras OpenAI compatibility</a
+						>
+					</li>
+					<li>
+						<a href="https://docs-prod.sambanova.ai/docs/api-reference/endpoints/model-list"
+							>SambaNova model list</a
+						>
+					</li>
+					<li>
+						<a href="https://novita.ai/docs/api-reference/model-apis-introduction"
+							>Novita model APIs</a
+						>
+					</li>
+					<li>
+						<a href="https://platform.minimax.io/docs/api-reference/api-overview"
+							>MiniMax API overview</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.siliconflow.com/en/userguide/quickstart"
+							>SiliconFlow quickstart</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html"
+							>NVIDIA NIM API reference</a
+						>
+					</li>
+					<li>
+						<a href="https://huggingface.co/docs/inference-providers/en/hub-api"
+							>Hugging Face model-list API</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.tokenfactory.nebius.com/api-reference/models/list-models"
+							>Nebius model-list API</a
+						>
+					</li>
+					<li>
+						<a href="https://www.scaleway.com/en/docs/generative-apis/api-cli/using-models-api/"
+							>Scaleway models API</a
+						>
+					</li>
+					<li><a href="https://vercel.com/docs/ai-gateway">Vercel AI Gateway</a></li>
+					<li>
+						<a href="https://docs.aws.amazon.com/bedrock/latest/userguide/apis.html"
+							>AWS Bedrock OpenAI-compatible APIs</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.fireworks.ai/tools-sdks/openai-compatibility"
+							>Fireworks OpenAI compatibility</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.github.com/en/rest/models/catalog?apiVersion=2022-11-28"
+							>GitHub Models catalog</a
+						>
+					</li>
+					<li>
+						<a
+							href="https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/"
+							>Cloudflare Workers AI compatibility</a
+						>
+					</li>
+					<li>
+						<a href="https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md"
+							>llama.cpp OpenAI-compatible server</a
+						>
+					</li>
+				</ul>
+			</section>
+
+			<footer class="composition-signal">
+				Composed 2026-07-16T19:40-07:00 by ce-ideate from the byok-runtime repository and current
+				official provider documentation.
+			</footer>
+		</main>
+	</body>
+</html>
