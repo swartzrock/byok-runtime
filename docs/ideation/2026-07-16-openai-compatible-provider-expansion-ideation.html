@@ -561,9 +561,13 @@
 
 				<h3 style="margin-top: 28px">Recommended provider portfolio</h3>
 				<p class="section-intro">
-					These are evidence-backed recommendations, not claims of live conformance. “Documented
-					candidate” means official docs cover the required surface; each still needs the admission
-					certificate in Ranked Idea 2.
+					The original selection favored providers whose official documentation showed OpenAI-style
+					chat completions plus some form of model discovery. It did not require both operations to
+					work through the OpenAI SDK, which is why three catalog-adapter candidates were included.
+					The compatibility column below applies the stricter BYOK test: can the same OpenAI client
+					call <code>chat.completions.create</code> and <code>models.list</code> after changing
+					credentials and the base URL? “Yes” is documentation-backed but still needs live admission
+					proof; “Partial” requires a provider-specific catalog adapter.
 				</p>
 				<div class="table-wrap">
 					<table>
@@ -573,6 +577,7 @@
 								<th>Lane</th>
 								<th>Generation base</th>
 								<th>Model discovery</th>
+								<th>OpenAI SDK for both?</th>
 								<th>Current recommendation</th>
 							</tr>
 						</thead>
@@ -582,6 +587,9 @@
 								<td>Direct</td>
 								<td><code>api.together.ai/v1</code></td>
 								<td>OpenAI SDK <code>models.list</code> documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small">Both SDK calls documented</span>
+								</td>
 								<td>High-priority documented candidate; verify exact wire shape</td>
 							</tr>
 							<tr>
@@ -589,6 +597,11 @@
 								<td>Direct</td>
 								<td><code>api.cerebras.ai/v1</code></td>
 								<td><code>GET /v1/models</code></td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI client + OpenAI-shaped models route</span
+									>
+								</td>
 								<td>High-priority; exact two-operation fit</td>
 							</tr>
 							<tr>
@@ -596,6 +609,11 @@
 								<td>Direct</td>
 								<td><code>api.sambanova.ai/v1</code></td>
 								<td>OpenAI-shaped model list documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI client + <code>data</code> model list</span
+									>
+								</td>
 								<td>High-priority; credentialed probe needed</td>
 							</tr>
 							<tr>
@@ -603,6 +621,11 @@
 								<td>Direct</td>
 								<td><code>api.novita.ai/openai</code></td>
 								<td>Models API documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>Chat and models marked OpenAI-compatible</span
+									>
+								</td>
 								<td>Recommended; verify base-path joining</td>
 							</tr>
 							<tr>
@@ -610,6 +633,11 @@
 								<td>Direct</td>
 								<td><code>api.minimax.io/v1</code></td>
 								<td>Models endpoint documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI chat + OpenAI models specification</span
+									>
+								</td>
 								<td>Incubator; newer compatibility surface</td>
 							</tr>
 							<tr>
@@ -617,6 +645,11 @@
 								<td>Direct</td>
 								<td><code>api.siliconflow.com/v1</code></td>
 								<td><code>GET /v1/models</code></td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI client + OpenAI-shaped models route</span
+									>
+								</td>
 								<td>High-priority; text filtering available</td>
 							</tr>
 							<tr>
@@ -624,6 +657,11 @@
 								<td>Direct / self-hosted</td>
 								<td><code>integrate.api.nvidia.com/v1</code> or NIM URL</td>
 								<td><code>GET /v1/models</code></td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI-compatible chat and models routes</span
+									>
+								</td>
 								<td>High-value; verify entitlements and duplicates</td>
 							</tr>
 							<tr>
@@ -631,6 +669,11 @@
 								<td>Gateway</td>
 								<td><code>router.huggingface.co/v1</code></td>
 								<td><code>GET /v1/models</code> with provider metadata</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI SDK compatibility covers both routes</span
+									>
+								</td>
 								<td>High-priority; broad routed catalog</td>
 							</tr>
 							<tr>
@@ -638,6 +681,9 @@
 								<td>Direct</td>
 								<td><code>api.tokenfactory.nebius.com/v1</code></td>
 								<td>OpenAI-shaped <code>data</code> list</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small">Both SDK calls documented</span>
+								</td>
 								<td>High-priority; clean documented fit</td>
 							</tr>
 							<tr>
@@ -645,6 +691,11 @@
 								<td>Direct</td>
 								<td><code>api.scaleway.ai/v1</code></td>
 								<td><code>GET /v1/models</code></td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI client + drop-in Models API</span
+									>
+								</td>
 								<td>High-priority; sovereign EU option</td>
 							</tr>
 							<tr>
@@ -652,6 +703,11 @@
 								<td>Gateway</td>
 								<td><code>ai-gateway.vercel.sh/v1</code></td>
 								<td>OpenAI-compatible catalog documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small"
+										>OpenAI client + OpenAI-shaped models route</span
+									>
+								</td>
 								<td>Recommended as leverage multiplier</td>
 							</tr>
 							<tr>
@@ -659,6 +715,9 @@
 								<td>Gateway</td>
 								<td>Region/account-specific OpenAI endpoint</td>
 								<td>OpenAI-compatible models surface documented</td>
+								<td>
+									<strong>Yes</strong><br /><span class="small">Both SDK calls documented</span>
+								</td>
 								<td>Incubator; endpoint construction needs design</td>
 							</tr>
 							<tr>
@@ -666,24 +725,46 @@
 								<td>Catalog adapter</td>
 								<td><code>api.fireworks.ai/inference/v1</code></td>
 								<td><code>/v1/accounts/{account}/models</code>, native shape</td>
+								<td>
+									<strong>Partial</strong><br /><span class="small"
+										>Generation yes; model listing needs adapter</span
+									>
+								</td>
 								<td>Recommend after bounded catalog seam</td>
 							</tr>
 							<tr>
 								<td class="provider">GitHub Models</td>
-								<td>Catalog adapter</td>
+								<td>Retired</td>
 								<td><code>models.github.ai/inference</code></td>
 								<td><code>models.github.ai/catalog/models</code>, native array</td>
-								<td>Recommend after catalog seam</td>
+								<td>
+									<strong>No</strong><br /><span class="small">Service retired July 30, 2026</span>
+								</td>
+								<td>Remove from the candidate portfolio</td>
 							</tr>
 							<tr>
 								<td class="provider">Cloudflare Workers AI</td>
 								<td>Catalog adapter</td>
 								<td>Account-scoped <code>/ai/v1</code></td>
 								<td>Cloudflare-native catalog</td>
+								<td>
+									<strong>Partial</strong><br /><span class="small"
+										>Generation yes; model listing needs adapter</span
+									>
+								</td>
 								<td>Recommend after account/catalog seam</td>
 							</tr>
 						</tbody>
 					</table>
+				</div>
+
+				<div class="callout warn">
+					<p>
+						<strong>Portfolio correction:</strong> GitHub Models was a valid catalog-adapter
+						candidate when this artifact was composed, but GitHub retired the service on July 30,
+						2026. The active portfolio is therefore 14 candidates until a replacement is selected or
+						the program target is revised.
+					</p>
 				</div>
 
 				<div class="callout warn">
@@ -1550,6 +1631,11 @@
 						>
 					</li>
 					<li>
+						<a href="https://inference-docs.cerebras.ai/api-reference/models/list-models"
+							>Cerebras model list</a
+						>
+					</li>
+					<li>
 						<a href="https://docs-prod.sambanova.ai/docs/api-reference/endpoints/model-list"
 							>SambaNova model list</a
 						>
@@ -1560,13 +1646,13 @@
 						>
 					</li>
 					<li>
-						<a href="https://platform.minimax.io/docs/api-reference/api-overview"
-							>MiniMax API overview</a
+						<a href="https://platform.minimax.io/docs/api-reference/models/openai/list-models"
+							>MiniMax OpenAI-compatible model list</a
 						>
 					</li>
 					<li>
-						<a href="https://docs.siliconflow.com/en/userguide/quickstart"
-							>SiliconFlow quickstart</a
+						<a href="https://docs.siliconflow.com/en/api-reference/models/get-model-list"
+							>SiliconFlow model list</a
 						>
 					</li>
 					<li>
@@ -1580,19 +1666,20 @@
 						>
 					</li>
 					<li>
-						<a href="https://docs.tokenfactory.nebius.com/api-reference/models/list-models"
-							>Nebius model-list API</a
+						<a href="https://docs.tokenfactory.nebius.com/api-reference/examples/list-of-models"
+							>Nebius OpenAI SDK model-list example</a
 						>
 					</li>
 					<li>
-						<a href="https://www.scaleway.com/en/docs/generative-apis/api-cli/using-models-api/"
-							>Scaleway models API</a
+						<a
+							href="https://www.scaleway.com/en/docs/generative-apis/reference-content/openai-compatibility/"
+							>Scaleway OpenAI compatibility</a
 						>
 					</li>
 					<li><a href="https://vercel.com/docs/ai-gateway">Vercel AI Gateway</a></li>
 					<li>
-						<a href="https://docs.aws.amazon.com/bedrock/latest/userguide/apis.html"
-							>AWS Bedrock OpenAI-compatible APIs</a
+						<a href="https://docs.aws.amazon.com/bedrock/latest/userguide/models-get-info.html"
+							>AWS Bedrock OpenAI SDK model list</a
 						>
 					</li>
 					<li>
@@ -1603,6 +1690,12 @@
 					<li>
 						<a href="https://docs.github.com/en/rest/models/catalog?apiVersion=2022-11-28"
 							>GitHub Models catalog</a
+						>
+					</li>
+					<li>
+						<a
+							href="https://github.blog/changelog/2026-07-01-github-models-is-being-fully-retired-on-july-30-2026/"
+							>GitHub Models retirement notice</a
 						>
 					</li>
 					<li>
