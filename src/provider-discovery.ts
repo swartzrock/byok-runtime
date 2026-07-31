@@ -2,7 +2,8 @@ import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import { delimiter, join } from "node:path";
 import { BYOK_PROVIDER_API_KEY_ENV_VARS } from "./credentials";
-import type { ByokCloudProviderId, ByokEnvironment, ByokProviderId } from "./types";
+import { BYOK_PROVIDER_MANIFEST } from "./provider-manifest";
+import type { ByokEnvironment, ByokProviderId } from "./types";
 
 const LOCAL_PROBES = [
 	{ provider: "ollama", url: "http://127.0.0.1:11434/api/tags" },
@@ -15,17 +16,6 @@ const CLI_PROBES = [
 ] as const;
 
 const PROBE_TIMEOUT_MS = 1_000;
-const CLOUD_PROVIDERS = [
-	"anthropic",
-	"openai",
-	"google",
-	"xai",
-	"openrouter",
-	"groq",
-	"mistral",
-	"deepseek",
-	"deepinfra",
-] as const satisfies readonly ByokCloudProviderId[];
 
 export interface FindAvailableProvidersOptions {
 	env: ByokEnvironment;
@@ -109,9 +99,12 @@ export async function findAvailableProviders(
 	for (const [provider, available] of [...localResults, ...cliResults]) {
 		if (available) providers.push(provider);
 	}
-	for (const provider of CLOUD_PROVIDERS) {
-		if (BYOK_PROVIDER_API_KEY_ENV_VARS[provider].some((name) => options.env[name])) {
-			providers.push(provider);
+	for (const entry of BYOK_PROVIDER_MANIFEST) {
+		if (
+			entry.family === "cloud" &&
+			BYOK_PROVIDER_API_KEY_ENV_VARS[entry.id].some((name) => options.env[name])
+		) {
+			providers.push(entry.id);
 		}
 	}
 
