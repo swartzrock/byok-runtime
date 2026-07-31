@@ -1,0 +1,13 @@
+{
+	"provider_id": "replace-with-provider-id",
+	"base_url": "https://api.example.com/v1",
+	"verified_at_utc": "2026-01-01T00:00:00Z",
+	"package_version": "0.0.0",
+	"openai_sdk_version": "0.0.0",
+	"model_id": "replace-with-public-chat-model-id",
+	"returned_model_count": 1,
+	"operations": {
+		"models_list": "pass",
+		"chat_completions_create": "pass"
+	}
+}

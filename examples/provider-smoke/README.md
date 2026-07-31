@@ -26,6 +26,49 @@ bun run provider-smoke detect
 | Codex CLI  | n/a                                  |
 | Claude CLI | n/a                                  |
 
+## Admit an OpenAI-compatible provider
+
+Use this procedure only for a fixed-endpoint provider that is being added through the existing OpenAI-compatible runtime. Choose a current, public chat model ID before starting, and export the provider's standard credential environment variable without putting the credential in a repository file.
+
+Set the provider ID and the exact model ID to admit:
+
+```bash
+PROVIDER="<provider-id>"
+MODEL_ID="<public-chat-model-id>"
+```
+
+List models with OpenAI SDK logging disabled. The `awk` check prints only the returned count and whether an exact line matches `MODEL_ID`; it does not save the catalog:
+
+```bash
+OPENAI_LOG=off bun run provider-smoke models --provider "$PROVIDER" |
+	awk -v target="$MODEL_ID" '
+		{ count += 1 }
+		$0 == target { found = 1 }
+		END {
+			printf "returned_model_count=%d\n", count
+			printf "exact_model_present=%s\n", found ? "yes" : "no"
+			exit found ? 0 : 1
+		}
+	'
+```
+
+Stop if the catalog is empty, the command fails, or `exact_model_present` is not `yes`. Do not run generation and do not create a receipt.
+
+Only after the exact ID is present, generate with that same ID and a synthetic, low-cost prompt:
+
+```bash
+OPENAI_LOG=off bun run provider-smoke generate \
+	--provider "$PROVIDER" \
+	--model "$MODEL_ID" \
+	--input "Reply with exactly: OK"
+```
+
+Stop without creating a receipt if the command fails or returns blank assistant text. Authentication errors, rate limits, network failures, and timeouts are all failed admissions.
+
+After both commands pass, manually copy `docs/provider-admission/receipt-template.json` to `docs/provider-admission/receipts/<provider-id>.json` and replace its placeholders. Record the fixed base URL from the provider manifest, the package and installed OpenAI SDK versions, the UTC verification time, the exact model ID, the terminal-reported model count, and both pass results. The receipt is a maintainer-authored attestation, not generated command output.
+
+Keep all live output in the terminal: do not redirect it, pipe it through `tee`, or paste it into repository files. Before committing, manually review the receipt and diff for credentials, headers, prompts, completions, full model catalogs, account IDs, raw command output, or raw response bodies. Commit the passing receipt in the same commit as that provider's runtime and documentation surfaces.
+
 ```bash
 OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
 	--provider openai \
