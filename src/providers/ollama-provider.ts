@@ -102,13 +102,14 @@ export class OllamaProvider implements AiProvider {
 		signal?: AbortSignal
 	): Promise<TextGenerationOutput> {
 		return {
-			text: await this.complete(input.prompt, input.responseFormat, signal),
+			text: await this.complete(input.prompt, input.instructions, input.responseFormat, signal),
 		};
 	}
 
 	/** POST /api/generate (non-streaming) and return the raw model text. */
 	private async complete(
 		prompt: string,
+		instructions?: string,
 		responseFormat: "text" | "json" = "text",
 		signal?: AbortSignal
 	): Promise<string> {
@@ -122,6 +123,7 @@ export class OllamaProvider implements AiProvider {
 				body: JSON.stringify({
 					model: this.model,
 					prompt,
+					...(instructions === undefined ? {} : { system: instructions }),
 					stream: false,
 					...(responseFormat === "json" ? { format: "json" } : {}),
 				}),

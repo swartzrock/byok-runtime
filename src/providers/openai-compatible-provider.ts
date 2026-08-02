@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { ChatCompletion } from "openai/resources/chat/completions";
+import type { ChatCompletion, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { z } from "zod/v3";
 import {
 	type AiProvider,
@@ -20,6 +20,7 @@ export type CloudObjectGenerator = <T>(opts: {
 
 export type CloudTextGenerator = (opts: {
 	prompt: string;
+	instructions?: string;
 	signal?: AbortSignal;
 }) => Promise<string>;
 
@@ -291,14 +292,22 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		);
 	}
 
-	private async complete(input: { prompt: string }, signal?: AbortSignal): Promise<string> {
+	private async complete(
+		input: { prompt: string; instructions?: string },
+		signal?: AbortSignal
+	): Promise<string> {
 		if (this.textGenerator) {
 			return this.textGenerator({ ...input, signal });
 		}
+		const messages: ChatCompletionMessageParam[] = [];
+		if (input.instructions !== undefined) {
+			messages.push({ role: "system", content: input.instructions });
+		}
+		messages.push({ role: "user", content: input.prompt });
 		const body = await this.client.chat.completions.create(
 			{
 				model: this.model,
-				messages: [{ role: "user", content: input.prompt }],
+				messages,
 			},
 			{ signal }
 		);
@@ -348,6 +357,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 						this.complete(
 							{
 								prompt: input.prompt,
+								...(input.instructions === undefined ? {} : { instructions: input.instructions }),
 							},
 							runSignal
 						),

@@ -70,6 +70,24 @@ describeForVitest("BYOK cloud client facade", () => {
 		expect(mocks.generateText).toHaveBeenCalledWith({ prompt: "Say hi." }, signal);
 	});
 
+	it("forwards instructions through the function-first facade", async () => {
+		await generateText({
+			provider: "openai",
+			apiKey: "sk-openai-test",
+			model: "gpt-4o-mini",
+			instructions: "  Answer as a release editor.\n",
+			prompt: "  Draft a note.\n",
+		});
+
+		expect(mocks.generateText).toHaveBeenCalledWith(
+			{
+				instructions: "  Answer as a release editor.\n",
+				prompt: "  Draft a note.\n",
+			},
+			undefined
+		);
+	});
+
 	it("binds cloud credentials in createByok and uses the call model", async () => {
 		const client = createByok({
 			provider: "anthropic",
@@ -80,6 +98,7 @@ describeForVitest("BYOK cloud client facade", () => {
 		await expect(
 			client.generateText({
 				model: "claude-sonnet-4-6",
+				instructions: "Answer concisely.",
 				prompt: "Say hi.",
 			})
 		).resolves.toEqual({ text: "Cloud response." });
@@ -90,6 +109,10 @@ describeForVitest("BYOK cloud client facade", () => {
 				model: "claude-sonnet-4-6",
 			},
 			{ fetchImpl }
+		);
+		expect(mocks.generateText).toHaveBeenCalledWith(
+			{ instructions: "Answer concisely.", prompt: "Say hi." },
+			undefined
 		);
 	});
 

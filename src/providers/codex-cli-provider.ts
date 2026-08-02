@@ -192,19 +192,26 @@ export class CodexCliProvider implements AiProvider {
 		input: TextGenerationInput,
 		signal?: AbortSignal
 	): Promise<TextGenerationOutput> {
-		return { text: await this.complete(input.prompt, signal) };
+		return { text: await this.complete(input.prompt, input.instructions, signal) };
 	}
 
-	private commandArgs(): string[] {
+	private commandArgs(instructions?: string): string[] {
 		const args = ["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--json"];
+		if (instructions !== undefined) {
+			args.push("-c", `developer_instructions=${JSON.stringify(instructions)}`);
+		}
 		if (this.model) args.push("--model", this.model);
 		return args;
 	}
 
-	private async complete(prompt: string, signal?: AbortSignal): Promise<string> {
+	private async complete(
+		prompt: string,
+		instructions?: string,
+		signal?: AbortSignal
+	): Promise<string> {
 		const request: LocalCommandRequest = {
 			command: this.command,
-			args: this.commandArgs(),
+			args: this.commandArgs(instructions),
 			stdin: prompt,
 			cwd: this.cwd,
 			timeoutMs: this.timeoutMs,

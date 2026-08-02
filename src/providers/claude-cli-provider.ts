@@ -287,7 +287,7 @@ export class ClaudeCliProvider implements AiProvider {
 		signal?: AbortSignal
 	): Promise<TextGenerationOutput> {
 		return {
-			text: await this.complete(input.prompt, input.jsonSchema, signal),
+			text: await this.complete(input.prompt, input.jsonSchema, signal, input.instructions),
 		};
 	}
 
@@ -314,7 +314,7 @@ export class ClaudeCliProvider implements AiProvider {
 		return extractOpenRouterAnthropicModels(await response.json());
 	}
 
-	private commandArgs(schema?: string): string[] {
+	private commandArgs(schema?: string, instructions?: string): string[] {
 		const args = [
 			"-p",
 			"--output-format",
@@ -331,6 +331,7 @@ export class ClaudeCliProvider implements AiProvider {
 			"--tools",
 			"",
 		];
+		if (instructions !== undefined) args.push("--append-system-prompt", instructions);
 		if (schema) args.push("--json-schema", schema);
 		if (this.model) args.push("--model", this.model);
 		return args;
@@ -340,11 +341,12 @@ export class ClaudeCliProvider implements AiProvider {
 		prompt: string,
 		schema?: string,
 		timeoutMs = this.timeoutMs,
-		signal?: AbortSignal
+		signal?: AbortSignal,
+		instructions?: string
 	): Promise<string> {
 		const request: LocalCommandRequest = {
 			command: this.command,
-			args: this.commandArgs(schema),
+			args: this.commandArgs(schema, instructions),
 			stdin: prompt,
 			cwd: this.cwd,
 			env: CLAUDE_CLI_ENV,
@@ -374,7 +376,12 @@ export class ClaudeCliProvider implements AiProvider {
 		return output;
 	}
 
-	private async complete(prompt: string, schema?: string, signal?: AbortSignal): Promise<string> {
-		return this.runPrompt(prompt, schema, this.timeoutMs, signal);
+	private async complete(
+		prompt: string,
+		schema?: string,
+		signal?: AbortSignal,
+		instructions?: string
+	): Promise<string> {
+		return this.runPrompt(prompt, schema, this.timeoutMs, signal, instructions);
 	}
 }

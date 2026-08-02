@@ -9,6 +9,7 @@ import type {
 	ByokGenerateTextOptions,
 	ByokListModelsOptions,
 	ByokModelOption,
+	ByokTextGenerationInput,
 	ByokTextGenerationOutput,
 } from "./types";
 
@@ -77,14 +78,20 @@ function providerConfigFromListModelsOptions(
 
 async function generateTextForConfig(
 	config: ByokCoreProviderConfig,
-	input: { prompt: string },
+	input: Pick<ByokTextGenerationInput, "prompt" | "instructions">,
 	options: {
 		deps?: ByokFacadeDeps;
 		signal?: AbortSignal;
 	} = {}
 ): Promise<ByokTextGenerationOutput> {
 	const provider = createByokProvider(config, options.deps);
-	return provider.generateText({ prompt: input.prompt }, options.signal);
+	return provider.generateText(
+		{
+			prompt: input.prompt,
+			...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+		},
+		options.signal
+	);
 }
 
 export async function generateText(

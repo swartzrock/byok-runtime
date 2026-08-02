@@ -30,6 +30,8 @@ export interface ProviderStatus {
 
 export interface TextGenerationInput {
 	prompt: string;
+	/** Optional system/developer instructions sent separately from the user prompt. */
+	instructions?: string;
 	/** Ask providers with native support to constrain the response to JSON text. */
 	responseFormat?: "text" | "json";
 	/** Optional JSON schema for providers that support structured text output. */

@@ -121,10 +121,35 @@ describe("OpenAiCompatibleProvider", () => {
 		const headers = new Headers(calls[0]?.init?.headers);
 		expect(headers.get("authorization")).toBe("Bearer k");
 		expect(headers.get("content-type")).toBe("application/json");
-		expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({
-			model: "gpt-4o-mini",
-			messages: [{ role: "user", content: "Write plainly." }],
+		expect(calls[0]?.init?.body).toBe(
+			JSON.stringify({
+				model: "gpt-4o-mini",
+				messages: [{ role: "user", content: "Write plainly." }],
+			})
+		);
+	});
+
+	it("sends instructions as a separate system message before the user prompt", async () => {
+		const calls: FetchCall[] = [];
+		const p = provider({
+			fetchImpl: (async (input, init) => {
+				calls.push({ url: input.toString(), init });
+				return new Response(
+					JSON.stringify({ choices: [{ message: { content: "plain reply" } }] }),
+					{ status: 200, headers: { "content-type": "application/json" } }
+				);
+			}) as typeof fetch,
 		});
+
+		await p.generateText({
+			instructions: "  Answer as an editor.\nKeep the ending.  ",
+			prompt: "  Rewrite this.\nDo not move me.  ",
+		});
+
+		expect(JSON.parse(calls[0]?.init?.body as string).messages).toEqual([
+			{ role: "system", content: "  Answer as an editor.\nKeep the ending.  " },
+			{ role: "user", content: "  Rewrite this.\nDo not move me.  " },
+		]);
 	});
 
 	it("parses object responses through the provided zod schema", async () => {
@@ -235,6 +260,57 @@ describe("OpenAiCompatibleProvider", () => {
 			})
 		).resolves.toEqual({ ok: true });
 		expect(calls).toBe(3);
+	});
+
+	it("preserves instructions and the abort signal across text retries", async () => {
+		const controller = new AbortController();
+		const inputs: Array<{ prompt: string; instructions?: string; signal?: AbortSignal }> = [];
+		const textGenerator: CloudTextGenerator = async (input) => {
+			inputs.push(input);
+			if (inputs.length < 3) {
+				throw Object.assign(new Error("429 rate limit"), {
+					status: 429,
+					retryAfterMs: 0,
+				});
+			}
+			return "ok";
+		};
+
+		await expect(
+			provider({ textGenerator }).generateText(
+				{ prompt: "  Prompt.\n", instructions: "  Instructions.\n" },
+				controller.signal
+			)
+		).resolves.toEqual({ text: "ok" });
+		expect(inputs).toHaveLength(3);
+		expect(inputs).toEqual(
+			inputs.map(() => ({
+				prompt: "  Prompt.\n",
+				instructions: "  Instructions.\n",
+				signal: controller.signal,
+			}))
+		);
+	});
+
+	it("still aborts while waiting to retry text generation", async () => {
+		const controller = new AbortController();
+		let calls = 0;
+		const textGenerator: CloudTextGenerator = async () => {
+			calls++;
+			throw Object.assign(new Error("429 rate limit"), {
+				status: 429,
+				retryAfterMs: 10_000,
+			});
+		};
+
+		const generation = provider({ textGenerator }).generateText(
+			{ prompt: "Hi", instructions: "Be brief." },
+			controller.signal
+		);
+		setTimeout(() => controller.abort(), 0);
+
+		await expect(generation).rejects.toBeInstanceOf(ProviderError);
+		expect(calls).toBe(1);
 	});
 
 	it("throws ProviderRateLimitError after retry budget is exhausted", async () => {

@@ -63,9 +63,28 @@ describe("OllamaProvider.generateText", () => {
 		const out = await p.generateText({ prompt: "Say hi" });
 		expect(out).toEqual({ text: "plain response" });
 		expect(spy).toHaveBeenCalledTimes(1);
-		const body = JSON.parse(spy.mock.calls[0][0].body as string);
-		expect(body.prompt).toBe("Say hi");
-		expect(body.format).toBeUndefined();
+		expect(spy.mock.calls[0][0].body).toBe(
+			JSON.stringify({ model: "test-model", prompt: "Say hi", stream: false })
+		);
+	});
+
+	it("sends instructions through Ollama's native system field", async () => {
+		const spy = vi.fn(generateClient(["plain response"]));
+		const p = new OllamaProvider(baseOpts(spy));
+
+		await p.generateText({
+			instructions: "  Answer as an editor.\n",
+			prompt: "  Rewrite this.\n",
+			responseFormat: "json",
+		});
+
+		expect(JSON.parse(spy.mock.calls[0][0].body as string)).toEqual({
+			model: "test-model",
+			prompt: "  Rewrite this.\n",
+			system: "  Answer as an editor.\n",
+			stream: false,
+			format: "json",
+		});
 	});
 
 	it("requests Ollama JSON mode for json responses", async () => {

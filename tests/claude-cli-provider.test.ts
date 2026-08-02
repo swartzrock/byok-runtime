@@ -111,6 +111,34 @@ describe("ClaudeCliProvider", () => {
 			])
 		);
 		expect(run.mock.calls[0][0].args).not.toContain("--json-schema");
+		expect(run.mock.calls[0][0].args).not.toContain("--append-system-prompt");
+	});
+
+	it("appends caller instructions to Claude's default system prompt", async () => {
+		const schema = '{"type":"object"}';
+		const { provider, run } = makeProvider(
+			[result(JSON.stringify({ type: "result", result: "Plain final answer." }))],
+			"sonnet"
+		);
+
+		await provider.generateText({
+			instructions: "  Answer as an editor.\nKeep this spacing.  ",
+			prompt: "  Rewrite this.\nKeep stdin spacing.  ",
+			responseFormat: "json",
+			jsonSchema: schema,
+		});
+
+		expect(run.mock.calls[0][0].stdin).toBe("  Rewrite this.\nKeep stdin spacing.  ");
+		expect(run.mock.calls[0][0].args).toEqual(
+			expect.arrayContaining([
+				"--append-system-prompt",
+				"  Answer as an editor.\nKeep this spacing.  ",
+			])
+		);
+		expect(run.mock.calls[0][0].args).not.toContain("--system-prompt");
+		expect(run.mock.calls[0][0].args).toEqual(
+			expect.arrayContaining(["--json-schema", schema, "--model", "sonnet"])
+		);
 	});
 
 	it("passes a caller-provided JSON schema when supplied", async () => {
