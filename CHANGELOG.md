@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+### Minor Changes
+
+- f4dfa32: Add optional provider-native instructions to every text generation API.
+
 ## 2.1.0
 
 ### Minor Changes
