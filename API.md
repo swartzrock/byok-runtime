@@ -64,13 +64,14 @@ const { text } = await generateText({
 	provider: ByokProvider.OpenAI,
 	apiKey,
 	model: "gpt-4o-mini",
+	instructions: "Answer for a technical audience. Be concise.",
 	prompt: "Explain BYOK in one sentence.",
 });
 ```
 
-Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, credential: { source: "env", env }, model, prompt }` for trusted scripts that opt into BYOK's standard env var map. URL-backed local providers use `{ provider, model, prompt }` and accept optional `url`; Ollama defaults to `http://localhost:11434`, and LM Studio defaults to `http://localhost:1234/v1`. Both forms accept optional `deps` and `signal`.
+Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, credential: { source: "env", env }, model, prompt }` for trusted scripts that opt into BYOK's standard env var map. URL-backed local providers use `{ provider, model, prompt }` and accept optional `url`; Ollama defaults to `http://localhost:11434`, and LM Studio defaults to `http://localhost:1234/v1`. Both forms accept optional `instructions`, `deps`, and `signal`.
 
-The function-first API intentionally accepts plain text prompts only. Use the node runtime when you need connection testing, JSON response hints, or structured object generation.
+The function-first API requires a plain-text user `prompt` and optionally accepts plain-text `instructions`. Instructions are sent through the provider's separate system/developer channel and are never concatenated into the prompt. Use the node runtime when you need connection testing, JSON response hints, or structured object generation.
 
 ### `createByok(config)`
 
@@ -84,6 +85,7 @@ const ai = createByok({
 
 const { text } = await ai.generateText({
 	model: "gpt-4o-mini",
+	instructions: "Use release-note style and active voice.",
 	prompt: "Draft a short release note.",
 });
 ```
@@ -162,9 +164,12 @@ The runtime exposes connection testing, model listing, text generation, and opti
 const status = await provider.testConnection();
 const models = await provider.listModels();
 const { text } = await provider.generateText({
+	instructions: "Answer for a technical audience. Be concise.",
 	prompt: "Explain BYOK in one sentence.",
 });
 ```
+
+`ByokTextGenerationInput`, `ByokClientTextGenerationInput`, and the function-first generation options all keep `prompt` required and expose `instructions?: string`. Omitted instructions do not add an empty message, request property, or CLI argument.
 
 AI SDK based providers expose `generateObject`. Check for the method before calling it because Ollama and local CLI providers are text-only.
 
@@ -210,6 +215,19 @@ enum ByokProvider {
 `BYOK_PROVIDER_IDS` contains the supported provider IDs in stable order. Host applications own provider presentation, form fields, and settings copy.
 
 Groq, Mistral, DeepSeek, and DeepInfra use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Support does not extend to every OpenAI API or provider-specific capability.
+
+### Instruction Channels
+
+| Providers                                                                                 | Instruction channel                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, LM Studio | OpenAI-compatible `system` message                |
+| Ollama                                                                                    | Native `system` request field                     |
+| Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
+| Codex CLI                                                                                 | Per-run `developer_instructions` config           |
+
+Every built-in text provider supports a separate instruction channel. Provider adapters must not concatenate instructions into the user prompt. If a future adapter cannot represent instructions separately, it must throw `ByokProviderError` only when `instructions` is supplied; prompt-only calls remain unchanged.
+
+Instruction and prompt strings are passed without trimming or rewriting. They are ordinary caller-provided model content, not credentials; host applications should handle them according to their normal content privacy and retention policies.
 
 ## Model Options
 

@@ -162,6 +162,8 @@ export interface ByokModelRefreshResult {
 
 export interface ByokTextGenerationInput {
 	prompt: string;
+	/** Optional system/developer instructions sent separately from the user prompt. */
+	instructions?: string;
 	/** Ask providers with native support to constrain the response to JSON text. */
 	responseFormat?: "text" | "json";
 	/** Optional JSON schema for providers that support structured text output. */
@@ -175,16 +177,19 @@ export interface ByokTextGenerationOutput {
 export type ByokGenerateTextOptions =
 	| (ByokCloudProviderConfig & {
 			prompt: string;
+			instructions?: string;
 			deps?: ByokFacadeDeps;
 			signal?: AbortSignal;
 	  })
 	| (ByokOllamaProviderConfig & {
 			prompt: string;
+			instructions?: string;
 			deps?: ByokFacadeDeps;
 			signal?: AbortSignal;
 	  })
 	| (ByokLmStudioProviderConfig & {
 			prompt: string;
+			instructions?: string;
 			deps?: ByokFacadeDeps;
 			signal?: AbortSignal;
 	  });
@@ -220,6 +225,7 @@ export type ByokClientConfig =
 export interface ByokClientTextGenerationInput {
 	model: string;
 	prompt: string;
+	instructions?: string;
 	signal?: AbortSignal;
 }
 

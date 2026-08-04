@@ -40,6 +40,7 @@ const openRouterText = generateText({
 	provider: ByokProvider.OpenRouter,
 	apiKey: "sk-test",
 	model: "openai/gpt-4o",
+	instructions: "Answer in one sentence.",
 	prompt: "Explain BYOK in one sentence.",
 	deps,
 });
@@ -109,6 +110,7 @@ void listModels({
 
 const clientText = client.generateText({
 	model: "gpt-4o-mini",
+	instructions: "Answer in one sentence.",
 	prompt: "Explain BYOK in one sentence.",
 });
 

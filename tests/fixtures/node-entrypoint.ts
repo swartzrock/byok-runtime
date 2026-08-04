@@ -27,5 +27,13 @@ const config: ByokProviderConfig = {
 const provider = createByokNodeProvider(config, deps);
 const availableProviders = findAvailableProviders({ env: process.env });
 
+const textWithoutInstructions = provider.generateText({ prompt: "Explain BYOK." });
+const textWithInstructions = provider.generateText({
+	instructions: "Answer in one sentence.",
+	prompt: "Explain BYOK.",
+});
+
 void provider.testConnection;
 void availableProviders;
+void textWithoutInstructions;
+void textWithInstructions;

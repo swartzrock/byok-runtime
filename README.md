@@ -29,6 +29,7 @@ const { text } = await generateText({
 	provider: ByokProvider.OpenAI,
 	apiKey: process.env.OPENAI_API_KEY!,
 	model: "gpt-4o-mini",
+	instructions: "Answer for a technical audience. Be concise.",
 	prompt: "Explain retrieval-augmented generation in two sentences.",
 });
 
@@ -70,6 +71,17 @@ Cloud and local-server providers use the main entrypoint. CLI providers can spaw
 
 Groq, Mistral, DeepSeek, and DeepInfra reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
 
+Optional `instructions` stay separate from the required user `prompt`:
+
+| Providers                                                                                 | Instruction channel                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, LM Studio | OpenAI-compatible `system` message                |
+| Ollama                                                                                    | Native `system` request field                     |
+| Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
+| Codex CLI                                                                                 | Per-run `developer_instructions` config           |
+
+All built-in text providers support this separation. BYOK Runtime never concatenates `instructions` into `prompt`. An adapter without a separate native channel must reject only calls that supply `instructions` with `ByokProviderError`; prompt-only calls remain unchanged.
+
 ## Common Workflows
 
 ### Reuse a Credential
@@ -86,6 +98,7 @@ const ai = createByok({
 
 const { text } = await ai.generateText({
 	model: "gpt-4o-mini",
+	instructions: "Use release-note style and active voice.",
 	prompt: "Draft a short release note for a model-provider SDK.",
 });
 ```
@@ -191,6 +204,7 @@ const provider = createByokNodeProvider({
 });
 
 const { text } = await provider.generateText({
+	instructions: "Write for an on-call engineer. Preserve error codes exactly.",
 	prompt: "Summarize this backend job failure in one paragraph.",
 });
 ```
@@ -216,7 +230,7 @@ Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GE
 
 Callers can inspect the flat `BYOK_API_KEY_ENV_VARS` list or the provider-keyed `BYOK_PROVIDER_API_KEY_ENV_VARS` map through the main package entrypoint.
 
-BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
+BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. `instructions` and `prompt` are ordinary caller-provided model content, not credentials; hosts should apply their normal content-handling and privacy policies to both. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
 
 ## Entry Points
 

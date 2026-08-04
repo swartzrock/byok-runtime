@@ -116,6 +116,28 @@ describe("CodexCliProvider", () => {
 		expect(run.mock.calls[0][0].args).not.toContain("--ask-for-approval");
 	});
 
+	it("passes instructions through Codex developer_instructions config", async () => {
+		const { provider, run } = makeProvider([result(eventOutput("Plain final answer."))], "gpt-5");
+
+		await provider.generateText({
+			instructions: '  Answer as an editor.\nKeep "quotes" and spacing.  ',
+			prompt: "  Rewrite this.\nKeep stdin spacing.  ",
+		});
+
+		expect(run.mock.calls[0][0].stdin).toBe("  Rewrite this.\nKeep stdin spacing.  ");
+		expect(run.mock.calls[0][0].args).toEqual([
+			"exec",
+			"--skip-git-repo-check",
+			"--sandbox",
+			"read-only",
+			"--json",
+			"-c",
+			'developer_instructions="  Answer as an editor.\\nKeep \\"quotes\\" and spacing.  "',
+			"--model",
+			"gpt-5",
+		]);
+	});
+
 	it("throws ProviderError when Codex CLI returns no final text", async () => {
 		const { provider } = makeProvider([result("")]);
 
