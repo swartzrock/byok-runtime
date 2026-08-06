@@ -141,6 +141,7 @@ describe("BYOK public contract", () => {
 		});
 		await expect(
 			runtime.generateObject?.({
+				instructions: "Answer for a study-review audience.",
 				prompt: "Hi",
 				schema: z.object({ ok: z.boolean() }),
 			})

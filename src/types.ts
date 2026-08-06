@@ -235,6 +235,8 @@ export interface ByokClient {
 
 export interface ByokObjectGenerationInput<T> {
 	prompt: string;
+	/** Optional system/developer instructions sent separately from the user prompt. */
+	instructions?: string;
 	schema: z.ZodType<T, z.ZodTypeDef, unknown>;
 }
 
