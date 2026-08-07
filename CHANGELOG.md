@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0
+
+### Minor Changes
+
+- afd9a9b: Add optional provider-native instructions to structured object generation.
+
 ## 2.2.0
 
 ### Minor Changes
