@@ -58,14 +58,14 @@ function provider(opts: {
 
 function fixedObjectGenerator(value: unknown): {
 	generator: CloudObjectGenerator;
-	prompts: string[];
+	inputs: unknown[];
 } {
-	const prompts: string[] = [];
-	const generator: CloudObjectGenerator = async ({ prompt }) => {
-		prompts.push(prompt);
+	const inputs: unknown[] = [];
+	const generator: CloudObjectGenerator = async (input) => {
+		inputs.push(input);
 		return value as never;
 	};
-	return { generator, prompts };
+	return { generator, inputs };
 }
 
 function fixedTextGenerator(value: string): {
@@ -175,7 +175,39 @@ describe("OpenAiCompatibleProvider", () => {
 
 		const body = JSON.parse(calls[0]?.init?.body as string);
 		expect(body.response_format).toBeUndefined();
+		expect(body.messages).toHaveLength(1);
+		expect(body.messages[0].role).toBe("user");
+		expect(body.messages[0].content).toContain("Answer this.");
+		expect(body.messages[0].content).toContain('"answer"');
 		expect(body.messages[0].content).toContain("Respond with ONLY a valid JSON object");
+	});
+
+	it("sends object instructions as a separate system message with exact whitespace", async () => {
+		const calls: FetchCall[] = [];
+		const p = provider({
+			fetchImpl: (async (input, init) => {
+				calls.push({ url: input.toString(), init });
+				return new Response(
+					JSON.stringify({ choices: [{ message: { content: '{"answer":"42"}' } }] }),
+					{ status: 200, headers: { "content-type": "application/json" } }
+				);
+			}) as typeof fetch,
+		});
+		const instructions = "  Remain faithful.\nKeep this spacing.  ";
+
+		await p.generateObject({
+			instructions,
+			prompt: "Summarize this note.",
+			schema: z.object({ answer: z.string() }),
+		});
+
+		const body = JSON.parse(calls[0]?.init?.body as string);
+		expect(body.messages).toHaveLength(2);
+		expect(body.messages[0]).toEqual({ role: "system", content: instructions });
+		expect(body.messages[1].role).toBe("user");
+		expect(body.messages[1].content).toContain("Summarize this note.");
+		expect(body.messages[1].content).toContain('"answer"');
+		expect(body.messages[1].content).not.toContain(instructions);
 	});
 
 	it("reprompts once when object JSON misses required schema fields", async () => {
@@ -206,6 +238,7 @@ describe("OpenAiCompatibleProvider", () => {
 
 		await expect(
 			p.generateObject({
+				instructions: "  Stay grounded.\n",
 				prompt: "Analyze this section.",
 				schema: z.object({
 					heading: z.string(),
@@ -218,15 +251,21 @@ describe("OpenAiCompatibleProvider", () => {
 		});
 
 		expect(calls).toHaveLength(2);
+		const initialBody = JSON.parse(calls[0]?.init?.body as string);
 		const retryBody = JSON.parse(calls[1]?.init?.body as string);
-		expect(retryBody.messages[0].content).toContain("Validation error");
-		expect(retryBody.messages[0].content).toContain("rationale");
-		expect(retryBody.messages[0].content).toContain("Return ONLY a corrected JSON object");
+		for (const body of [initialBody, retryBody]) {
+			expect(body.messages[0]).toEqual({ role: "system", content: "  Stay grounded.\n" });
+			expect(body.messages[1].content).not.toContain("  Stay grounded.\n");
+		}
+		expect(initialBody.messages[1].content).toContain("Analyze this section.");
+		expect(retryBody.messages[1].content).toContain("Validation error");
+		expect(retryBody.messages[1].content).toContain("rationale");
+		expect(retryBody.messages[1].content).toContain("Return ONLY a corrected JSON object");
 	});
 
 	it("uses injected object and text generators for focused tests", async () => {
 		const schema = z.object({ answer: z.string() });
-		const { generator, prompts: objectPrompts } = fixedObjectGenerator({ answer: "42" });
+		const { generator, inputs: objectInputs } = fixedObjectGenerator({ answer: "42" });
 		const { textGenerator, prompts: textPrompts } = fixedTextGenerator("plain reply");
 		const p = provider({ generator, textGenerator });
 
@@ -236,15 +275,17 @@ describe("OpenAiCompatibleProvider", () => {
 		await expect(p.generateText({ prompt: "Write plainly." })).resolves.toEqual({
 			text: "plain reply",
 		});
-		expect(objectPrompts).toEqual(["Answer this."]);
+		expect(objectInputs).toStrictEqual([{ schema, prompt: "Answer this.", signal: undefined }]);
 		expect(textPrompts).toEqual(["Write plainly."]);
 	});
 
-	it("retries rate-limit errors before surfacing success", async () => {
-		let calls = 0;
-		const generator: CloudObjectGenerator = async () => {
-			calls++;
-			if (calls < 3) {
+	it("preserves object instructions and the abort signal across rate-limit retries", async () => {
+		const controller = new AbortController();
+		const schema = z.object({ ok: z.boolean() });
+		const inputs: unknown[] = [];
+		const generator: CloudObjectGenerator = async (input) => {
+			inputs.push(input);
+			if (inputs.length < 3) {
 				throw Object.assign(new Error("429 rate limit"), {
 					status: 429,
 					retryAfterMs: 0,
@@ -254,12 +295,24 @@ describe("OpenAiCompatibleProvider", () => {
 		};
 
 		await expect(
-			provider({ generator }).generateObject({
-				prompt: "Hi",
-				schema: z.object({ ok: z.boolean() }),
-			})
+			provider({ generator }).generateObject(
+				{
+					instructions: "  Stay exact.\n",
+					prompt: "Hi",
+					schema,
+				},
+				controller.signal
+			)
 		).resolves.toEqual({ ok: true });
-		expect(calls).toBe(3);
+		expect(inputs).toHaveLength(3);
+		for (const input of inputs) {
+			expect(input).toStrictEqual({
+				schema,
+				prompt: "Hi",
+				instructions: "  Stay exact.\n",
+				signal: controller.signal,
+			});
+		}
 	});
 
 	it("preserves instructions and the abort signal across text retries", async () => {

@@ -15,6 +15,8 @@ import type { ByokModelOption, ByokProviderId } from "../types";
 export type CloudObjectGenerator = <T>(opts: {
 	schema: z.ZodType<T, z.ZodTypeDef, unknown>;
 	prompt: string;
+	/** Optional system/developer instructions sent separately from the user prompt. */
+	instructions?: string;
 	signal?: AbortSignal;
 }) => Promise<T>;
 
@@ -377,6 +379,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 					return this.objectGenerator({
 						schema: input.schema,
 						prompt: input.prompt,
+						...(input.instructions === undefined ? {} : { instructions: input.instructions }),
 						signal: runSignal,
 					});
 				}
@@ -388,7 +391,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
 				let prompt = basePrompt;
 				let lastError: unknown = null;
 				for (let attempt = 0; attempt <= SCHEMA_REPAIR_ATTEMPTS; attempt++) {
-					const text = await this.complete({ prompt }, runSignal);
+					const text = await this.complete(
+						{
+							prompt,
+							...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+						},
+						runSignal
+					);
 					try {
 						return parseObjectResponse(input.schema, text);
 					} catch (e) {

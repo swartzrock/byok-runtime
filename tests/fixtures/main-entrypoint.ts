@@ -7,9 +7,11 @@ import {
 	listModels,
 	resolveByokEnvCredential,
 	type ByokHttpClient,
+	type ByokObjectGenerationInput,
 	type ByokProviderDeps,
 	type BYOK_API_KEY_ENV_VARS,
 } from "../../src";
+import { z } from "zod/v3";
 
 const http: ByokHttpClient = async () => ({
 	status: 200,
@@ -44,6 +46,12 @@ const openRouterText = generateText({
 	prompt: "Explain BYOK in one sentence.",
 	deps,
 });
+
+const objectInput: ByokObjectGenerationInput<{ summary: string }> = {
+	instructions: "Answer for a study-review audience.",
+	prompt: "Return the note's primary takeaway.",
+	schema: z.object({ summary: z.string() }),
+};
 
 const modelOptions = listModels({
 	provider: ByokProvider.OpenAI,
@@ -151,6 +159,7 @@ const providerIds: readonly [
 
 void text;
 void openRouterText;
+void objectInput;
 void modelOptions;
 void envText;
 void envModelOptions;

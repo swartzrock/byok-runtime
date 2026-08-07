@@ -171,7 +171,7 @@ const { text } = await provider.generateText({
 
 `ByokTextGenerationInput`, `ByokClientTextGenerationInput`, and the function-first generation options all keep `prompt` required and expose `instructions?: string`. Omitted instructions do not add an empty message, request property, or CLI argument.
 
-AI SDK based providers expose `generateObject`. Check for the method before calling it because Ollama and local CLI providers are text-only.
+AI SDK based providers expose `generateObject`. Check for the method before calling it because Ollama and local CLI providers are text-only. `ByokObjectGenerationInput<T>` keeps `prompt` and `schema` required and exposes the same optional `instructions?: string` as text generation.
 
 ```ts
 import { z } from "zod/v3";
@@ -179,12 +179,15 @@ import { z } from "zod/v3";
 if (!provider.generateObject) throw new Error("Structured output unavailable.");
 
 const report = await provider.generateObject({
+	instructions: "Remain faithful to the supplied source material.",
 	prompt: "Return three risks of storing API keys in plaintext.",
 	schema: z.object({
 		risks: z.array(z.string()),
 	}),
 });
 ```
+
+Providers exposing `generateObject` send instructions through the same native channel as text generation. Instructions remain separate from the generated schema prompt, and validation-repair attempts retain the original instructions unchanged.
 
 ## Providers
 
@@ -225,7 +228,7 @@ Groq, Mistral, DeepSeek, and DeepInfra use BYOK's existing OpenAI-compatible cha
 | Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
 | Codex CLI                                                                                 | Per-run `developer_instructions` config           |
 
-Every built-in text provider supports a separate instruction channel. Provider adapters must not concatenate instructions into the user prompt. If a future adapter cannot represent instructions separately, it must throw `ByokProviderError` only when `instructions` is supplied; prompt-only calls remain unchanged.
+Every built-in text provider supports a separate instruction channel, and providers exposing `generateObject` use that same channel. Provider adapters must not concatenate instructions into the user prompt, including generated schema or repair text. Object-generation repair attempts retain the original instructions. If a future adapter cannot represent instructions separately, it must throw `ByokProviderError` only when `instructions` is supplied; prompt-only calls remain unchanged.
 
 Instruction and prompt strings are passed without trimming or rewriting. They are ordinary caller-provided model content, not credentials; host applications should handle them according to their normal content privacy and retention policies.
 

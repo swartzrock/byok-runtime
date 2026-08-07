@@ -80,7 +80,7 @@ Optional `instructions` stay separate from the required user `prompt`:
 | Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
 | Codex CLI                                                                                 | Per-run `developer_instructions` config           |
 
-All built-in text providers support this separation. BYOK Runtime never concatenates `instructions` into `prompt`. An adapter without a separate native channel must reject only calls that supply `instructions` with `ByokProviderError`; prompt-only calls remain unchanged.
+All built-in text providers support this separation, and providers exposing `generateObject` use the same native instruction channel. BYOK Runtime never concatenates `instructions` into `prompt`. An adapter without a separate native channel must reject only calls that supply `instructions` with `ByokProviderError`; prompt-only calls remain unchanged.
 
 ## Common Workflows
 
@@ -154,7 +154,7 @@ When supported, `status.models` contains model IDs returned during the connectio
 
 ### Generate Structured Objects
 
-Provider runtimes that expose `generateObject` accept a Zod schema. Ollama and local CLI providers are text-only.
+Provider runtimes that expose `generateObject` accept a Zod schema and optional provider-native instructions. Ollama and local CLI providers are text-only.
 
 ```ts
 import { z } from "zod/v3";
@@ -169,10 +169,13 @@ if (!provider.generateObject) {
 }
 
 const report = await provider.generateObject({
+	instructions: "Remain faithful to the supplied source material.",
 	prompt: "Return the main risks of storing API keys in plaintext.",
 	schema,
 });
 ```
+
+`ByokObjectGenerationInput<T>.instructions` has the same separation and whitespace-preserving semantics as text generation. It is never folded into the user prompt, and structured-output repair attempts retain the original instructions.
 
 ### Use Local Models
 
