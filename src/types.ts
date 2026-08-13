@@ -174,6 +174,15 @@ export interface ByokTextGenerationOutput {
 	text: string;
 }
 
+export type ByokTextStreamDelivery = "native" | "buffered";
+
+export interface ByokTextStream {
+	/** Whether text arrives progressively from the provider or as one completed response. */
+	readonly delivery: ByokTextStreamDelivery;
+	/** Single-consumer text deltas whose concatenation is the exact generated text. */
+	readonly textStream: AsyncIterable<string>;
+}
+
 export type ByokGenerateTextOptions =
 	| (ByokCloudProviderConfig & {
 			prompt: string;
@@ -193,6 +202,8 @@ export type ByokGenerateTextOptions =
 			deps?: ByokFacadeDeps;
 			signal?: AbortSignal;
 	  });
+
+export type ByokStreamTextOptions = ByokGenerateTextOptions;
 
 export type ByokListModelsOptions =
 	| (Omit<ByokApiKeyCloudProviderConfig, "model"> & {
@@ -233,6 +244,10 @@ export interface ByokClient {
 	generateText(input: ByokClientTextGenerationInput): Promise<ByokTextGenerationOutput>;
 }
 
+export interface ByokStreamingClient extends ByokClient {
+	streamText(input: ByokClientTextGenerationInput): ByokTextStream;
+}
+
 export interface ByokObjectGenerationInput<T> {
 	prompt: string;
 	/** Optional system/developer instructions sent separately from the user prompt. */
@@ -252,6 +267,7 @@ export interface ByokProviderRuntime {
 		input: ByokTextGenerationInput,
 		signal?: AbortSignal
 	): Promise<ByokTextGenerationOutput>;
+	streamText?(input: ByokTextGenerationInput, signal?: AbortSignal): ByokTextStream;
 	generateObject?<T>(input: ByokObjectGenerationInput<T>, signal?: AbortSignal): Promise<T>;
 }
 

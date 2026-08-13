@@ -116,6 +116,45 @@ describe("CodexCliProvider", () => {
 		expect(run.mock.calls[0][0].args).not.toContain("--ask-for-approval");
 	});
 
+	it("adapts Codex generation to one lazy buffered delta", async () => {
+		const { provider, run } = makeProvider([result(eventOutput("  Exact final answer.\n"))]);
+
+		const stream = provider.streamText({ prompt: "Answer plainly." });
+
+		expect(stream.delivery).toBe("buffered");
+		expect(run).not.toHaveBeenCalled();
+		const deltas: string[] = [];
+		for await (const delta of stream.textStream) deltas.push(delta);
+		expect(deltas).toEqual(["  Exact final answer.\n"]);
+		expect(run).toHaveBeenCalledTimes(1);
+	});
+
+	it("cancels a pending Codex process when stream iteration stops", async () => {
+		let request: LocalCommandRequest | undefined;
+		const run = vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>(
+			(input: LocalCommandRequest) =>
+				new Promise((_resolve, reject) => {
+					request = input;
+					input.signal?.addEventListener(
+						"abort",
+						() => reject(new ProviderError("codex was cancelled.")),
+						{ once: true }
+					);
+				})
+		);
+		const provider = new CodexCliProvider({ command: "codex", runner: { run } });
+		const iterator = provider
+			.streamText({ prompt: "Answer plainly." })
+			.textStream[Symbol.asyncIterator]();
+		const pending = iterator.next().catch((error: unknown) => error);
+		await vi.waitFor(() => expect(request).toBeDefined());
+
+		await expect(iterator.return?.()).resolves.toEqual({ done: true, value: undefined });
+
+		expect(request?.signal?.aborted).toBe(true);
+		await expect(pending).resolves.toBeInstanceOf(ProviderError);
+	});
+
 	it("passes instructions through Codex developer_instructions config", async () => {
 		const { provider, run } = makeProvider([result(eventOutput("Plain final answer."))], "gpt-5");
 

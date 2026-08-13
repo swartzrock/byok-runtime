@@ -11,6 +11,7 @@ import {
 	generateText,
 	listModels,
 	resolveByokEnvCredential,
+	streamText,
 } from "@swartzrock/byok-runtime";
 import { createByokNodeProvider, findAvailableProviders } from "@swartzrock/byok-runtime/node";
 ```
@@ -30,6 +31,7 @@ Runtime exports:
 - `isByokProviderId`
 - `normalizeProviderId`
 - `generateText`
+- `streamText`
 - `createByok`
 - `listModels`
 - `resolveByokEnvCredential`
@@ -73,6 +75,42 @@ Cloud providers use `{ provider, apiKey, model, prompt }`, or `{ provider, crede
 
 The function-first API requires a plain-text user `prompt` and optionally accepts plain-text `instructions`. Instructions are sent through the provider's separate system/developer channel and are never concatenated into the prompt. Use the node runtime when you need connection testing, JSON response hints, or structured object generation.
 
+### `streamText(options)`
+
+Returns a lazy, single-consumer text stream without changing `generateText` behavior.
+
+```ts
+const { delivery, textStream } = streamText({
+	provider: ByokProvider.OpenAI,
+	apiKey,
+	model: "gpt-4o-mini",
+	prompt: "Explain BYOK in one paragraph.",
+});
+
+let text = "";
+for await (const delta of textStream) text += delta;
+```
+
+The return value is `ByokTextStream`:
+
+```ts
+interface ByokTextStream {
+	readonly delivery: "native" | "buffered";
+	readonly textStream: AsyncIterable<string>;
+}
+```
+
+The request begins on the first iterator read. `"native"` means the provider supplies progressive
+deltas; `"buffered"` means the adapter emits one completed delta. Concatenating every delta
+reconstructs the exact generated text. Verified OpenAI-compatible routes and Ollama's fetch-backed
+transport use native delivery. Codex CLI, Claude CLI, and unsupported custom transports use
+buffered delivery.
+
+The caller's optional `signal` and iterator lifetime share cancellation. Aborting the signal,
+calling `return()`, or breaking from `for await` aborts the underlying request or local process.
+Rate-limit retries are allowed only before the first emitted text delta. Streams can be consumed
+once, retain the default response-size limit, and preserve instructions separately from the prompt.
+
 ### `createByok(config)`
 
 Creates a credential-bound client for repeated text generation. The model remains per call.
@@ -90,7 +128,8 @@ const { text } = await ai.generateText({
 });
 ```
 
-`ByokClient` exposes only `generateText`.
+The client returned by `createByok` exposes both `generateText` and `streamText`; the model remains
+per call for both methods.
 
 `createByok` also accepts env-backed cloud credentials for trusted scripts:
 
@@ -168,6 +207,9 @@ const { text } = await provider.generateText({
 	prompt: "Explain BYOK in one sentence.",
 });
 ```
+
+Built-in runtimes also expose `streamText`. The method remains optional on the public provider
+runtime interface so existing custom runtime implementations stay source-compatible.
 
 `ByokTextGenerationInput`, `ByokClientTextGenerationInput`, and the function-first generation options all keep `prompt` required and expose `instructions?: string`. Omitted instructions do not add an empty message, request property, or CLI argument.
 

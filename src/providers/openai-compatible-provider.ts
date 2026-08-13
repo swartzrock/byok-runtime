@@ -10,7 +10,8 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokModelOption, ByokProviderId } from "../types";
+import type { ByokModelOption, ByokProviderId, ByokTextStream } from "../types";
+import { createBufferedTextStream, createTextStream, withResponseSizeLimit } from "../text-stream";
 
 export type CloudObjectGenerator = <T>(opts: {
 	schema: z.ZodType<T, z.ZodTypeDef, unknown>;
@@ -40,6 +41,7 @@ export interface OpenAiCompatibleProviderConfig {
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 	requestHeaders?: (apiKey: string) => Record<string, string>;
 	requiresNetwork?: boolean;
+	nativeTextStreaming?: boolean;
 }
 
 export interface OpenAiCompatibleModel {
@@ -174,6 +176,18 @@ function extractText(body: ChatCompletion): string {
 	throw new Error("OpenAI-compatible response did not include message content.");
 }
 
+function chatMessages(input: {
+	prompt: string;
+	instructions?: string;
+}): ChatCompletionMessageParam[] {
+	const messages: ChatCompletionMessageParam[] = [];
+	if (input.instructions !== undefined) {
+		messages.push({ role: "system", content: input.instructions });
+	}
+	messages.push({ role: "user", content: input.prompt });
+	return messages;
+}
+
 function normalizeModel(entry: OpenAiCompatibleModel): ByokModelOption | null {
 	const id = entry.id ?? "";
 	if (!id.trim()) return null;
@@ -200,6 +214,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
 	private readonly normalizeModel: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 	private readonly requestHeaders?: (apiKey: string) => Record<string, string>;
+	private readonly nativeTextStreaming: boolean;
 
 	constructor(config: OpenAiCompatibleProviderConfig) {
 		this.id = config.id;
@@ -222,6 +237,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.listModelsImpl = config.listModelsImpl;
 		this.normalizeModel = config.normalizeModel ?? normalizeModel;
 		this.requestHeaders = config.requestHeaders;
+		this.nativeTextStreaming = config.nativeTextStreaming ?? false;
 	}
 
 	protected describeError(e: unknown): string {
@@ -301,19 +317,62 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		if (this.textGenerator) {
 			return this.textGenerator({ ...input, signal });
 		}
-		const messages: ChatCompletionMessageParam[] = [];
-		if (input.instructions !== undefined) {
-			messages.push({ role: "system", content: input.instructions });
-		}
-		messages.push({ role: "user", content: input.prompt });
 		const body = await this.client.chat.completions.create(
 			{
 				model: this.model,
-				messages,
+				messages: chatMessages(input),
 			},
 			{ signal }
 		);
 		return extractText(body);
+	}
+
+	private async *streamNative(
+		input: { prompt: string; instructions?: string },
+		signal: AbortSignal
+	): AsyncIterable<string> {
+		let emitted = false;
+		const messages = chatMessages(input);
+		const streamingClient = new OpenAI({
+			apiKey: this.apiKey,
+			baseURL: this.baseURL,
+			fetch: withResponseSizeLimit(this.fetchImpl),
+			maxRetries: 0,
+			dangerouslyAllowBrowser: true,
+		});
+		for (let attempt = 0; attempt <= DEFAULT_RATE_LIMIT_RETRIES; attempt++) {
+			try {
+				const stream = await streamingClient.chat.completions.create(
+					{
+						model: this.model,
+						messages,
+						stream: true,
+					},
+					{ signal }
+				);
+				for await (const chunk of stream) {
+					const delta = chunk.choices?.[0]?.delta?.content;
+					if (typeof delta !== "string" || delta.length === 0) continue;
+					emitted = true;
+					yield delta;
+				}
+				return;
+			} catch (error) {
+				if (isRateLimitError(error)) {
+					if (emitted || attempt === DEFAULT_RATE_LIMIT_RETRIES) {
+						throw new ProviderRateLimitError(this.describeError(error), retryAfterMs(error));
+					}
+					const waitMs = Math.min(
+						retryAfterMs(error) ?? DEFAULT_RATE_LIMIT_RETRY_MS * 2 ** attempt,
+						MAX_RATE_LIMIT_RETRY_MS
+					);
+					await sleep(waitMs, signal);
+					continue;
+				}
+				if (error instanceof ProviderError) throw error;
+				throw new ProviderError(this.describeError(error));
+			}
+		}
 	}
 
 	async testConnection(): Promise<ProviderStatus> {
@@ -370,6 +429,27 @@ export class OpenAiCompatibleProvider implements AiProvider {
 			if (e instanceof ProviderRateLimitError) throw e;
 			throw new ProviderError(this.describeError(e));
 		}
+	}
+
+	streamText(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream {
+		if (!this.nativeTextStreaming || this.textGenerator) {
+			return createBufferedTextStream(
+				(streamSignal) => this.generateText(input, streamSignal),
+				signal
+			);
+		}
+		return createTextStream(
+			"native",
+			(streamSignal) =>
+				this.streamNative(
+					{
+						prompt: input.prompt,
+						...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+					},
+					streamSignal
+				),
+			signal
+		);
 	}
 
 	async generateObject<T>(input: ObjectGenerationInput<T>, signal?: AbortSignal): Promise<T> {

@@ -24,6 +24,7 @@ describe("BYOK public contract", () => {
 			"listModels",
 			"normalizeProviderId",
 			"resolveByokEnvCredential",
+			"streamText",
 		]);
 		expect("createByokNodeProvider" in byok).toBe(false);
 		expect("findAvailableProviders" in byok).toBe(false);
@@ -77,6 +78,7 @@ describe("BYOK public contract", () => {
 		expect(codeExamples).toContain('from "@swartzrock/byok-runtime"');
 		expect(codeExamples).toContain('from "@swartzrock/byok-runtime/node"');
 		expect(codeExamples).toContain("generateText");
+		expect(codeExamples).toContain("streamText");
 		expect(codeExamples).toContain("createByok");
 		expect(codeExamples).toContain("listModels");
 		expect(codeExamples).toContain("ByokProvider");

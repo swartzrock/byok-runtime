@@ -1,6 +1,6 @@
 import { ByokProviderError, type ByokHttpClient, type ByokProviderDeps } from "../types";
+import { MAX_BYOK_RESPONSE_BYTES } from "../text-stream";
 
-const MAX_DEFAULT_HTTP_RESPONSE_BYTES = 1_000_000;
 export const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 export const DEFAULT_LM_STUDIO_BASE_URL = "http://localhost:1234/v1";
 
@@ -59,7 +59,7 @@ async function readCappedText(response: Response): Promise<string> {
 	const body = response.body;
 	if (!body) {
 		const text = await response.text();
-		if (new TextEncoder().encode(text).byteLength > MAX_DEFAULT_HTTP_RESPONSE_BYTES) {
+		if (new TextEncoder().encode(text).byteLength > MAX_BYOK_RESPONSE_BYTES) {
 			throw new ByokProviderError("BYOK HTTP response exceeded the default size limit.");
 		}
 		return text;
@@ -72,7 +72,7 @@ async function readCappedText(response: Response): Promise<string> {
 		if (done) break;
 		if (!value) continue;
 		totalBytes += value.byteLength;
-		if (totalBytes > MAX_DEFAULT_HTTP_RESPONSE_BYTES) {
+		if (totalBytes > MAX_BYOK_RESPONSE_BYTES) {
 			await reader.cancel();
 			throw new ByokProviderError("BYOK HTTP response exceeded the default size limit.");
 		}
@@ -120,10 +120,16 @@ export function resolveByokFetchDeps(
 
 export function resolveOllamaDeps(
 	deps: Partial<ByokProviderDeps> | undefined
-): Pick<ByokProviderDeps, "http"> {
-	if (deps?.http) return { http: deps.http };
+): Pick<ByokProviderDeps, "http"> & Partial<Pick<ByokProviderDeps, "fetchImpl">> {
+	if (deps?.http) {
+		return {
+			http: deps.http,
+			...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
+		};
+	}
 	const { fetchImpl } = resolveByokFetchDeps(deps);
 	return {
 		http: createDefaultHttpClient(fetchImpl),
+		fetchImpl,
 	};
 }

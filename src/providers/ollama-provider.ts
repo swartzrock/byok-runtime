@@ -7,7 +7,9 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
+import type { ByokTextStream } from "../types";
 import { normalizeModelIds, type ModelOption } from "../models/model-options";
+import { createBufferedTextStream, createTextStream, withResponseSizeLimit } from "../text-stream";
 
 /** Pull Ollama's `{ "error": "..." }` body out of a failed response. */
 function extractServerError(res: HttpResponse): string {
@@ -39,6 +41,7 @@ export interface OllamaProviderOptions {
 	url: string;
 	model: string;
 	http: HttpClient;
+	fetchImpl?: typeof fetch;
 }
 
 export class OllamaProvider implements AiProvider {
@@ -50,11 +53,13 @@ export class OllamaProvider implements AiProvider {
 	private url: string;
 	private model: string;
 	private http: HttpClient;
+	private fetchImpl?: typeof fetch;
 
 	constructor(opts: OllamaProviderOptions) {
 		this.url = opts.url.replace(/\/+$/, "");
 		this.model = opts.model;
 		this.http = opts.http;
+		this.fetchImpl = opts.fetchImpl;
 	}
 
 	async testConnection(): Promise<ProviderStatus> {
@@ -104,6 +109,71 @@ export class OllamaProvider implements AiProvider {
 		return {
 			text: await this.complete(input.prompt, input.instructions, input.responseFormat, signal),
 		};
+	}
+
+	streamText(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream {
+		if (!this.fetchImpl) {
+			return createBufferedTextStream(
+				(streamSignal) => this.generateText(input, streamSignal),
+				signal
+			);
+		}
+		return createTextStream(
+			"native",
+			(streamSignal) => this.streamNative(input, streamSignal, this.fetchImpl!),
+			signal
+		);
+	}
+
+	private async *streamNative(
+		input: TextGenerationInput,
+		signal: AbortSignal,
+		fetchImpl: typeof fetch
+	): AsyncIterable<string> {
+		const { Ollama } = await import("ollama/browser");
+		const limitedFetch = withResponseSizeLimit(fetchImpl);
+		const client = new Ollama({
+			host: this.url,
+			fetch: (fetchInput, init) =>
+				limitedFetch(fetchInput, {
+					...init,
+					signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal,
+				}),
+		});
+		let stream;
+		try {
+			stream = await client.generate({
+				model: this.model,
+				prompt: input.prompt,
+				...(input.instructions === undefined ? {} : { system: input.instructions }),
+				stream: true,
+				...(input.responseFormat === "json" ? { format: "json" } : {}),
+			});
+		} catch (error) {
+			if (signal.aborted || isAbortError(error)) throw error;
+			throw new ProviderError(
+				`Ollama request failed: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+
+		let completed = false;
+		const onAbort = (): void => stream.abort();
+		if (signal.aborted) onAbort();
+		else signal.addEventListener("abort", onAbort, { once: true });
+		try {
+			for await (const chunk of stream) {
+				if (chunk.response) yield chunk.response;
+			}
+			completed = true;
+		} catch (error) {
+			if (signal.aborted || isAbortError(error)) throw error;
+			throw new ProviderError(
+				`Ollama request failed: ${error instanceof Error ? error.message : String(error)}`
+			);
+		} finally {
+			signal.removeEventListener("abort", onAbort);
+			if (!completed && !signal.aborted) stream.abort();
+		}
 	}
 
 	/** POST /api/generate (non-streaming) and return the raw model text. */

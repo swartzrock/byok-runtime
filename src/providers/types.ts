@@ -3,7 +3,7 @@ export {
 	ByokProviderError as ProviderError,
 	ByokProviderRateLimitError as ProviderRateLimitError,
 } from "../types";
-import type { ByokModelOption } from "../types";
+import type { ByokModelOption, ByokTextStream } from "../types";
 
 /** Minimal HTTP abstraction so providers can be unit-tested without a live server. */
 export interface HttpRequest {
@@ -62,5 +62,6 @@ export interface AiProvider {
 	testConnection(): Promise<ProviderStatus>;
 	listModels(): Promise<ByokModelOption[]>;
 	generateText(input: TextGenerationInput, signal?: AbortSignal): Promise<TextGenerationOutput>;
+	streamText?(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream;
 	generateObject?<T>(input: ObjectGenerationInput<T>, signal?: AbortSignal): Promise<T>;
 }

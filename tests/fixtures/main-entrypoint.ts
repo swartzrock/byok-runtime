@@ -6,9 +6,12 @@ import {
 	generateText,
 	listModels,
 	resolveByokEnvCredential,
+	streamText,
 	type ByokHttpClient,
+	type ByokClient,
 	type ByokObjectGenerationInput,
 	type ByokProviderDeps,
+	type ByokTextStream,
 	type BYOK_API_KEY_ENV_VARS,
 } from "../../src";
 import { z } from "zod/v3";
@@ -43,6 +46,14 @@ const openRouterText = generateText({
 	apiKey: "sk-test",
 	model: "openai/gpt-4o",
 	instructions: "Answer in one sentence.",
+	prompt: "Explain BYOK in one sentence.",
+	deps,
+});
+
+const streamedText: ByokTextStream = streamText({
+	provider: ByokProvider.OpenAI,
+	apiKey: "sk-test",
+	model: "gpt-4o-mini",
 	prompt: "Explain BYOK in one sentence.",
 	deps,
 });
@@ -109,6 +120,12 @@ const envClient = createByok({
 	deps,
 });
 
+const legacyClientShape: ByokClient = {
+	async generateText() {
+		return { text: "Compatible." };
+	},
+};
+
 void listModels({
 	// @ts-expect-error use ByokProvider.OpenAI to avoid typos like this.
 	provider: "oppenai",
@@ -119,6 +136,11 @@ void listModels({
 const clientText = client.generateText({
 	model: "gpt-4o-mini",
 	instructions: "Answer in one sentence.",
+	prompt: "Explain BYOK in one sentence.",
+});
+
+const clientStream = client.streamText({
+	model: "gpt-4o-mini",
 	prompt: "Explain BYOK in one sentence.",
 });
 
@@ -159,12 +181,15 @@ const providerIds: readonly [
 
 void text;
 void openRouterText;
+void streamedText;
 void objectInput;
 void modelOptions;
 void envText;
 void envModelOptions;
 void clientText;
+void clientStream;
 void envClientText;
+void legacyClientShape;
 void googleApiKey;
 void supportedApiKeyEnvVar;
 void unsupportedApiKeyEnvVar;

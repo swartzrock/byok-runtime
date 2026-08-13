@@ -114,6 +114,21 @@ describe("ClaudeCliProvider", () => {
 		expect(run.mock.calls[0][0].args).not.toContain("--append-system-prompt");
 	});
 
+	it("adapts Claude generation to one lazy buffered delta", async () => {
+		const { provider, run } = makeProvider([
+			result(JSON.stringify({ type: "result", result: "  Exact final answer.\n" })),
+		]);
+
+		const stream = provider.streamText({ prompt: "Answer plainly." });
+
+		expect(stream.delivery).toBe("buffered");
+		expect(run).not.toHaveBeenCalled();
+		const deltas: string[] = [];
+		for await (const delta of stream.textStream) deltas.push(delta);
+		expect(deltas).toEqual(["  Exact final answer.\n"]);
+		expect(run).toHaveBeenCalledTimes(1);
+	});
+
 	it("appends caller instructions to Claude's default system prompt", async () => {
 		const schema = '{"type":"object"}';
 		const { provider, run } = makeProvider(

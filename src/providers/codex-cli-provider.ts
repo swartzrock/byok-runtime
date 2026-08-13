@@ -5,7 +5,8 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokModelOption } from "../types";
+import type { ByokModelOption, ByokTextStream } from "../types";
+import { createBufferedTextStream } from "../text-stream";
 import {
 	defaultLocalCliCwd,
 	LocalCommandRunner,
@@ -193,6 +194,13 @@ export class CodexCliProvider implements AiProvider {
 		signal?: AbortSignal
 	): Promise<TextGenerationOutput> {
 		return { text: await this.complete(input.prompt, input.instructions, signal) };
+	}
+
+	streamText(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream {
+		return createBufferedTextStream(
+			(streamSignal) => this.generateText(input, streamSignal),
+			signal
+		);
 	}
 
 	private commandArgs(instructions?: string): string[] {

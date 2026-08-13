@@ -68,6 +68,7 @@ function createCloudProvider(
 		fetchImpl,
 		requestHeaders: requestHeaders(runtime.auth),
 		normalizeModel: normalizeModel(runtime.modelNormalization),
+		nativeTextStreaming: runtime.nativeTextStreaming,
 	});
 }
 
@@ -85,6 +86,7 @@ function createLmStudioProvider(
 		baseURL: normalizeLmStudioBaseUrl(config.url),
 		fetchImpl,
 		requiresNetwork: false,
+		nativeTextStreaming: true,
 	});
 }
 
@@ -100,11 +102,12 @@ export function createByokProvider(
 		case "lm-studio":
 			return createLmStudioProvider(config, deps);
 		case "ollama": {
-			const { http } = resolveOllamaDeps(deps);
+			const { http, fetchImpl } = resolveOllamaDeps(deps);
 			return new OllamaProvider({
 				url: normalizeOllamaUrl(config.url),
 				model: config.model,
 				http,
+				fetchImpl,
 			});
 		}
 	}

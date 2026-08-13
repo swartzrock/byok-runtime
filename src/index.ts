@@ -4,7 +4,7 @@ export {
 	BYOK_PROVIDER_API_KEY_ENV_VARS,
 	resolveByokEnvCredential,
 } from "./credentials";
-export { createByok, generateText, listModels } from "./client";
+export { createByok, generateText, listModels, streamText } from "./client";
 export type {
 	ByokApiKeyCloudProviderConfig,
 	ByokCliProviderId,
@@ -37,8 +37,12 @@ export type {
 	ByokProviderStoredSettings,
 	ByokSetupStatus,
 	ByokStoredSettings,
+	ByokStreamTextOptions,
+	ByokStreamingClient,
 	ByokTextGenerationInput,
 	ByokTextGenerationOutput,
+	ByokTextStream,
+	ByokTextStreamDelivery,
 	ByokVerificationSnapshot,
 	ByokVerificationSnapshotMap,
 } from "./types";

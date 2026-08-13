@@ -5,7 +5,8 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokModelOption } from "../types";
+import type { ByokModelOption, ByokTextStream } from "../types";
+import { createBufferedTextStream } from "../text-stream";
 import {
 	defaultLocalCliCwd,
 	LocalCommandRunner,
@@ -289,6 +290,13 @@ export class ClaudeCliProvider implements AiProvider {
 		return {
 			text: await this.complete(input.prompt, input.jsonSchema, signal, input.instructions),
 		};
+	}
+
+	streamText(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream {
+		return createBufferedTextStream(
+			(streamSignal) => this.generateText(input, streamSignal),
+			signal
+		);
 	}
 
 	async listModels(): Promise<ByokModelOption[]> {
