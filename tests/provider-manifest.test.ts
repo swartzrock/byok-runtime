@@ -16,10 +16,20 @@ describe("provider manifest", () => {
 			"deepinfra",
 			"ollama",
 			"lm-studio",
+			"managed-local",
 			"codex-cli",
 			"claude-cli",
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
+	});
+
+	it("registers managed-local as a Node-only provider", () => {
+		expect(BYOK_PROVIDER_MANIFEST).toContainEqual({
+			family: "managed-local",
+			id: "managed-local",
+			label: "Built-in Local",
+			nodeOnly: true,
+		});
 	});
 
 	it("preserves cloud runtime diagnostics", () => {

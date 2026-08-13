@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ByokProviderError, type ByokCoreProviderConfig, type ByokHttpClient } from "../src";
 import { createByokProvider } from "../src/providers/provider-factory";
-import { createByokNodeProvider, type ByokProviderConfig } from "../src/node";
+import {
+	createByokNodeProvider,
+	ManagedLocalError,
+	type ByokProviderConfig,
+} from "../src/node";
 import { createDefaultHttpClient } from "../src/providers/default-deps";
 
 const http: ByokHttpClient = async () => ({ status: 200, text: "{}", json: {} });
@@ -332,5 +336,27 @@ describe("createByokProvider", () => {
 		expect(provider.id).toBe("claude-cli");
 		expect(provider.label).toBe("Claude CLI");
 		expect(typeof provider.listModels).toBe("function");
+	});
+
+	it("rejects managed-local construction through its typed contract without side effects", () => {
+		const managedFetch = vi.fn(fetchImpl);
+		const managedHttp = vi.fn(http);
+
+		expect(() =>
+			createByokNodeProvider(
+				{ provider: "managed-local", model: "qwen3-1.7b-q8_0" },
+				{ fetchImpl: managedFetch, http: managedHttp }
+			)
+		).toThrow(ManagedLocalError);
+		try {
+			createByokNodeProvider(
+				{ provider: "managed-local", model: "qwen3-1.7b-q8_0" },
+				{ fetchImpl: managedFetch, http: managedHttp }
+			);
+		} catch (error) {
+			expect(error).toMatchObject({ code: "runtime-blocked" });
+		}
+		expect(managedFetch).not.toHaveBeenCalled();
+		expect(managedHttp).not.toHaveBeenCalled();
 	});
 });
