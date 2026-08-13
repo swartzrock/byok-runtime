@@ -102,6 +102,7 @@ describe("BYOK public contract", () => {
 			},
 			{ provider: "ollama", model: "llama3.1:8b" },
 			{ provider: "lm-studio", model: "qwen2.5-7b-instruct" },
+			{ provider: "managed-local", model: "qwen3-1.7b-q8_0" },
 			{ provider: "codex-cli", command: "codex" },
 			{ provider: "claude-cli", command: "claude", model: "sonnet" },
 		];

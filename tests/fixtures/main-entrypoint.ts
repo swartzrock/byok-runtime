@@ -153,6 +153,7 @@ const providerIds: readonly [
 	"deepinfra",
 	"ollama",
 	"lm-studio",
+	"managed-local",
 	"codex-cli",
 	"claude-cli",
 ] = BYOK_PROVIDER_IDS;
