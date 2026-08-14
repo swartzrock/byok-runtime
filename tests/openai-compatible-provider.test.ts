@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod/v3";
 import {
 	OpenAiCompatibleProvider,
@@ -33,6 +33,7 @@ function provider(opts: {
 	generator?: CloudObjectGenerator;
 	textGenerator?: CloudTextGenerator;
 	listModelsImpl?: () => Promise<ModelOption[]>;
+	nativeTextStreaming?: boolean;
 }) {
 	return new OpenAiCompatibleProvider({
 		id: opts.id ?? "openai",
@@ -53,6 +54,23 @@ function provider(opts: {
 		generator: opts.generator,
 		textGenerator: opts.textGenerator,
 		listModelsImpl: opts.listModelsImpl,
+		nativeTextStreaming: opts.nativeTextStreaming,
+	});
+}
+
+async function collectText(stream: AsyncIterable<string>): Promise<string> {
+	let text = "";
+	for await (const delta of stream) text += delta;
+	return text;
+}
+
+function sseResponse(deltas: string[]): Response {
+	const events = deltas.map(
+		(content) => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`
+	);
+	return new Response(`${events.join("")}data: [DONE]\n\n`, {
+		status: 200,
+		headers: { "content-type": "text/event-stream" },
 	});
 }
 
@@ -126,6 +144,136 @@ describe("OpenAiCompatibleProvider", () => {
 				model: "gpt-4o-mini",
 				messages: [{ role: "user", content: "Write plainly." }],
 			})
+		);
+	});
+
+	it("streams exact native deltas lazily on verified routes", async () => {
+		const calls: FetchCall[] = [];
+		const p = provider({
+			nativeTextStreaming: true,
+			fetchImpl: (async (input, init) => {
+				calls.push({ url: input.toString(), init });
+				return sseResponse(["  Hello", "\nworld.  "]);
+			}) as typeof fetch,
+		});
+
+		const result = p.streamText?.({ prompt: "Write plainly." });
+
+		expect(result?.delivery).toBe("native");
+		expect(calls).toHaveLength(0);
+		await expect(collectText(result!.textStream)).resolves.toBe("  Hello\nworld.  ");
+		expect(calls).toHaveLength(1);
+		expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({ stream: true });
+	});
+
+	it("buffers unverified routes into one lazy exact delta", async () => {
+		const calls: FetchCall[] = [];
+		const p = provider({
+			fetchImpl: (async (input, init) => {
+				calls.push({ url: input.toString(), init });
+				return new Response(
+					JSON.stringify({ choices: [{ message: { content: "  Complete\nreply.  " } }] }),
+					{ status: 200, headers: { "content-type": "application/json" } }
+				);
+			}) as typeof fetch,
+		});
+		const result = p.streamText?.({ prompt: "Write plainly." });
+
+		expect(result?.delivery).toBe("buffered");
+		expect(calls).toHaveLength(0);
+		const deltas: string[] = [];
+		for await (const delta of result!.textStream) deltas.push(delta);
+
+		expect(deltas).toEqual(["  Complete\nreply.  "]);
+		expect(calls).toHaveLength(1);
+		expect(JSON.parse(calls[0]?.init?.body as string)).not.toHaveProperty("stream");
+	});
+
+	it("retries rate limits only before the first emitted delta", async () => {
+		let calls = 0;
+		const p = provider({
+			nativeTextStreaming: true,
+			fetchImpl: (async () => {
+				calls++;
+				if (calls === 1) {
+					return new Response("rate limited", {
+						status: 429,
+						headers: { "retry-after": "0" },
+					});
+				}
+				return sseResponse(["Recovered."]);
+			}) as typeof fetch,
+		});
+
+		await expect(collectText(p.streamText!({ prompt: "Hi" }).textStream)).resolves.toBe(
+			"Recovered."
+		);
+		expect(calls).toBe(2);
+
+		let pull = 0;
+		const body = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				if (pull++ === 0) {
+					controller.enqueue(
+						new TextEncoder().encode(
+							`data: ${JSON.stringify({ choices: [{ delta: { content: "Partial" } }] })}\n\n`
+						)
+					);
+					return;
+				}
+				controller.error(Object.assign(new Error("429 rate limit"), { status: 429 }));
+			},
+		});
+		const failingFetch = vi.fn(
+			async () => new Response(body, { headers: { "content-type": "text/event-stream" } })
+		);
+		const iterator = provider({
+			nativeTextStreaming: true,
+			fetchImpl: failingFetch as typeof fetch,
+		}).streamText!({ prompt: "Hi" }).textStream[Symbol.asyncIterator]();
+
+		await expect(iterator.next()).resolves.toEqual({ done: false, value: "Partial" });
+		await expect(iterator.next()).rejects.toBeInstanceOf(ProviderRateLimitError);
+		expect(failingFetch).toHaveBeenCalledTimes(1);
+	});
+
+	it("aborts the native request when iteration stops", async () => {
+		let requestSignal: AbortSignal | null = null;
+		let sent = false;
+		const p = provider({
+			nativeTextStreaming: true,
+			fetchImpl: (async (_input, init) => {
+				requestSignal = init?.signal as AbortSignal;
+				return new Response(
+					new ReadableStream<Uint8Array>({
+						pull(controller) {
+							if (sent) return;
+							sent = true;
+							controller.enqueue(
+								new TextEncoder().encode(
+									`data: ${JSON.stringify({ choices: [{ delta: { content: "First" } }] })}\n\n`
+								)
+							);
+						},
+					}),
+					{ headers: { "content-type": "text/event-stream" } }
+				);
+			}) as typeof fetch,
+		});
+
+		for await (const _delta of p.streamText!({ prompt: "Hi" }).textStream) break;
+
+		expect(requestSignal?.aborted).toBe(true);
+	});
+
+	it("retains the default response-size limit for native streams", async () => {
+		const p = provider({
+			nativeTextStreaming: true,
+			fetchImpl: (async () => sseResponse(["x".repeat(1_000_001)])) as typeof fetch,
+		});
+
+		await expect(collectText(p.streamText!({ prompt: "Hi" }).textStream)).rejects.toThrow(
+			/default size limit/i
 		);
 	});
 

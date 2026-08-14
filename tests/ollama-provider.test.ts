@@ -129,3 +129,70 @@ describe("OllamaProvider.generateText", () => {
 		);
 	});
 });
+
+describe("OllamaProvider.streamText", () => {
+	it("streams exact native deltas and aborts when iteration stops", async () => {
+		let signal: AbortSignal | undefined;
+		let pull = 0;
+		const fetchImpl = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+			signal = init?.signal ?? undefined;
+			return new Response(
+				new ReadableStream<Uint8Array>({
+					pull(controller) {
+						if (pull++ > 0) return;
+						controller.enqueue(
+							new TextEncoder().encode(
+								`${JSON.stringify({ response: "  First\n", done: false })}\n`
+							)
+						);
+					},
+				}),
+				{ status: 200, headers: { "content-type": "application/x-ndjson" } }
+			);
+		});
+		const p = new OllamaProvider({ ...baseOpts(generateClient([])), fetchImpl });
+		const result = p.streamText?.({ prompt: "Say hi" });
+
+		expect(result?.delivery).toBe("native");
+		expect(fetchImpl).not.toHaveBeenCalled();
+		for await (const delta of result!.textStream) {
+			expect(delta).toBe("  First\n");
+			break;
+		}
+
+		expect(signal?.aborted).toBe(true);
+		expect(JSON.parse(fetchImpl.mock.calls[0]?.[1]?.body as string)).toMatchObject({
+			model: "test-model",
+			prompt: "Say hi",
+			stream: true,
+		});
+	});
+
+	it("aborts a native request before response headers arrive", async () => {
+		let requestSignal: AbortSignal | undefined;
+		const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+			requestSignal = init?.signal ?? undefined;
+			return new Promise<Response>((_resolve, reject) => {
+				const rejectOnAbort = (): void => reject(new DOMException("Aborted", "AbortError"));
+				if (requestSignal?.aborted) rejectOnAbort();
+				else requestSignal?.addEventListener("abort", rejectOnAbort, { once: true });
+			});
+		});
+		const controller = new AbortController();
+		const p = new OllamaProvider({ ...baseOpts(generateClient([])), fetchImpl });
+		const result = p.streamText?.({ prompt: "Say hi" }, controller.signal);
+		const iterator = result!.textStream[Symbol.asyncIterator]();
+		const nextResult = iterator.next().then(
+			() => undefined,
+			(error: unknown) => error
+		);
+
+		await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+		expect(requestSignal?.aborted).toBe(false);
+		controller.abort();
+
+		expect(requestSignal?.aborted).toBe(true);
+		await expect(nextResult).resolves.toMatchObject({ name: "AbortError" });
+		expect(fetchImpl).toHaveBeenCalledTimes(1);
+	});
+});

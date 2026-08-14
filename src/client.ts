@@ -1,9 +1,9 @@
 import { createByokProvider } from "./providers/provider-factory";
 import { resolveByokCloudProviderConfig } from "./credentials";
 import type {
-	ByokClient,
 	ByokClientConfig,
 	ByokClientTextGenerationInput,
+	ByokStreamingClient,
 	ByokCoreProviderConfig,
 	ByokFacadeDeps,
 	ByokGenerateTextOptions,
@@ -11,9 +11,21 @@ import type {
 	ByokModelOption,
 	ByokTextGenerationInput,
 	ByokTextGenerationOutput,
+	ByokStreamTextOptions,
+	ByokTextStream,
 } from "./types";
+import { createBufferedTextStream } from "./text-stream";
 
 const MODEL_NOT_REQUIRED_FOR_LISTING = "";
+
+function providerTextInput(
+	input: Pick<ByokTextGenerationInput, "prompt" | "instructions">
+): ByokTextGenerationInput {
+	return {
+		prompt: input.prompt,
+		...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+	};
+}
 
 function providerConfigFromGenerateTextOptions(
 	options: ByokGenerateTextOptions
@@ -85,12 +97,25 @@ async function generateTextForConfig(
 	} = {}
 ): Promise<ByokTextGenerationOutput> {
 	const provider = createByokProvider(config, options.deps);
-	return provider.generateText(
-		{
-			prompt: input.prompt,
-			...(input.instructions === undefined ? {} : { instructions: input.instructions }),
-		},
-		options.signal
+	return provider.generateText(providerTextInput(input), options.signal);
+}
+
+function streamTextForConfig(
+	config: ByokCoreProviderConfig,
+	input: Pick<ByokTextGenerationInput, "prompt" | "instructions">,
+	options: {
+		deps?: ByokFacadeDeps;
+		signal?: AbortSignal;
+	} = {}
+): ByokTextStream {
+	const provider = createByokProvider(config, options.deps);
+	const generationInput = providerTextInput(input);
+	return (
+		provider.streamText?.(generationInput, options.signal) ??
+		createBufferedTextStream(
+			(signal) => provider.generateText(generationInput, signal),
+			options.signal
+		)
 	);
 }
 
@@ -103,15 +128,28 @@ export async function generateText(
 	});
 }
 
+export function streamText(options: ByokStreamTextOptions): ByokTextStream {
+	return streamTextForConfig(providerConfigFromGenerateTextOptions(options), options, {
+		deps: options.deps,
+		signal: options.signal,
+	});
+}
+
 export async function listModels(options: ByokListModelsOptions): Promise<ByokModelOption[]> {
 	const provider = createByokProvider(providerConfigFromListModelsOptions(options), options.deps);
 	return provider.listModels();
 }
 
-export function createByok(config: ByokClientConfig): ByokClient {
+export function createByok(config: ByokClientConfig): ByokStreamingClient {
 	return {
 		generateText(input) {
 			return generateTextForConfig(providerConfigFromClientInput(config, input), input, {
+				deps: config.deps,
+				signal: input.signal,
+			});
+		},
+		streamText(input) {
+			return streamTextForConfig(providerConfigFromClientInput(config, input), input, {
 				deps: config.deps,
 				signal: input.signal,
 			});

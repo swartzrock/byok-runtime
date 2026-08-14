@@ -43,6 +43,7 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 ## Why BYOK Runtime?
 
 - One generation API across cloud keys, local model servers, and authenticated CLI tools.
+- Lazy text streaming with explicit native or buffered delivery metadata.
 - Model discovery through a provider-neutral runtime API.
 - Connection testing with user-readable provider errors and rate-limit handling.
 - Reusable clients that bind a credential or local provider URL while keeping the model per call.
@@ -102,6 +103,40 @@ const { text } = await ai.generateText({
 	prompt: "Draft a short release note for a model-provider SDK.",
 });
 ```
+
+### Stream Text
+
+Use `streamText` when the caller can render incremental output. Creating the stream is lazy: the
+provider request starts when iteration begins, not when `streamText` returns.
+
+```ts
+import { ByokProvider, streamText } from "@swartzrock/byok-runtime";
+
+const { delivery, textStream } = streamText({
+	provider: ByokProvider.OpenAI,
+	apiKey: process.env.OPENAI_API_KEY!,
+	model: "gpt-4o-mini",
+	prompt: "Explain BYOK in one paragraph.",
+});
+
+let text = "";
+for await (const delta of textStream) {
+	text += delta;
+}
+
+console.log(delivery, text);
+```
+
+`delivery` is `"native"` for verified OpenAI-compatible routes and Ollama's fetch-backed
+transport. It is `"buffered"` when an adapter completes generation first and emits the exact text
+as one delta, including Codex CLI, Claude CLI, and unsupported custom transports. Concatenating all
+deltas reconstructs the generated text exactly.
+
+The stream accepts the same optional `signal` as `generateText`. Aborting that signal, returning
+the iterator, or breaking from `for await` aborts the underlying request or local process. Streams
+are single-consumer. Rate-limit retries may occur before the first text delta; after a delta is
+emitted, BYOK never restarts the request and risk duplicating text. Existing `generateText`
+behavior is unchanged.
 
 ### Discover Models
 

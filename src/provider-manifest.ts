@@ -11,6 +11,7 @@ interface CloudRuntimeManifest {
 	baseURL: string;
 	auth: "bearer" | "anthropic-api-key";
 	modelNormalization: "default" | "name-fallback";
+	nativeTextStreaming: boolean;
 }
 
 interface CloudManifestEntry {
@@ -44,6 +45,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.anthropic.com/v1",
 			auth: "anthropic-api-key",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -56,6 +58,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.openai.com/v1",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -68,6 +71,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -80,6 +84,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.x.ai/v1",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -92,6 +97,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://openrouter.ai/api/v1",
 			auth: "bearer",
 			modelNormalization: "name-fallback",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -104,6 +110,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.groq.com/openai/v1",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -116,6 +123,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.mistral.ai/v1",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -128,6 +136,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.deepseek.com",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{
@@ -140,6 +149,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.deepinfra.com/v1/openai",
 			auth: "bearer",
 			modelNormalization: "default",
+			nativeTextStreaming: true,
 		},
 	},
 	{ family: "local-server", id: ByokProvider.Ollama },

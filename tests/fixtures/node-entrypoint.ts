@@ -32,8 +32,10 @@ const textWithInstructions = provider.generateText({
 	instructions: "Answer in one sentence.",
 	prompt: "Explain BYOK.",
 });
+const streamedText = provider.streamText?.({ prompt: "Explain BYOK." });
 
 void provider.testConnection;
 void availableProviders;
 void textWithoutInstructions;
 void textWithInstructions;
+void streamedText;
