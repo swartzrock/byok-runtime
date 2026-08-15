@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.1
+
+### Patch Changes
+
+- 8437c9e: Harden local CLI subprocess cleanup for cancellation, timeouts, and stdin failures.
+
 ## 2.4.0
 
 ### Minor Changes
