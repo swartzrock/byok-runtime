@@ -4,6 +4,7 @@ import type { Readable, Writable } from "node:stream";
 import { ProviderError } from "./types";
 
 const DEFAULT_TIMEOUT_MS = 60_000;
+const FORCE_KILL_DELAY_MS = 250;
 const STDERR_EXCERPT_CHARS = 400;
 const LOGIN_SHELL_PATH_TIMEOUT_MS = 3_000;
 const LOGIN_SHELL_PATH_MARKER = "__CUECRAFT_LOGIN_SHELL_PATH__";
@@ -245,33 +246,54 @@ export class LocalCommandRunner {
 			let stderr = "";
 			let settled = false;
 			let timeout: ReturnType<typeof setTimeout> | null = null;
+			let forceKillTimeout: ReturnType<typeof setTimeout> | null = null;
+			let interruptionError: ProviderError | null = null;
 
-			const settle = (callback: () => void, removeAbortListener: () => void): void => {
+			function removeAbortListener(): void {
+				request.signal?.removeEventListener("abort", onAbort);
+			}
+
+			function settle(callback: () => void): void {
 				if (settled) return;
 				settled = true;
 				if (timeout) clearTimeout(timeout);
+				if (forceKillTimeout) clearTimeout(forceKillTimeout);
 				removeAbortListener();
 				callback();
-			};
+			}
 
-			const onAbort = (): void => {
+			function interrupt(error: ProviderError): void {
+				if (settled || interruptionError) return;
+				interruptionError = error;
+				if (timeout) {
+					clearTimeout(timeout);
+					timeout = null;
+				}
+				removeAbortListener();
 				child.kill("SIGTERM");
-				settle(
-					() => reject(new ProviderError(`${commandLabel(request.command)} was cancelled.`)),
-					() => request.signal?.removeEventListener("abort", onAbort)
+				if (settled) return;
+				forceKillTimeout = setTimeout(() => {
+					forceKillTimeout = null;
+					if (!settled) child.kill("SIGKILL");
+				}, FORCE_KILL_DELAY_MS);
+			}
+
+			function onAbort(): void {
+				interrupt(new ProviderError(`${commandLabel(request.command)} was cancelled.`));
+			}
+
+			function inputError(error: unknown): ProviderError {
+				const detail = error instanceof Error ? error.message : String(error);
+				return new ProviderError(
+					`${commandLabel(request.command)} failed to receive input: ${detail}`
 				);
-			};
+			}
 
-			request.signal?.addEventListener("abort", onAbort, { once: true });
-			const removeAbortListener = (): void => request.signal?.removeEventListener("abort", onAbort);
-
-			child.stdout.on("data", (chunk: Buffer | string) => {
-				stdout += chunk.toString();
-			});
-			child.stderr.on("data", (chunk: Buffer | string) => {
-				stderr += chunk.toString();
-			});
-			child.once("error", (error) => {
+			const onChildError = (error: NodeJS.ErrnoException): void => {
+				if (interruptionError) {
+					child.once("error", onChildError);
+					return;
+				}
 				settle(() => {
 					this.logger.warn("BYOK local CLI failed to start", {
 						command: request.command,
@@ -279,30 +301,49 @@ export class LocalCommandRunner {
 						hasPath: Boolean(commandEnv.PATH),
 					});
 					reject(new ProviderError(errorMessageForSpawn(request.command, error)));
-				}, removeAbortListener);
+				});
+			};
+
+			request.signal?.addEventListener("abort", onAbort, { once: true });
+
+			child.stdout.on("data", (chunk: Buffer | string) => {
+				stdout += chunk.toString();
 			});
+			child.stderr.on("data", (chunk: Buffer | string) => {
+				stderr += chunk.toString();
+			});
+			child.stdin.once("error", (error: unknown) => {
+				interrupt(inputError(error));
+			});
+			child.once("error", onChildError);
 			child.once("close", (code) => {
 				settle(() => {
+					if (interruptionError) {
+						reject(interruptionError);
+						return;
+					}
 					if (code === 0) {
 						resolve({ stdout, stderr, exitCode: 0 });
 						return;
 					}
 					reject(new ProviderError(errorMessageForExit(request.command, code, stderr, stdout)));
-				}, removeAbortListener);
+				});
 			});
 
 			timeout = setTimeout(() => {
-				child.kill("SIGTERM");
-				settle(
-					() =>
-						reject(
-							new ProviderError(`${commandLabel(request.command)} timed out after ${timeoutMs}ms.`)
-						),
-					removeAbortListener
+				interrupt(
+					new ProviderError(`${commandLabel(request.command)} timed out after ${timeoutMs}ms.`)
 				);
 			}, timeoutMs);
 
-			child.stdin.end(request.stdin ?? "");
+			if (request.signal?.aborted) onAbort();
+			if (!interruptionError) {
+				try {
+					child.stdin.end(request.stdin ?? "");
+				} catch (error) {
+					interrupt(inputError(error));
+				}
+			}
 		});
 	}
 }

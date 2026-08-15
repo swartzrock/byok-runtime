@@ -13,7 +13,8 @@ class FakeProcess extends EventEmitter implements LocalProcess {
 	readonly stdout = new PassThrough();
 	readonly stderr = new PassThrough();
 	readonly stdin = new PassThrough();
-	killedWith: NodeJS.Signals | undefined;
+	readonly killSignals: NodeJS.Signals[] = [];
+	onKill?: (signal: NodeJS.Signals) => void;
 	stdinText = "";
 
 	constructor() {
@@ -23,8 +24,9 @@ class FakeProcess extends EventEmitter implements LocalProcess {
 		});
 	}
 
-	kill(signal?: NodeJS.Signals): boolean {
-		this.killedWith = signal;
+	kill(signal: NodeJS.Signals = "SIGTERM"): boolean {
+		this.killSignals.push(signal);
+		this.onKill?.(signal);
 		return true;
 	}
 
@@ -61,6 +63,28 @@ function makeRunner(
 			loadLoginShellPath
 		),
 		calls,
+	};
+}
+
+function observe(promise: Promise<unknown>): {
+	completion: Promise<void>;
+	isSettled: () => boolean;
+	error: () => unknown;
+} {
+	let settled = false;
+	let observedError: unknown;
+	return {
+		completion: promise.then(
+			() => {
+				settled = true;
+			},
+			(error: unknown) => {
+				settled = true;
+				observedError = error;
+			}
+		),
+		isSettled: () => settled,
+		error: () => observedError,
 	};
 }
 
@@ -159,7 +183,7 @@ describe("LocalCommandRunner", () => {
 		await expect(result).rejects.toThrow(/claude exited with code 1: Login required/);
 	});
 
-	it("kills the process and reports cancellation when aborted", async () => {
+	it("terminates, waits for close, and reports cancellation when aborted", async () => {
 		const process = new FakeProcess();
 		const { runner } = makeRunner(process);
 		const controller = new AbortController();
@@ -168,11 +192,97 @@ describe("LocalCommandRunner", () => {
 			args: ["exec"],
 			signal: controller.signal,
 		});
+		const observed = observe(result);
 
 		controller.abort();
+		await Promise.resolve();
 
-		await expect(result).rejects.toThrow(/codex was cancelled/);
-		expect(process.killedWith).toBe("SIGTERM");
+		expect(process.killSignals).toEqual(["SIGTERM"]);
+		expect(observed.isSettled()).toBe(false);
+
+		process.close(143);
+
+		await observed.completion;
+		expect(observed.error()).toBeInstanceOf(ProviderError);
+		expect(observed.error()).toMatchObject({
+			message: expect.stringMatching(/codex was cancelled/),
+		});
+	});
+
+	it("force-kills a cancelled process that does not close after SIGTERM", async () => {
+		vi.useFakeTimers();
+		try {
+			const process = new FakeProcess();
+			const { runner } = makeRunner(process);
+			const controller = new AbortController();
+			const result = runner.run({ command: "codex", signal: controller.signal });
+			const observed = observe(result);
+
+			controller.abort();
+			await vi.advanceTimersByTimeAsync(249);
+			expect(process.killSignals).toEqual(["SIGTERM"]);
+
+			await vi.advanceTimersByTimeAsync(1);
+			expect(process.killSignals).toEqual(["SIGTERM", "SIGKILL"]);
+
+			process.close(137);
+			await observed.completion;
+			expect(observed.error()).toMatchObject({
+				message: expect.stringMatching(/codex was cancelled/),
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("keeps consuming child errors until an interrupted process closes", async () => {
+		vi.useFakeTimers();
+		try {
+			const process = new FakeProcess();
+			process.onKill = () => {
+				const error = Object.assign(new Error("operation not permitted"), { code: "EPERM" });
+				process.fail(error);
+			};
+			const { runner } = makeRunner(process);
+			const controller = new AbortController();
+			const observed = observe(runner.run({ command: "codex", signal: controller.signal }));
+
+			controller.abort();
+			await vi.advanceTimersByTimeAsync(250);
+
+			expect(process.killSignals).toEqual(["SIGTERM", "SIGKILL"]);
+			expect(observed.isSettled()).toBe(false);
+
+			process.close(1);
+			await observed.completion;
+			expect(observed.error()).toMatchObject({
+				message: expect.stringMatching(/codex was cancelled/),
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("does not force-kill a cancelled process that closes after SIGTERM", async () => {
+		vi.useFakeTimers();
+		try {
+			const process = new FakeProcess();
+			const { runner } = makeRunner(process);
+			const controller = new AbortController();
+			const observed = observe(runner.run({ command: "codex", signal: controller.signal }));
+
+			controller.abort();
+			process.close(143);
+			await observed.completion;
+			await vi.advanceTimersByTimeAsync(250);
+
+			expect(process.killSignals).toEqual(["SIGTERM"]);
+			expect(observed.error()).toMatchObject({
+				message: expect.stringMatching(/codex was cancelled/),
+			});
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("does not spawn when the signal is already aborted", async () => {
@@ -215,17 +325,93 @@ describe("LocalCommandRunner", () => {
 		expect(calls).toHaveLength(0);
 	});
 
-	it("kills the process and reports timeout when the command hangs", async () => {
+	it("does not miss an abort while installing the process listener", async () => {
 		const process = new FakeProcess();
+		process.onKill = (signal) => {
+			if (signal === "SIGTERM") queueMicrotask(() => process.close(143));
+		};
+		const { runner } = makeRunner(process);
+		let abortedReads = 0;
+		const signal = {
+			get aborted() {
+				abortedReads += 1;
+				return abortedReads >= 3;
+			},
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+		} as unknown as AbortSignal;
+
+		const result = runner.run({ command: "codex", signal });
+
+		await expect(result).rejects.toThrow(/codex was cancelled/);
+		expect(process.killSignals).toEqual(["SIGTERM"]);
+	});
+
+	it("terminates and waits for close when the command times out", async () => {
+		vi.useFakeTimers();
+		try {
+			const process = new FakeProcess();
+			const { runner } = makeRunner(process);
+			const result = runner.run({
+				command: "claude",
+				args: ["-p"],
+				timeoutMs: 1,
+			});
+			const observed = observe(result);
+
+			await vi.advanceTimersByTimeAsync(1);
+			expect(process.killSignals).toEqual(["SIGTERM"]);
+			expect(observed.isSettled()).toBe(false);
+
+			process.close(143);
+			await observed.completion;
+			expect(observed.error()).toMatchObject({
+				message: expect.stringMatching(/claude timed out after 1ms/),
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("terminates and reaps the process when ending stdin throws", async () => {
+		const process = new FakeProcess();
+		process.stdin.end = (() => {
+			throw new Error("broken pipe");
+		}) as typeof process.stdin.end;
+		process.onKill = (signal) => {
+			if (signal === "SIGTERM") queueMicrotask(() => process.close(1));
+		};
+		const { runner } = makeRunner(process);
+
+		const result = runner.run({ command: "codex", stdin: "prompt" });
+
+		await expect(result).rejects.toThrow(/codex failed to receive input: broken pipe/);
+		await expect(result).rejects.toBeInstanceOf(ProviderError);
+		expect(process.killSignals).toEqual(["SIGTERM"]);
+	});
+
+	it("terminates and reaps the process when stdin emits an error", async () => {
+		const process = new FakeProcess();
+		const controller = new AbortController();
+		process.onKill = (signal) => {
+			if (signal === "SIGTERM") queueMicrotask(() => process.close(1));
+		};
 		const { runner } = makeRunner(process);
 		const result = runner.run({
-			command: "claude",
-			args: ["-p"],
-			timeoutMs: 1,
+			command: "codex",
+			stdin: "prompt",
+			signal: controller.signal,
 		});
+		const observed = observe(result);
 
-		await expect(result).rejects.toThrow(/claude timed out after 1ms/);
-		expect(process.killedWith).toBe("SIGTERM");
+		process.stdin.emit("error", new Error("broken pipe"));
+		controller.abort();
+
+		await observed.completion;
+		expect(observed.error()).toMatchObject({
+			message: expect.stringMatching(/codex failed to receive input: broken pipe/),
+		});
+		expect(process.killSignals).toEqual(["SIGTERM"]);
 	});
 
 	it("maps missing commands to setup guidance", async () => {
