@@ -1,15 +1,19 @@
 {
 	"compilerOptions": {
 		"allowJs": false,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
 		"declaration": true,
 		"declarationMap": true,
 		"emitDeclarationOnly": false,
 		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"ignoreDeprecations": "6.0",
 		"isolatedModules": true,
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"noFallthroughCasesInSwitch": true,
 		"noEmit": true,
+		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noUncheckedSideEffectImports": true,
@@ -17,12 +21,10 @@
 		"noUnusedParameters": true,
 		"outDir": "dist",
 		"rootDir": "src",
-		"target": "ES2022",
-		"allowUnreachableCode": false,
-		"allowUnusedLabels": false,
-		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": false,
 		"strict": true,
-		"skipLibCheck": false
+		"target": "ES2022",
+		"types": ["node"]
 	},
 	"include": ["src/**/*.ts"]
 }
