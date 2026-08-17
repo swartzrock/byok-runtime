@@ -28,4 +28,15 @@ describe("GitHub Actions security", () => {
 		expect(release).toContain("permissions:\n  contents: read\n  id-token: write");
 		expect(release).not.toContain("pull-requests: write");
 	});
+
+	it("uses the Changesets v2 release inputs", () => {
+		const release = readWorkflow("release.yml");
+
+		expect(release).toContain("github-token: ${{ secrets.CHANGESETS_TOKEN }}");
+		expect(release).toContain("version-script: bun run changeset:version");
+		expect(release).toContain("publish-script: bun run changeset:publish");
+		expect(release).toContain('commit-message: "chore: release"');
+		expect(release).toContain('NPM_CONFIG_PROVENANCE: "true"');
+		expect(release).not.toContain("GITHUB_TOKEN:");
+	});
 });
