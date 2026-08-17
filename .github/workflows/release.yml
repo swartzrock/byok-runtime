@@ -26,12 +26,12 @@ jobs:
           package-manager-cache: false
       - run: bun install --frozen-lockfile
       - name: Create release PR or publish to npm
-        uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v1
+        uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v2.1.0
         with:
+          github-token: ${{ secrets.CHANGESETS_TOKEN }}
           version-script: bun run changeset:version
           publish-script: bun run changeset:publish
-          commit-mesage: "chore: release"
+          commit-message: "chore: release"
           pr-title: "chore: release"
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
