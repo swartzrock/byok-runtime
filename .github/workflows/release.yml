@@ -28,10 +28,10 @@ jobs:
       - name: Create release PR or publish to npm
         uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v1
         with:
-          version: bun run changeset:version
-          publish: bun run changeset:publish
-          commit: "chore: release"
-          title: "chore: release"
+          version-script: bun run changeset:version
+          publish-script: bun run changeset:publish
+          commit-mesage: "chore: release"
+          pr-title: "chore: release"
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
