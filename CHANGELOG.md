@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0
+
+### Major Changes
+
+- 5ba9a20: Replace the split `fetchImpl` and `http` provider dependencies with one normalized `ByokTransport` contract, and add `parseByokStoredSettings` for validating persisted BYOK data before use.
+
 ## 2.4.1
 
 ### Patch Changes
