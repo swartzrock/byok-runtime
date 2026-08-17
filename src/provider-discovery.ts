@@ -2,7 +2,8 @@ import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import { delimiter, join } from "node:path";
 import { BYOK_PROVIDER_API_KEY_ENV_VARS } from "./credentials";
-import type { ByokCloudProviderId, ByokEnvironment, ByokProviderId } from "./types";
+import type { ByokCloudProviderId, ByokEnvironment, ByokProviderId, ByokTransport } from "./types";
+import { fetchFromTransport, resolveByokTransport } from "./transport";
 
 const LOCAL_PROBES = [
 	{ provider: "ollama", url: "http://127.0.0.1:11434/api/tags" },
@@ -32,7 +33,7 @@ export interface FindAvailableProvidersOptions {
 }
 
 export interface FindAvailableProvidersDeps {
-	fetchImpl?: typeof fetch;
+	transport?: ByokTransport;
 	commandExists?: (command: string, env: ByokEnvironment) => Promise<boolean>;
 }
 
@@ -89,7 +90,9 @@ export async function findAvailableProviders(
 	options: FindAvailableProvidersOptions,
 	deps: FindAvailableProvidersDeps = {}
 ): Promise<ByokProviderId[]> {
-	const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
+	const fetchImpl = fetchFromTransport(
+		resolveByokTransport(deps.transport ? { transport: deps.transport } : undefined).transport
+	);
 	const commandProbe = deps.commandExists ?? commandExists;
 	const [localResults, cliResults] = await Promise.all([
 		Promise.all(

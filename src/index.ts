@@ -5,6 +5,7 @@ export {
 	resolveByokEnvCredential,
 } from "./credentials";
 export { createByok, generateText, listModels, streamText } from "./client";
+export { parseByokStoredSettings } from "./stored-settings";
 export type {
 	ByokApiKeyCloudProviderConfig,
 	ByokCliProviderId,
@@ -20,9 +21,7 @@ export type {
 	ByokEnvCredential,
 	ByokEnvironment,
 	ByokFacadeDeps,
-	ByokHttpClient,
-	ByokHttpRequest,
-	ByokHttpResponse,
+	ByokTransport,
 	ByokGenerateTextOptions,
 	ByokListModelsOptions,
 	ByokModelOption,

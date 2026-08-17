@@ -187,6 +187,22 @@ if (!status.ok) {
 
 When supported, `status.models` contains model IDs returned during the connection test.
 
+Custom transports use one normalized request contract across every HTTP-backed provider:
+
+```ts
+import type { ByokTransport } from "@swartzrock/byok-runtime";
+
+const transport = Object.assign(
+	async (request: Request) => {
+		// Bridge the normalized Request to the trusted host's HTTP API.
+		return fetch(request);
+	},
+	{ supportsStreaming: true }
+) satisfies ByokTransport;
+```
+
+Pass it as `{ transport }` in client or provider dependencies. Declare `supportsStreaming: true` only when the host returns progressive response bodies; otherwise BYOK reports streamed output as buffered delivery.
+
 ### Generate Structured Objects
 
 Provider runtimes that expose `generateObject` accept a Zod schema and optional provider-native instructions. Ollama and local CLI providers are text-only.
@@ -269,6 +285,8 @@ Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GE
 Callers can inspect the flat `BYOK_API_KEY_ENV_VARS` list or the provider-keyed `BYOK_PROVIDER_API_KEY_ENV_VARS` map through the main package entrypoint.
 
 BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. `instructions` and `prompt` are ordinary caller-provided model content, not credentials; hosts should apply their normal content-handling and privacy policies to both. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
+
+Hosts should pass the current persisted BYOK subtree through `parseByokStoredSettings(unknown)` before use. The parser supplies safe defaults and filters malformed provider settings, model collections, and verification snapshots. Storage, encryption, and host-specific legacy migrations remain host responsibilities.
 
 ## Entry Points
 

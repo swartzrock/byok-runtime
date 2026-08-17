@@ -38,7 +38,7 @@ Runtime exports:
 - `ByokProviderError`
 - `ByokProviderRateLimitError`
 
-Type exports include the public provider config, transport, model, generation, runtime, verification, and stored-settings types.
+Type exports include the public provider config, transport, model, generation, runtime, verification, and stored-settings types. `parseByokStoredSettings` is also available at runtime for validating the current persisted BYOK shape.
 
 ## `@swartzrock/byok-runtime/node`
 
@@ -193,9 +193,24 @@ const provider = createByokNodeProvider(
 		apiKey,
 		model: "gpt-4o-mini",
 	},
-	{ fetchImpl: fetch, http }
+	{
+		transport: Object.assign((request: Request) => fetch(request), {
+			supportsStreaming: true,
+		}),
+	}
 );
 ```
+
+`ByokProviderDeps` has one host-owned HTTP boundary:
+
+```ts
+interface ByokTransport {
+	(request: Request): Promise<Response>;
+	readonly supportsStreaming?: boolean;
+}
+```
+
+The runtime converts every SDK request to a `Request` before calling the transport, so method, headers, body, and cancellation have one contract. Set `supportsStreaming: true` only when the host returns progressive response bodies. Omit custom dependencies to use the runtime's global `fetch` transport.
 
 The runtime exposes connection testing, model listing, text generation, and optional structured object generation:
 
@@ -289,6 +304,16 @@ Provider-specific metadata such as pricing, context length, supported parameters
 
 ## Storage And Setup State
 
-BYOK does not persist credentials, fetched model caches, setup verification, or app settings. Host apps own storage, encryption, migration, setup-state derivation, and UI-specific model sorting.
+BYOK does not persist credentials, fetched model caches, setup verification, or app settings. Host apps own storage, encryption, legacy migration, setup-state derivation, and UI-specific model sorting.
 
-The package still exports public types such as `ByokStoredSettings`, `ByokVerificationSnapshot`, and `ByokSetupStatus` so apps can describe their own state, but mutation helpers are not part of the main public API.
+Pass the current BYOK subtree from storage through `parseByokStoredSettings` before treating it as application data:
+
+```ts
+import { parseByokStoredSettings } from "@swartzrock/byok-runtime";
+
+const settings = parseByokStoredSettings(await storage.load("byok"));
+```
+
+The parser accepts `unknown`, supplies safe defaults, filters malformed model collections and verification snapshots, removes unknown provider keys, and normalizes legacy `codex` and `claude` provider aliases. It does not migrate host-specific legacy fields or persist the parsed result.
+
+The package also exports public types such as `ByokStoredSettings`, `ByokVerificationSnapshot`, and `ByokSetupStatus` so apps can describe their state. Mutation helpers are not part of the main public API.

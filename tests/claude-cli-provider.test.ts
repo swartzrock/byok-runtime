@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ByokTransport } from "../src";
 import { ClaudeCliProvider, extractClaudeCliOutput } from "../src/providers/claude-cli-provider";
 import {
 	defaultLocalCliCwd,
@@ -14,7 +15,7 @@ function result(stdout: string, stderr = ""): LocalCommandResult {
 function makeProvider(
 	responses: Array<LocalCommandResult | Error>,
 	model = "",
-	fetchImpl?: typeof fetch
+	transport?: ByokTransport
 ): {
 	provider: ClaudeCliProvider;
 	run: ReturnType<typeof vi.fn<[LocalCommandRequest], Promise<LocalCommandResult>>>;
@@ -32,7 +33,7 @@ function makeProvider(
 			cwd: "/tmp/byok-empty",
 			timeoutMs: 50,
 			runner: { run },
-			fetchImpl,
+			transport,
 		}),
 		run,
 	};
@@ -384,9 +385,9 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("lists Anthropic models from OpenRouter public models", async () => {
-		const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
-			expect(input).toBe("https://openrouter.ai/api/v1/models");
-			expect(init).toMatchObject({ method: "GET" });
+		const transport = vi.fn<ByokTransport>(async (request) => {
+			expect(request.url).toBe("https://openrouter.ai/api/v1/models");
+			expect(request.method).toBe("GET");
 			return new Response(
 				JSON.stringify({
 					data: [
@@ -409,7 +410,7 @@ describe("ClaudeCliProvider", () => {
 				{ status: 200 }
 			);
 		});
-		const { provider, run } = makeProvider([], "", fetchImpl);
+		const { provider, run } = makeProvider([], "", transport);
 
 		await expect(provider.listModels()).resolves.toEqual([
 			{
@@ -433,10 +434,10 @@ describe("ClaudeCliProvider", () => {
 	});
 
 	it("reports OpenRouter model-list failures", async () => {
-		const fetchImpl = vi.fn<typeof fetch>(
+		const transport = vi.fn<ByokTransport>(
 			async () => new Response("temporarily unavailable", { status: 503 })
 		);
-		const { provider } = makeProvider([], "", fetchImpl);
+		const { provider } = makeProvider([], "", transport);
 
 		await expect(provider.listModels()).rejects.toThrow(
 			/Claude CLI model fetch failed \(503\): temporarily unavailable/

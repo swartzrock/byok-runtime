@@ -4,7 +4,7 @@ import type {
 	generateText as generateTextType,
 	listModels as listModelsType,
 } from "../src/client";
-import type { ByokProviderRuntime } from "../src";
+import type { ByokProviderRuntime, ByokTransport } from "../src";
 
 const mocks = {
 	createByokProvider: vi.fn(),
@@ -16,7 +16,7 @@ let createByok: typeof createByokType;
 let generateText: typeof generateTextType;
 let listModels: typeof listModelsType;
 
-const fetchImpl = (async () => new Response("{}")) as typeof fetch;
+const transport = (async () => new Response("{}")) as ByokTransport;
 const describeForVitest = "Bun" in globalThis ? describe.skip : describe;
 
 function mockRuntime(id = "openai"): ByokProviderRuntime {
@@ -55,7 +55,7 @@ describeForVitest("BYOK cloud client facade", () => {
 			model: "gpt-4o-mini",
 			prompt: "Say hi.",
 			signal,
-			deps: { fetchImpl },
+			deps: { transport },
 		});
 
 		expect(result).toEqual({ text: "Cloud response." });
@@ -65,7 +65,7 @@ describeForVitest("BYOK cloud client facade", () => {
 				apiKey: "sk-openai-test",
 				model: "gpt-4o-mini",
 			},
-			{ fetchImpl }
+			{ transport }
 		);
 		expect(mocks.generateText).toHaveBeenCalledWith({ prompt: "Say hi." }, signal);
 	});
@@ -92,7 +92,7 @@ describeForVitest("BYOK cloud client facade", () => {
 		const client = createByok({
 			provider: "anthropic",
 			apiKey: "sk-ant-test",
-			deps: { fetchImpl },
+			deps: { transport },
 		});
 
 		await expect(
@@ -108,7 +108,7 @@ describeForVitest("BYOK cloud client facade", () => {
 				apiKey: "sk-ant-test",
 				model: "claude-sonnet-4-6",
 			},
-			{ fetchImpl }
+			{ transport }
 		);
 		expect(mocks.generateText).toHaveBeenCalledWith(
 			{ instructions: "Answer concisely.", prompt: "Say hi." },
@@ -158,7 +158,7 @@ describeForVitest("BYOK cloud client facade", () => {
 		const result = await listModels({
 			provider: "openai",
 			apiKey: "sk-openai-test",
-			deps: { fetchImpl },
+			deps: { transport },
 		});
 
 		expect(result).toEqual([{ id: "gpt-4o-mini", label: "gpt-4o-mini" }]);
@@ -168,7 +168,7 @@ describeForVitest("BYOK cloud client facade", () => {
 				apiKey: "sk-openai-test",
 				model: "",
 			},
-			{ fetchImpl }
+			{ transport }
 		);
 	});
 
