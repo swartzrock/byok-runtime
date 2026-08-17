@@ -5,23 +5,6 @@ export {
 } from "../types";
 import type { ByokModelOption, ByokTextStream } from "../types";
 
-/** Minimal HTTP abstraction so providers can be unit-tested without a live server. */
-export interface HttpRequest {
-	url: string;
-	method: "GET" | "POST";
-	body?: string;
-	headers?: Record<string, string>;
-	signal?: AbortSignal;
-}
-
-export interface HttpResponse {
-	status: number;
-	text: string;
-	json: unknown;
-}
-
-export type HttpClient = (req: HttpRequest) => Promise<HttpResponse>;
-
 export interface ProviderStatus {
 	ok: boolean;
 	message: string;

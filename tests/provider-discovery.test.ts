@@ -2,15 +2,16 @@ import { access, chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import type { ByokTransport } from "../src";
 import { findAvailableProviders } from "../src/node";
 
 describe("findAvailableProviders", () => {
 	it("returns detected providers in local, CLI, then API-key order", async () => {
 		const urls: string[] = [];
-		const fetchImpl = vi.fn(async (input: string | URL | Request) => {
-			urls.push(String(input));
+		const transport = vi.fn<ByokTransport>(async (request) => {
+			urls.push(request.url);
 			return new Response("", { status: 200 });
-		}) as typeof fetch;
+		});
 		const commandExists = vi.fn(async () => true);
 
 		const providers = await findAvailableProviders(
@@ -27,7 +28,7 @@ describe("findAvailableProviders", () => {
 					DEEPINFRA_TOKEN: "deepinfra-test",
 				},
 			},
-			{ fetchImpl, commandExists }
+			{ transport, commandExists }
 		);
 
 		expect(providers).toEqual([
@@ -45,21 +46,21 @@ describe("findAvailableProviders", () => {
 			"deepseek",
 			"deepinfra",
 		]);
-		expect(fetchImpl).toHaveBeenCalledTimes(2);
+		expect(transport).toHaveBeenCalledTimes(2);
 		expect(urls).toEqual(["http://127.0.0.1:11434/api/tags", "http://127.0.0.1:1234/v1/models"]);
 		expect(commandExists.mock.calls.map(([command]) => command)).toEqual(["codex", "claude"]);
 	});
 
 	it("treats failed probes as unavailable instead of throwing", async () => {
-		const fetchImpl = vi.fn(async () => {
+		const transport = vi.fn<ByokTransport>(async () => {
 			throw new Error("server unavailable");
-		}) as typeof fetch;
+		});
 		const commandExists = vi.fn(async () => {
 			throw new Error("command lookup failed");
 		});
 
 		await expect(
-			findAvailableProviders({ env: {} }, { fetchImpl, commandExists })
+			findAvailableProviders({ env: {} }, { transport, commandExists })
 		).resolves.toEqual([]);
 	});
 
@@ -67,18 +68,17 @@ describe("findAvailableProviders", () => {
 		vi.useFakeTimers();
 		try {
 			const signals: AbortSignal[] = [];
-			const fetchImpl = vi.fn(
-				(_input: string | URL | Request, init?: RequestInit) =>
+			const transport = vi.fn<ByokTransport>(
+				(request) =>
 					new Promise<Response>((_resolve, reject) => {
-						const signal = init?.signal;
-						if (!signal) throw new Error("Expected an abort signal");
+						const signal = request.signal;
 						signals.push(signal);
 						signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
 					})
-			) as typeof fetch;
+			);
 			const commandExists = vi.fn(async () => false);
 
-			const discovery = findAvailableProviders({ env: {} }, { fetchImpl, commandExists });
+			const discovery = findAvailableProviders({ env: {} }, { transport, commandExists });
 			await vi.advanceTimersByTimeAsync(1_000);
 
 			await expect(discovery).resolves.toEqual([]);
@@ -103,9 +103,9 @@ describe("findAvailableProviders", () => {
 				const providers = await findAvailableProviders(
 					{ env: { PATH: binDir } },
 					{
-						fetchImpl: vi.fn(async () => {
+						transport: vi.fn<ByokTransport>(async () => {
 							throw new Error("server unavailable");
-						}) as typeof fetch,
+						}),
 					}
 				);
 

@@ -1,22 +1,29 @@
 import {
 	type AiProvider,
-	type HttpClient,
-	type HttpResponse,
 	ProviderError,
 	type ProviderStatus,
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokTextStream } from "../types";
+import type { ByokTextStream, ByokTransport } from "../types";
 import { normalizeModelIds, type ModelOption } from "../models/model-options";
 import { createBufferedTextStream, createTextStream, withResponseSizeLimit } from "../text-stream";
+import { fetchFromTransport } from "../transport";
 
 /** Pull Ollama's `{ "error": "..." }` body out of a failed response. */
-function extractServerError(res: HttpResponse): string {
-	const fromJson = (res.json as { error?: unknown } | null)?.error;
+function extractServerError(text: string, json: unknown): string {
+	const fromJson = (json as { error?: unknown } | null)?.error;
 	if (typeof fromJson === "string" && fromJson.trim()) return fromJson.trim();
-	if (res.text && res.text.trim()) return res.text.trim().slice(0, 300);
+	if (text.trim()) return text.trim().slice(0, 300);
 	return "no error detail returned";
+}
+
+function parseJson(text: string): unknown {
+	try {
+		return text ? JSON.parse(text) : null;
+	} catch {
+		return null;
+	}
 }
 
 /** Add a hint for the common status codes so the Notice is actionable. */
@@ -40,8 +47,7 @@ function isAbortError(error: unknown): boolean {
 export interface OllamaProviderOptions {
 	url: string;
 	model: string;
-	http: HttpClient;
-	fetchImpl?: typeof fetch;
+	transport: ByokTransport;
 }
 
 export class OllamaProvider implements AiProvider {
@@ -52,14 +58,14 @@ export class OllamaProvider implements AiProvider {
 
 	private url: string;
 	private model: string;
-	private http: HttpClient;
-	private fetchImpl?: typeof fetch;
+	private fetchImpl: typeof fetch;
+	private supportsStreaming: boolean;
 
 	constructor(opts: OllamaProviderOptions) {
 		this.url = opts.url.replace(/\/+$/, "");
 		this.model = opts.model;
-		this.http = opts.http;
-		this.fetchImpl = opts.fetchImpl;
+		this.fetchImpl = withResponseSizeLimit(fetchFromTransport(opts.transport));
+		this.supportsStreaming = opts.transport.supportsStreaming === true;
 	}
 
 	async testConnection(): Promise<ProviderStatus> {
@@ -94,7 +100,7 @@ export class OllamaProvider implements AiProvider {
 		const { Ollama } = await import("ollama/browser");
 		const client = new Ollama({
 			host: this.url,
-			fetch: this.fetchViaHttp(),
+			fetch: this.fetchImpl,
 		});
 		const response = await client.list();
 		return (response.models ?? [])
@@ -112,7 +118,7 @@ export class OllamaProvider implements AiProvider {
 	}
 
 	streamText(input: TextGenerationInput, signal?: AbortSignal): ByokTextStream {
-		if (!this.fetchImpl) {
+		if (!this.supportsStreaming) {
 			return createBufferedTextStream(
 				(streamSignal) => this.generateText(input, streamSignal),
 				signal
@@ -120,22 +126,20 @@ export class OllamaProvider implements AiProvider {
 		}
 		return createTextStream(
 			"native",
-			(streamSignal) => this.streamNative(input, streamSignal, this.fetchImpl!),
+			(streamSignal) => this.streamNative(input, streamSignal),
 			signal
 		);
 	}
 
 	private async *streamNative(
 		input: TextGenerationInput,
-		signal: AbortSignal,
-		fetchImpl: typeof fetch
+		signal: AbortSignal
 	): AsyncIterable<string> {
 		const { Ollama } = await import("ollama/browser");
-		const limitedFetch = withResponseSizeLimit(fetchImpl);
 		const client = new Ollama({
 			host: this.url,
 			fetch: (fetchInput, init) =>
-				limitedFetch(fetchInput, {
+				this.fetchImpl(fetchInput, {
 					...init,
 					signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal,
 				}),
@@ -183,10 +187,9 @@ export class OllamaProvider implements AiProvider {
 		responseFormat: "text" | "json" = "text",
 		signal?: AbortSignal
 	): Promise<string> {
-		let res;
+		let response: Response;
 		try {
-			res = await this.http({
-				url: `${this.url}/api/generate`,
+			response = await this.fetchImpl(`${this.url}/api/generate`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				signal,
@@ -204,40 +207,17 @@ export class OllamaProvider implements AiProvider {
 				"Ollama server unreachable. Check the URL and that Ollama is running."
 			);
 		}
-		if (res.status < 200 || res.status >= 300) {
+		const text = await response.text();
+		const json = parseJson(text);
+		if (!response.ok) {
 			throw new ProviderError(
-				`Ollama request failed (HTTP ${res.status})${describeError(res.status)}: ${extractServerError(res)}`
+				`Ollama request failed (HTTP ${response.status})${describeError(response.status)}: ${extractServerError(text, json)}`
 			);
 		}
-		const body = res.json as { response?: string } | null;
+		const body = json as { response?: string } | null;
 		if (!body || typeof body.response !== "string") {
 			throw new ProviderError("Ollama returned an unexpected response shape.");
 		}
 		return body.response;
-	}
-
-	private fetchViaHttp(): typeof fetch {
-		return async (input: RequestInfo | URL, init?: RequestInit) => {
-			const url =
-				typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-			const headers: Record<string, string> = {};
-			new Headers(init?.headers).forEach((value, key) => {
-				headers[key] = value;
-			});
-			const res = await this.http({
-				url,
-				method: (init?.method as "GET" | "POST" | undefined) ?? "GET",
-				body: (init?.body as string | undefined) ?? undefined,
-				headers,
-				signal: init?.signal ?? undefined,
-			});
-			return new Response(res.text, {
-				status: res.status,
-				headers:
-					res.json && typeof res.json === "object"
-						? { "content-type": "application/json" }
-						: undefined,
-			});
-		};
 	}
 }

@@ -7,7 +7,7 @@ import {
 	listModels,
 	resolveByokEnvCredential,
 	streamText,
-	type ByokHttpClient,
+	type ByokTransport,
 	type ByokClient,
 	type ByokObjectGenerationInput,
 	type ByokProviderDeps,
@@ -16,16 +16,10 @@ import {
 } from "../../src";
 import { z } from "zod/v3";
 
-const http: ByokHttpClient = async () => ({
-	status: 200,
-	text: "{}",
-	json: {},
-});
-const fetchImpl = (async () => new Response("{}")) as typeof fetch;
+const transport = (async () => new Response("{}")) as ByokTransport;
 
 const deps: ByokProviderDeps = {
-	fetchImpl,
-	http,
+	transport,
 };
 const env = {
 	OPENAI_API_KEY: "sk-test",

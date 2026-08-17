@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ByokProviderError, createByok, streamText, type ByokHttpClient } from "../src";
+import { ByokProviderError, createByok, streamText, type ByokTransport } from "../src";
 
 async function collectText(stream: AsyncIterable<string>): Promise<string> {
 	let text = "";
@@ -19,12 +19,13 @@ describe("BYOK text streaming facade", () => {
 				)
 		);
 
+		const transport = Object.assign(fetchImpl as ByokTransport, { supportsStreaming: true });
 		const result = streamText({
 			provider: "openai",
 			apiKey: "sk-test",
 			model: "gpt-4o-mini",
 			prompt: "Say hi.",
-			deps: { fetchImpl: fetchImpl as typeof fetch },
+			deps: { transport },
 		});
 
 		expect(result.delivery).toBe("native");
@@ -34,16 +35,19 @@ describe("BYOK text streaming facade", () => {
 
 	it("shares caller cancellation with the underlying native request", async () => {
 		let requestSignal: AbortSignal | undefined;
-		const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-			requestSignal = init?.signal ?? undefined;
-			return new Promise<Response>((_resolve, reject) => {
-				requestSignal?.addEventListener(
-					"abort",
-					() => reject(new DOMException("Aborted", "AbortError")),
-					{ once: true }
-				);
-			});
-		});
+		const transport = Object.assign(
+			vi.fn((request: Request) => {
+				requestSignal = request.signal;
+				return new Promise<Response>((_resolve, reject) => {
+					requestSignal?.addEventListener(
+						"abort",
+						() => reject(new DOMException("Aborted", "AbortError")),
+						{ once: true }
+					);
+				});
+			}),
+			{ supportsStreaming: true }
+		);
 		const controller = new AbortController();
 		const result = streamText({
 			provider: "openai",
@@ -51,7 +55,7 @@ describe("BYOK text streaming facade", () => {
 			model: "gpt-4o-mini",
 			prompt: "Say hi.",
 			signal: controller.signal,
-			deps: { fetchImpl: fetchImpl as typeof fetch },
+			deps: { transport },
 		});
 		const pending = result.textStream[Symbol.asyncIterator]()
 			.next()
@@ -60,68 +64,62 @@ describe("BYOK text streaming facade", () => {
 				(error: unknown) => error
 			);
 
-		await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(transport).toHaveBeenCalledTimes(1));
 		controller.abort();
 
 		expect(requestSignal?.aborted).toBe(true);
 		await expect(pending).resolves.toBeInstanceOf(ByokProviderError);
-		expect(fetchImpl).toHaveBeenCalledTimes(1);
+		expect(transport).toHaveBeenCalledTimes(1);
 	});
 
 	it("is lazy and buffers unsupported transports into one exact delta", async () => {
-		const http = vi.fn<ByokHttpClient>(async () => ({
-			status: 200,
-			text: JSON.stringify({ response: "  Exact\ntext.  " }),
-			json: { response: "  Exact\ntext.  " },
-		}));
+		const transport = vi.fn<ByokTransport>(
+			async () => new Response(JSON.stringify({ response: "  Exact\ntext.  " }))
+		);
 
 		const result = streamText({
 			provider: "ollama",
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
-			deps: { http },
+			deps: { transport },
 		});
 
 		expect(result.delivery).toBe("buffered");
-		expect(http).not.toHaveBeenCalled();
+		expect(transport).not.toHaveBeenCalled();
 		const deltas: string[] = [];
 		for await (const delta of result.textStream) deltas.push(delta);
 		expect(deltas).toEqual(["  Exact\ntext.  "]);
-		expect(http).toHaveBeenCalledTimes(1);
+		expect(transport).toHaveBeenCalledTimes(1);
 	});
 
 	it("exposes the same lazy stream through credential-bound clients", async () => {
-		const http = vi.fn<ByokHttpClient>(async () => ({
-			status: 200,
-			text: JSON.stringify({ response: "Client response." }),
-			json: { response: "Client response." },
-		}));
-		const client = createByok({ provider: "ollama", deps: { http } });
+		const transport = vi.fn<ByokTransport>(
+			async () => new Response(JSON.stringify({ response: "Client response." }))
+		);
+		const client = createByok({ provider: "ollama", deps: { transport } });
 
 		const result = client.streamText({
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
 		});
 
-		expect(http).not.toHaveBeenCalled();
+		expect(transport).not.toHaveBeenCalled();
 		await expect(collectText(result.textStream)).resolves.toBe("Client response.");
 	});
 
 	it("rejects a second consumer without repeating generation", async () => {
-		const http = vi.fn<ByokHttpClient>(async () => ({
-			status: 200,
-			text: JSON.stringify({ response: "Once." }),
-			json: { response: "Once." },
-		}));
+		const transport = vi.fn<ByokTransport>(
+			async () => new Response(JSON.stringify({ response: "Once." }))
+		);
 		const result = streamText({
 			provider: "ollama",
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
-			deps: { http },
+			deps: { transport },
 		});
 
 		await expect(collectText(result.textStream)).resolves.toBe("Once.");
 		await expect(collectText(result.textStream)).rejects.toThrow(/only be consumed once/i);
-		expect(http).toHaveBeenCalledTimes(1);
+		expect(transport).toHaveBeenCalledTimes(1);
 	});
 });

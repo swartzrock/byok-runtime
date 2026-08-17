@@ -18,7 +18,7 @@ export function createByokNodeProvider(
 			return new ClaudeCliProvider({
 				command: config.command,
 				model: config.model,
-				fetchImpl: deps?.fetchImpl,
+				transport: deps?.transport,
 			});
 		case "ollama":
 		case "lm-studio":

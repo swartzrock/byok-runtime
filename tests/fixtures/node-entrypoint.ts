@@ -2,21 +2,15 @@ import {
 	ByokProvider,
 	createByokNodeProvider,
 	findAvailableProviders,
-	type ByokHttpClient,
+	type ByokTransport,
 	type ByokProviderConfig,
 	type ByokProviderDeps,
 } from "../../src/node";
 
-const http: ByokHttpClient = async () => ({
-	status: 200,
-	text: "{}",
-	json: {},
-});
-const fetchImpl = (async () => new Response("{}")) as typeof fetch;
+const transport = (async () => new Response("{}")) as ByokTransport;
 
 const deps: ByokProviderDeps = {
-	fetchImpl,
-	http,
+	transport,
 };
 
 const config: ByokProviderConfig = {

@@ -1,10 +1,5 @@
 import { OllamaProvider } from "./ollama-provider";
-import {
-	normalizeLmStudioBaseUrl,
-	normalizeOllamaUrl,
-	resolveByokFetchDeps,
-	resolveOllamaDeps,
-} from "./default-deps";
+import { normalizeLmStudioBaseUrl, normalizeOllamaUrl } from "./default-deps";
 import { OpenAiCompatibleProvider, type OpenAiCompatibleModel } from "./openai-compatible-provider";
 import { BYOK_CLOUD_PROVIDER_MANIFEST, isCloudProviderId } from "../provider-manifest";
 import type {
@@ -15,6 +10,7 @@ import type {
 	ByokProviderDeps,
 	ByokProviderRuntime,
 } from "../types";
+import { fetchFromTransport, resolveByokTransport } from "../transport";
 
 function requestHeaders(
 	auth: "bearer" | "anthropic-api-key"
@@ -56,7 +52,7 @@ function createCloudProvider(
 	config: Extract<ByokCoreProviderConfig, { provider: ByokCloudProviderId }>,
 	deps?: Partial<ByokProviderDeps>
 ): ByokProviderRuntime {
-	const { fetchImpl } = resolveByokFetchDeps(deps);
+	const { transport } = resolveByokTransport(deps);
 	const { runtime } = BYOK_CLOUD_PROVIDER_MANIFEST[config.provider];
 	return new OpenAiCompatibleProvider({
 		id: config.provider,
@@ -65,10 +61,10 @@ function createCloudProvider(
 		baseURL: runtime.baseURL,
 		apiKey: config.apiKey,
 		model: config.model,
-		fetchImpl,
+		fetchImpl: fetchFromTransport(transport),
 		requestHeaders: requestHeaders(runtime.auth),
 		normalizeModel: normalizeModel(runtime.modelNormalization),
-		nativeTextStreaming: runtime.nativeTextStreaming,
+		nativeTextStreaming: runtime.nativeTextStreaming && transport.supportsStreaming === true,
 	});
 }
 
@@ -76,7 +72,7 @@ function createLmStudioProvider(
 	config: ByokLmStudioProviderConfig,
 	deps?: Partial<ByokProviderDeps>
 ): ByokProviderRuntime {
-	const { fetchImpl } = resolveByokFetchDeps(deps);
+	const { transport } = resolveByokTransport(deps);
 	return new OpenAiCompatibleProvider({
 		id: config.provider,
 		label: "LM Studio",
@@ -84,9 +80,9 @@ function createLmStudioProvider(
 		apiKey: LM_STUDIO_API_KEY,
 		model: config.model,
 		baseURL: normalizeLmStudioBaseUrl(config.url),
-		fetchImpl,
+		fetchImpl: fetchFromTransport(transport),
 		requiresNetwork: false,
-		nativeTextStreaming: true,
+		nativeTextStreaming: transport.supportsStreaming === true,
 	});
 }
 
@@ -102,12 +98,11 @@ export function createByokProvider(
 		case "lm-studio":
 			return createLmStudioProvider(config, deps);
 		case "ollama": {
-			const { http, fetchImpl } = resolveOllamaDeps(deps);
+			const { transport } = resolveByokTransport(deps);
 			return new OllamaProvider({
 				url: normalizeOllamaUrl(config.url),
 				model: config.model,
-				http,
-				fetchImpl,
+				transport,
 			});
 		}
 	}

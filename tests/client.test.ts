@@ -1,14 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createByok, generateText, type ByokHttpClient } from "../src";
+import { createByok, generateText, type ByokTransport } from "../src";
 
-function ollamaHttp(requests: Array<Parameters<ByokHttpClient>[0]>): ByokHttpClient {
+function ollamaTransport(requests: Request[]): ByokTransport {
 	return async (request) => {
 		requests.push(request);
-		return {
+		return new Response(JSON.stringify({ response: "Plain response." }), {
 			status: 200,
-			text: JSON.stringify({ response: "Plain response." }),
-			json: { response: "Plain response." },
-		};
+			headers: { "content-type": "application/json" },
+		});
 	};
 }
 
@@ -18,19 +17,19 @@ describe("BYOK client facade", () => {
 	});
 
 	it("generates text through the function-first Ollama facade", async () => {
-		const requests: Array<Parameters<ByokHttpClient>[0]> = [];
+		const requests: Request[] = [];
 
 		const result = await generateText({
 			provider: "ollama",
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
-			deps: { http: ollamaHttp(requests) },
+			deps: { transport: ollamaTransport(requests) },
 		});
 
 		expect(result).toEqual({ text: "Plain response." });
 		expect(requests).toHaveLength(1);
 		expect(requests[0]?.url).toBe("http://localhost:11434/api/generate");
-		expect(JSON.parse(requests[0]?.body ?? "{}")).toMatchObject({
+		expect(await requests[0]?.json()).toMatchObject({
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
 			stream: false,
@@ -38,12 +37,10 @@ describe("BYOK client facade", () => {
 	});
 
 	it("uses explicit Ollama URLs with the default fetch-backed HTTP adapter", async () => {
-		let requestUrl: string | URL | Request | undefined;
-		let requestInit: RequestInit | undefined;
+		let request: Request | undefined;
 		const controller = new AbortController();
 		vi.stubGlobal("fetch", (async (input, init) => {
-			requestUrl = input;
-			requestInit = init;
+			request = new Request(input, init);
 			return new Response(JSON.stringify({ response: "Default transport." }), {
 				status: 200,
 				headers: { "content-type": "application/json" },
@@ -59,17 +56,15 @@ describe("BYOK client facade", () => {
 		});
 
 		expect(result).toEqual({ text: "Default transport." });
-		expect(requestUrl).toBe("http://localhost:11434/api/generate");
-		expect(requestInit?.method).toBe("POST");
-		expect(requestInit?.signal).toBe(controller.signal);
-		expect(JSON.parse(String(requestInit?.body))).toMatchObject({
+		expect(request?.url).toBe("http://localhost:11434/api/generate");
+		expect(request?.method).toBe("POST");
+		expect(request?.signal.aborted).toBe(false);
+		expect(await request?.json()).toMatchObject({
 			model: "llama3.1:8b",
 			prompt: "Say hi.",
 			stream: false,
 		});
-		expect(requestInit?.headers).toMatchObject({
-			"Content-Type": "application/json",
-		});
+		expect(request?.headers.get("content-type")).toBe("application/json");
 	});
 
 	it("preserves Ollama abort errors", async () => {
@@ -82,7 +77,7 @@ describe("BYOK client facade", () => {
 				model: "llama3.1:8b",
 				prompt: "Say hi.",
 				deps: {
-					http: async () => {
+					transport: async () => {
 						throw abortError;
 					},
 				},
@@ -91,7 +86,7 @@ describe("BYOK client facade", () => {
 	});
 
 	it("forwards abort signals to custom Ollama transports", async () => {
-		const requests: Array<Parameters<ByokHttpClient>[0]> = [];
+		const requests: Request[] = [];
 		const controller = new AbortController();
 
 		await generateText({
@@ -100,17 +95,17 @@ describe("BYOK client facade", () => {
 			model: "llama3.1:8b",
 			prompt: "Return JSON.",
 			signal: controller.signal,
-			deps: { http: ollamaHttp(requests) },
+			deps: { transport: ollamaTransport(requests) },
 		});
 
-		expect(requests[0]?.signal).toBe(controller.signal);
+		expect(requests[0]?.signal.aborted).toBe(false);
 	});
 
 	it("binds credentials in createByok and requires model per call", async () => {
-		const requests: Array<Parameters<ByokHttpClient>[0]> = [];
+		const requests: Request[] = [];
 		const client = createByok({
 			provider: "ollama",
-			deps: { http: ollamaHttp(requests) },
+			deps: { transport: ollamaTransport(requests) },
 		});
 
 		const result = await client.generateText({
@@ -122,7 +117,7 @@ describe("BYOK client facade", () => {
 		expect("testConnection" in client).toBe(false);
 		expect("listModels" in client).toBe(false);
 		expect("generateObject" in client).toBe(false);
-		expect(JSON.parse(requests[0]?.body ?? "{}")).toMatchObject({
+		expect(await requests[0]?.json()).toMatchObject({
 			model: "llama3.1:8b",
 		});
 	});

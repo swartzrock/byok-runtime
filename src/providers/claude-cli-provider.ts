@@ -5,7 +5,8 @@ import {
 	type TextGenerationInput,
 	type TextGenerationOutput,
 } from "./types";
-import type { ByokModelOption, ByokTextStream } from "../types";
+import type { ByokModelOption, ByokTextStream, ByokTransport } from "../types";
+import { fetchFromTransport, resolveByokTransport } from "../transport";
 import { createBufferedTextStream } from "../text-stream";
 import {
 	defaultLocalCliCwd,
@@ -46,7 +47,7 @@ export interface ClaudeCliProviderOptions {
 	cwd?: string;
 	timeoutMs?: number;
 	runner?: CommandRunner;
-	fetchImpl?: typeof fetch;
+	transport?: ByokTransport;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -240,7 +241,7 @@ export class ClaudeCliProvider implements AiProvider {
 	private readonly cwd?: string;
 	private readonly timeoutMs: number;
 	private readonly runner: CommandRunner;
-	private readonly fetchImpl?: typeof fetch;
+	private readonly transport?: ByokTransport;
 
 	constructor(opts: ClaudeCliProviderOptions) {
 		this.command = opts.command.trim() || "claude";
@@ -248,7 +249,7 @@ export class ClaudeCliProvider implements AiProvider {
 		this.cwd = opts.cwd ?? defaultLocalCliCwd();
 		this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 		this.runner = opts.runner ?? new LocalCommandRunner();
-		this.fetchImpl = opts.fetchImpl;
+		this.transport = opts.transport;
 	}
 
 	async testConnection(): Promise<ProviderStatus> {
@@ -300,10 +301,9 @@ export class ClaudeCliProvider implements AiProvider {
 	}
 
 	async listModels(): Promise<ByokModelOption[]> {
-		const fetchFn = this.fetchImpl ?? globalThis.fetch;
-		if (!fetchFn) {
-			throw new ProviderError("Claude CLI model fetch requires a fetch implementation.");
-		}
+		const fetchFn = fetchFromTransport(
+			resolveByokTransport(this.transport ? { transport: this.transport } : undefined).transport
+		);
 		let response: Response;
 		try {
 			response = await fetchFn(OPENROUTER_MODELS_URL, { method: "GET" });

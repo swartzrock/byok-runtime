@@ -83,25 +83,15 @@ export type ByokProviderConfig =
 export type ByokCoreProviderConfig =
 	ByokApiKeyCloudProviderConfig | ByokOllamaProviderConfig | ByokLmStudioProviderConfig;
 
-export interface ByokHttpRequest {
-	url: string;
-	method: "GET" | "POST";
-	body?: string;
-	headers?: Record<string, string>;
-	signal?: AbortSignal;
+/** Host-owned HTTP boundary. The runtime always supplies one normalized Request. */
+export interface ByokTransport {
+	(request: Request): Promise<Response>;
+	/** Set true only when response bodies arrive progressively from the provider. */
+	readonly supportsStreaming?: boolean;
 }
-
-export interface ByokHttpResponse {
-	status: number;
-	text: string;
-	json: unknown;
-}
-
-export type ByokHttpClient = (request: ByokHttpRequest) => Promise<ByokHttpResponse>;
 
 export interface ByokProviderDeps {
-	fetchImpl: typeof fetch;
-	http: ByokHttpClient;
+	transport: ByokTransport;
 }
 
 export type ByokFacadeDeps = Partial<ByokProviderDeps>;

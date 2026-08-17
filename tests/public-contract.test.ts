@@ -23,6 +23,7 @@ describe("BYOK public contract", () => {
 			"isByokProviderId",
 			"listModels",
 			"normalizeProviderId",
+			"parseByokStoredSettings",
 			"resolveByokEnvCredential",
 			"streamText",
 		]);
