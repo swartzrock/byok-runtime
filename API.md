@@ -276,7 +276,7 @@ enum ByokProvider {
 
 `BYOK_PROVIDER_IDS` contains the supported provider IDs in stable order. Host applications own provider presentation, form fields, and settings copy.
 
-Groq, Mistral, DeepSeek, DeepInfra, and Together AI use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Fireworks AI uses chat completions only: its documented model catalog is account-scoped, so callers must supply a model ID. Support does not extend to every OpenAI API or provider-specific capability.
+Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Support does not extend to every OpenAI API or provider-specific capability.
 
 ### Instruction Channels
 

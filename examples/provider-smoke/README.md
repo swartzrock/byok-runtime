@@ -64,4 +64,4 @@ To detect providers through the library, choose a random available model, and pr
 
 The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI.
 
-Groq, Mistral, DeepSeek, DeepInfra, and Together AI smoke checks exercise BYOK's OpenAI-compatible chat-completions and model-listing subset. Fireworks AI smoke checks exercise chat completions only; provide its model ID manually. This is not full OpenAI API parity.
+Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI smoke checks exercise BYOK's OpenAI-compatible chat-completions and model-listing subset. This is not full OpenAI API parity.
