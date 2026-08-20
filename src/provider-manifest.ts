@@ -177,7 +177,6 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.fireworks.ai/inference/v1",
 			auth: "bearer",
 			modelNormalization: "default",
-			modelListing: "manual",
 			nativeTextStreaming: true,
 		},
 	},

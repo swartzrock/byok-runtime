@@ -64,7 +64,7 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 | DeepSeek     | API key or env      | Model IDs              | Text and JSON-like   |
 | DeepInfra    | API key or env      | Model IDs              | Text and JSON-like   |
 | Together AI  | API key or env      | Model IDs              | Text and JSON-like   |
-| Fireworks AI | API key or env      | Manual model ID        | Text and JSON-like   |
+| Fireworks AI | API key or env      | Model IDs              | Text and JSON-like   |
 | Ollama       | Local or remote URL | Installed models       | Text                 |
 | LM Studio    | Local or remote URL | Local model IDs        | Text and JSON-like   |
 | Codex CLI    | Local CLI session   | Codex model IDs        | Text                 |
@@ -72,7 +72,7 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 
 Cloud and local-server providers use the main entrypoint. CLI providers can spawn local commands and are available only from `@swartzrock/byok-runtime/node`.
 
-Groq, Mistral, DeepSeek, DeepInfra, and Together AI reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. Fireworks AI reuses chat completions, but its account-scoped model API requires information that BYOK does not collect, so pass a model ID manually. This does not imply compatibility with every OpenAI API or provider-specific feature.
+Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
 
 Optional `instructions` stay separate from the required user `prompt`:
 

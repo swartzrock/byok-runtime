@@ -270,6 +270,12 @@ describe("createByokProvider", () => {
 			"meta-llama/Llama-3.3-70B-Instruct",
 			"meta-llama/Llama-3.3-70B-Instruct",
 		],
+		[
+			"fireworks",
+			"https://api.fireworks.ai/inference/v1/models",
+			"accounts/fireworks/models/deepseek-v3p1",
+			"DeepSeek V3.1",
+		],
 		["lm-studio", "http://localhost:1234/v1/models", "qwen2.5-7b-instruct", "Qwen 2.5 7B Instruct"],
 	] as const)(
 		"lists %s models through its OpenAI-compatible base URL",
@@ -324,21 +330,6 @@ describe("createByokProvider", () => {
 		await expect(runtime.listModels()).resolves.toEqual([
 			{ id: "moonshotai/Kimi-K3", label: "Kimi K3" },
 		]);
-	});
-
-	it("requires Fireworks model IDs to be selected manually", async () => {
-		const transport = vi.fn<ByokTransport>(async () => new Response("unexpected request"));
-		const runtime = createByokProvider(
-			{
-				provider: "fireworks",
-				apiKey: "fireworks-test",
-				model: "accounts/fireworks/models/deepseek-v3p1",
-			},
-			{ transport }
-		);
-
-		await expect(runtime.listModels()).resolves.toEqual([]);
-		expect(transport).not.toHaveBeenCalled();
 	});
 
 	it.each([
