@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0
+
+### Minor Changes
+
+- abe0c6e: Add Together AI and Fireworks AI as supported cloud providers.
+
 ## 3.0.0
 
 ### Major Changes
