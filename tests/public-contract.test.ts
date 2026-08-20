@@ -103,6 +103,16 @@ describe("BYOK public contract", () => {
 				apiKey: "deepinfra-test",
 				model: "meta-llama/Llama-3.3-70B-Instruct",
 			},
+			{
+				provider: "together",
+				apiKey: "together-test",
+				model: "meta-llama/Llama-3.3-70B-Instruct",
+			},
+			{
+				provider: "fireworks",
+				apiKey: "fireworks-test",
+				model: "accounts/fireworks/models/deepseek-v3p1",
+			},
 			{ provider: "ollama", model: "llama3.1:8b" },
 			{ provider: "lm-studio", model: "qwen2.5-7b-instruct" },
 			{ provider: "codex-cli", command: "codex" },

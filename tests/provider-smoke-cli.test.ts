@@ -131,6 +131,8 @@ describe("provider smoke CLI", () => {
 		["mistral", "MISTRAL_API_KEY"],
 		["deepseek", "DEEPSEEK_API_KEY"],
 		["deepinfra", "DEEPINFRA_TOKEN"],
+		["together", "TOGETHER_API_KEY"],
+		["fireworks", "FIREWORKS_API_KEY"],
 	] as const)("routes %s model listing through cloud credentials", async (provider, envVar) => {
 		const listModels = vi.fn().mockResolvedValue([{ id: "model-1", label: "model-1" }]);
 		const env = { [envVar]: `${provider}-test` };

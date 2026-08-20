@@ -29,6 +29,18 @@ describe("createByokProvider", () => {
 			},
 			"deepinfra",
 		],
+		[
+			{ provider: "together", apiKey: "together-test", model: "meta-llama/Llama-3.3-70B-Instruct" },
+			"together",
+		],
+		[
+			{
+				provider: "fireworks",
+				apiKey: "fireworks-test",
+				model: "accounts/fireworks/models/deepseek-v3p1",
+			},
+			"fireworks",
+		],
 		[{ provider: "lm-studio", model: "qwen2.5-7b-instruct" }, "lm-studio"],
 	] as const)("creates the %s runtime", (config, expectedId) => {
 		const provider = createByokProvider(config satisfies ByokCoreProviderConfig, {
@@ -252,6 +264,12 @@ describe("createByokProvider", () => {
 			"meta-llama/Meta-Llama-3.1-8B-Instruct",
 			"meta-llama/Meta-Llama-3.1-8B-Instruct",
 		],
+		[
+			"together",
+			"https://api.together.ai/v1/models",
+			"meta-llama/Llama-3.3-70B-Instruct",
+			"meta-llama/Llama-3.3-70B-Instruct",
+		],
 		["lm-studio", "http://localhost:1234/v1/models", "qwen2.5-7b-instruct", "Qwen 2.5 7B Instruct"],
 	] as const)(
 		"lists %s models through its OpenAI-compatible base URL",
@@ -284,6 +302,60 @@ describe("createByokProvider", () => {
 				expect(headers.get("authorization")).toBe("Bearer key");
 				expect(headers.has("x-api-key")).toBe(false);
 			}
+		}
+	);
+
+	it("requires Fireworks model IDs to be selected manually", async () => {
+		const transport = vi.fn<ByokTransport>(async () => new Response("unexpected request"));
+		const runtime = createByokProvider(
+			{
+				provider: "fireworks",
+				apiKey: "fireworks-test",
+				model: "accounts/fireworks/models/deepseek-v3p1",
+			},
+			{ transport }
+		);
+
+		await expect(runtime.listModels()).resolves.toEqual([]);
+		expect(transport).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[
+			"together",
+			"https://api.together.ai/v1/chat/completions",
+			"meta-llama/Llama-3.3-70B-Instruct",
+		],
+		[
+			"fireworks",
+			"https://api.fireworks.ai/inference/v1/chat/completions",
+			"accounts/fireworks/models/deepseek-v3p1",
+		],
+	] as const)(
+		"generates text through %s's documented inference endpoint",
+		async (provider, expectedUrl, model) => {
+			const requests: Request[] = [];
+			const runtime = createByokProvider(
+				{ provider, apiKey: "key", model },
+				{
+					transport: async (request) => {
+						requests.push(request);
+						return new Response(
+							JSON.stringify({ choices: [{ message: { content: "Provider response." } }] }),
+							{ status: 200, headers: { "content-type": "application/json" } }
+						);
+					},
+				}
+			);
+
+			await expect(runtime.generateText({ prompt: "Say hi." })).resolves.toEqual({
+				text: "Provider response.",
+			});
+			expect(requests[0]?.url).toBe(expectedUrl);
+			expect(requests[0]?.headers.get("authorization")).toBe("Bearer key");
+			expect(await requests[0]?.text()).toBe(
+				JSON.stringify({ model, messages: [{ role: "user", content: "Say hi." }] })
+			);
 		}
 	);
 

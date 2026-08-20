@@ -64,6 +64,7 @@ function createCloudProvider(
 		fetchImpl: fetchFromTransport(transport),
 		requestHeaders: requestHeaders(runtime.auth),
 		normalizeModel: normalizeModel(runtime.modelNormalization),
+		listModelsImpl: runtime.modelListing === "manual" ? async () => [] : undefined,
 		nativeTextStreaming: runtime.nativeTextStreaming && transport.supportsStreaming === true,
 	});
 }

@@ -35,6 +35,8 @@ describe("BYOK env credentials", () => {
 		["mistral", "MISTRAL_API_KEY", "mistral-test"],
 		["deepseek", "DEEPSEEK_API_KEY", "deepseek-test"],
 		["deepinfra", "DEEPINFRA_TOKEN", "deepinfra-test"],
+		["together", "TOGETHER_API_KEY", "together-test"],
+		["fireworks", "FIREWORKS_API_KEY", "fireworks-test"],
 	] as const)("resolves %s API keys from %s", (provider, envVar, expected) => {
 		expect(
 			resolveByokEnvCredential(provider, {
@@ -49,6 +51,8 @@ describe("BYOK env credentials", () => {
 		["mistral", "MISTRAL_API_KEY"],
 		["deepseek", "DEEPSEEK_API_KEY"],
 		["deepinfra", "DEEPINFRA_TOKEN"],
+		["together", "TOGETHER_API_KEY"],
+		["fireworks", "FIREWORKS_API_KEY"],
 	] as const)("names %s's expected %s when credentials are missing", (provider, envVar) => {
 		expect(() => resolveByokEnvCredential(provider, { source: "env", env: {} })).toThrow(envVar);
 	});
@@ -64,6 +68,8 @@ describe("BYOK env credentials", () => {
 			mistral: ["MISTRAL_API_KEY"],
 			deepseek: ["DEEPSEEK_API_KEY"],
 			deepinfra: ["DEEPINFRA_TOKEN"],
+			together: ["TOGETHER_API_KEY"],
+			fireworks: ["FIREWORKS_API_KEY"],
 		});
 		expect("ollama" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
 		expect("lm-studio" in BYOK_PROVIDER_API_KEY_ENV_VARS).toBe(false);
@@ -82,6 +88,8 @@ describe("BYOK env credentials", () => {
 			"MISTRAL_API_KEY",
 			"DEEPSEEK_API_KEY",
 			"DEEPINFRA_TOKEN",
+			"TOGETHER_API_KEY",
+			"FIREWORKS_API_KEY",
 		]);
 	});
 });

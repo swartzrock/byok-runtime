@@ -14,6 +14,8 @@ describe("provider manifest", () => {
 			"mistral",
 			"deepseek",
 			"deepinfra",
+			"together",
+			"fireworks",
 			"ollama",
 			"lm-studio",
 			"codex-cli",
@@ -40,6 +42,8 @@ describe("provider manifest", () => {
 			mistral: { label: "Mistral", vendor: "Mistral" },
 			deepseek: { label: "DeepSeek", vendor: "DeepSeek" },
 			deepinfra: { label: "DeepInfra", vendor: "DeepInfra" },
+			together: { label: "Together AI", vendor: "Together AI" },
+			fireworks: { label: "Fireworks AI", vendor: "Fireworks AI" },
 		});
 	});
 
@@ -54,6 +58,7 @@ describe("provider manifest", () => {
 				expect(entry.runtime.baseURL).toMatch(/^https:\/\//);
 				expect(["bearer", "anthropic-api-key"]).toContain(entry.runtime.auth);
 				expect(["default", "name-fallback"]).toContain(entry.runtime.modelNormalization);
+				expect(entry.runtime.modelListing ?? "openai").toMatch(/^(openai|manual)$/);
 				continue;
 			}
 

@@ -10,21 +10,23 @@ bun run provider-smoke detect
 
 `detect` delegates to the Node runtime's `findAvailableProviders` function and prints provider IDs in fallback order.
 
-| Provider   | Env-backed API key names             |
-| ---------- | ------------------------------------ |
-| Anthropic  | `ANTHROPIC_API_KEY`                  |
-| OpenAI     | `OPENAI_API_KEY`                     |
-| Google     | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
-| xAI        | `XAI_API_KEY`                        |
-| OpenRouter | `OPENROUTER_API_KEY`                 |
-| Groq       | `GROQ_API_KEY`                       |
-| Mistral    | `MISTRAL_API_KEY`                    |
-| DeepSeek   | `DEEPSEEK_API_KEY`                   |
-| DeepInfra  | `DEEPINFRA_TOKEN`                    |
-| Ollama     | n/a                                  |
-| LM Studio  | n/a                                  |
-| Codex CLI  | n/a                                  |
-| Claude CLI | n/a                                  |
+| Provider     | Env-backed API key names             |
+| ------------ | ------------------------------------ |
+| Anthropic    | `ANTHROPIC_API_KEY`                  |
+| OpenAI       | `OPENAI_API_KEY`                     |
+| Google       | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
+| xAI          | `XAI_API_KEY`                        |
+| OpenRouter   | `OPENROUTER_API_KEY`                 |
+| Groq         | `GROQ_API_KEY`                       |
+| Mistral      | `MISTRAL_API_KEY`                    |
+| DeepSeek     | `DEEPSEEK_API_KEY`                   |
+| DeepInfra    | `DEEPINFRA_TOKEN`                    |
+| Together AI  | `TOGETHER_API_KEY`                   |
+| Fireworks AI | `FIREWORKS_API_KEY`                  |
+| Ollama       | n/a                                  |
+| LM Studio    | n/a                                  |
+| Codex CLI    | n/a                                  |
+| Claude CLI   | n/a                                  |
 
 ```bash
 OPENAI_API_KEY="<OPENAI_API_KEY>" bun run provider-smoke generate \
@@ -60,6 +62,6 @@ To detect providers through the library, choose a random available model, and pr
 ./examples/first-available-llm.sh "What is BYOK?"
 ```
 
-The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, and DeepInfra.
+The fallback order is Ollama, LM Studio, Codex CLI, Claude CLI, then API keys for Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI.
 
-Groq, Mistral, DeepSeek, and DeepInfra smoke checks exercise BYOK's OpenAI-compatible chat-completions and model-listing subset, not full OpenAI API parity.
+Groq, Mistral, DeepSeek, DeepInfra, and Together AI smoke checks exercise BYOK's OpenAI-compatible chat-completions and model-listing subset. Fireworks AI smoke checks exercise chat completions only; provide its model ID manually. This is not full OpenAI API parity.

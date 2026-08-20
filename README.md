@@ -36,7 +36,7 @@ const { text } = await generateText({
 console.log(text);
 ```
 
-Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Ollama, or LM Studio.
+Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, Fireworks AI, Ollama, or LM Studio.
 
 BYOK Runtime is designed for trusted servers, desktop backends, Electron main processes, and local tools. Browser and Electron renderer UIs should call it through a trusted host boundary rather than receive provider credentials directly.
 
@@ -52,34 +52,36 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 
 ## Provider Support
 
-| Provider   | Credentials         | Model listing          | Generation           |
-| ---------- | ------------------- | ---------------------- | -------------------- |
-| Anthropic  | API key or env      | Account models         | Text and object      |
-| OpenAI     | API key or env      | Model IDs              | Text and object      |
-| Google     | API key or env      | Gemini model IDs       | Text and object      |
-| xAI        | API key or env      | Model IDs              | Text and object      |
-| OpenRouter | API key or env      | Portable model options | Text and JSON-like   |
-| Groq       | API key or env      | Model IDs              | Text and JSON-like   |
-| Mistral    | API key or env      | Model IDs              | Text and JSON-like   |
-| DeepSeek   | API key or env      | Model IDs              | Text and JSON-like   |
-| DeepInfra  | API key or env      | Model IDs              | Text and JSON-like   |
-| Ollama     | Local or remote URL | Installed models       | Text                 |
-| LM Studio  | Local or remote URL | Local model IDs        | Text and JSON-like   |
-| Codex CLI  | Local CLI session   | Codex model IDs        | Text                 |
-| Claude CLI | Local CLI session   | Anthropic model IDs    | Text with JSON hints |
+| Provider     | Credentials         | Model listing          | Generation           |
+| ------------ | ------------------- | ---------------------- | -------------------- |
+| Anthropic    | API key or env      | Account models         | Text and object      |
+| OpenAI       | API key or env      | Model IDs              | Text and object      |
+| Google       | API key or env      | Gemini model IDs       | Text and object      |
+| xAI          | API key or env      | Model IDs              | Text and object      |
+| OpenRouter   | API key or env      | Portable model options | Text and JSON-like   |
+| Groq         | API key or env      | Model IDs              | Text and JSON-like   |
+| Mistral      | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepSeek     | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepInfra    | API key or env      | Model IDs              | Text and JSON-like   |
+| Together AI  | API key or env      | Model IDs              | Text and JSON-like   |
+| Fireworks AI | API key or env      | Manual model ID        | Text and JSON-like   |
+| Ollama       | Local or remote URL | Installed models       | Text                 |
+| LM Studio    | Local or remote URL | Local model IDs        | Text and JSON-like   |
+| Codex CLI    | Local CLI session   | Codex model IDs        | Text                 |
+| Claude CLI   | Local CLI session   | Anthropic model IDs    | Text with JSON hints |
 
 Cloud and local-server providers use the main entrypoint. CLI providers can spawn local commands and are available only from `@swartzrock/byok-runtime/node`.
 
-Groq, Mistral, DeepSeek, and DeepInfra reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
+Groq, Mistral, DeepSeek, DeepInfra, and Together AI reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. Fireworks AI reuses chat completions, but its account-scoped model API requires information that BYOK does not collect, so pass a model ID manually. This does not imply compatibility with every OpenAI API or provider-specific feature.
 
 Optional `instructions` stay separate from the required user `prompt`:
 
-| Providers                                                                                 | Instruction channel                               |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, LM Studio | OpenAI-compatible `system` message                |
-| Ollama                                                                                    | Native `system` request field                     |
-| Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
-| Codex CLI                                                                                 | Per-run `developer_instructions` config           |
+| Providers                                                                                                            | Instruction channel                               |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, Fireworks AI, LM Studio | OpenAI-compatible `system` message                |
+| Ollama                                                                                                               | Native `system` request field                     |
+| Claude CLI                                                                                                           | `--append-system-prompt` (keeps Claude's default) |
+| Codex CLI                                                                                                            | Per-run `developer_instructions` config           |
 
 All built-in text providers support this separation, and providers exposing `generateObject` use the same native instruction channel. BYOK Runtime never concatenates `instructions` into `prompt`. An adapter without a separate native channel must reject only calls that supply `instructions` with `ByokProviderError`; prompt-only calls remain unchanged.
 
@@ -280,7 +282,7 @@ const { text } = await generateText({
 });
 ```
 
-Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_TOKEN`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
+Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `DEEPINFRA_TOKEN`, `TOGETHER_API_KEY`, and `FIREWORKS_API_KEY`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
 
 Callers can inspect the flat `BYOK_API_KEY_ENV_VARS` list or the provider-keyed `BYOK_PROVIDER_API_KEY_ENV_VARS` map through the main package entrypoint.
 
