@@ -11,6 +11,7 @@ interface CloudRuntimeManifest {
 	baseURL: string;
 	auth: "bearer" | "anthropic-api-key";
 	modelNormalization: "default" | "name-fallback";
+	modelListing?: "direct";
 	nativeTextStreaming: boolean;
 }
 
@@ -147,6 +148,33 @@ export const BYOK_PROVIDER_MANIFEST = [
 			label: "DeepInfra",
 			vendor: "DeepInfra",
 			baseURL: "https://api.deepinfra.com/v1/openai",
+			auth: "bearer",
+			modelNormalization: "default",
+			nativeTextStreaming: true,
+		},
+	},
+	{
+		family: "cloud",
+		id: ByokProvider.Together,
+		apiKeyEnvVars: ["TOGETHER_API_KEY"],
+		runtime: {
+			label: "Together AI",
+			vendor: "Together AI",
+			baseURL: "https://api.together.ai/v1",
+			auth: "bearer",
+			modelNormalization: "default",
+			modelListing: "direct",
+			nativeTextStreaming: true,
+		},
+	},
+	{
+		family: "cloud",
+		id: ByokProvider.Fireworks,
+		apiKeyEnvVars: ["FIREWORKS_API_KEY"],
+		runtime: {
+			label: "Fireworks AI",
+			vendor: "Fireworks AI",
+			baseURL: "https://api.fireworks.ai/inference/v1",
 			auth: "bearer",
 			modelNormalization: "default",
 			nativeTextStreaming: true,

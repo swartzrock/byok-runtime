@@ -8,6 +8,8 @@ Build BYOK AI apps with one TypeScript API for user-owned cloud keys, local mode
 
 **ESM-only · Node.js 20+ · trusted host runtimes only**
 
+Contributing? See [CONTRIBUTING.md](./CONTRIBUTING.md) to build, test, and submit changes.
+
 ## Install
 
 ```sh
@@ -36,7 +38,7 @@ const { text } = await generateText({
 console.log(text);
 ```
 
-Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Ollama, or LM Studio.
+Change the provider, credential, and model to run the same call against Anthropic, Google Gemini, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, Fireworks AI, Ollama, or LM Studio.
 
 BYOK Runtime is designed for trusted servers, desktop backends, Electron main processes, and local tools. Browser and Electron renderer UIs should call it through a trusted host boundary rather than receive provider credentials directly.
 
@@ -52,57 +54,31 @@ BYOK Runtime is designed for trusted servers, desktop backends, Electron main pr
 
 ## Provider Support
 
-| Provider   | Credentials         | Model listing          | Generation           |
-| ---------- | ------------------- | ---------------------- | -------------------- |
-| Anthropic  | API key or env      | Account models         | Text and object      |
-| OpenAI     | API key or env      | Model IDs              | Text and object      |
-| Google     | API key or env      | Gemini model IDs       | Text and object      |
-| xAI        | API key or env      | Model IDs              | Text and object      |
-| OpenRouter | API key or env      | Portable model options | Text and JSON-like   |
-| Groq       | API key or env      | Model IDs              | Text and JSON-like   |
-| Mistral    | API key or env      | Model IDs              | Text and JSON-like   |
-| DeepSeek   | API key or env      | Model IDs              | Text and JSON-like   |
-| DeepInfra  | API key or env      | Model IDs              | Text and JSON-like   |
-| Ollama     | Local or remote URL | Installed models       | Text                 |
-| LM Studio  | Local or remote URL | Local model IDs        | Text and JSON-like   |
-| Codex CLI  | Local CLI session   | Codex model IDs        | Text                 |
-| Claude CLI | Local CLI session   | Anthropic model IDs    | Text with JSON hints |
+| Provider     | Credentials         | Model listing          | Generation           |
+| ------------ | ------------------- | ---------------------- | -------------------- |
+| Anthropic    | API key or env      | Account models         | Text and object      |
+| OpenAI       | API key or env      | Model IDs              | Text and object      |
+| Google       | API key or env      | Gemini model IDs       | Text and object      |
+| xAI          | API key or env      | Model IDs              | Text and object      |
+| OpenRouter   | API key or env      | Portable model options | Text and JSON-like   |
+| Groq         | API key or env      | Model IDs              | Text and JSON-like   |
+| Mistral      | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepSeek     | API key or env      | Model IDs              | Text and JSON-like   |
+| DeepInfra    | API key or env      | Model IDs              | Text and JSON-like   |
+| Together AI  | API key or env      | Model IDs              | Text and JSON-like   |
+| Fireworks AI | API key or env      | Model IDs              | Text and JSON-like   |
+| Ollama       | Local or remote URL | Installed models       | Text                 |
+| LM Studio    | Local or remote URL | Local model IDs        | Text and JSON-like   |
+| Codex CLI    | Local CLI session   | Codex model IDs        | Text                 |
+| Claude CLI   | Local CLI session   | Anthropic model IDs    | Text with JSON hints |
 
 Cloud and local-server providers use the main entrypoint. CLI providers can spawn local commands and are available only from `@swartzrock/byok-runtime/node`.
 
-Groq, Mistral, DeepSeek, and DeepInfra reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
+Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI reuse BYOK Runtime's OpenAI-compatible chat-completions and model-listing subset. This does not imply compatibility with every OpenAI API or provider-specific feature.
 
-Optional `instructions` stay separate from the required user `prompt`:
-
-| Providers                                                                                 | Instruction channel                               |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, LM Studio | OpenAI-compatible `system` message                |
-| Ollama                                                                                    | Native `system` request field                     |
-| Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
-| Codex CLI                                                                                 | Per-run `developer_instructions` config           |
-
-All built-in text providers support this separation, and providers exposing `generateObject` use the same native instruction channel. BYOK Runtime never concatenates `instructions` into `prompt`. An adapter without a separate native channel must reject only calls that supply `instructions` with `ByokProviderError`; prompt-only calls remain unchanged.
+Optional `instructions` stay separate from the required user `prompt` and are never concatenated into it. Each provider maps `instructions` to its own native channel — see [Instruction Channels](./API.md#instruction-channels) in the API reference.
 
 ## Common Workflows
-
-### Reuse a Credential
-
-Use `createByok` when several calls share the same provider credential or local URL. The model remains selectable per call.
-
-```ts
-import { ByokProvider, createByok } from "@swartzrock/byok-runtime";
-
-const ai = createByok({
-	provider: ByokProvider.OpenAI,
-	apiKey: process.env.OPENAI_API_KEY!,
-});
-
-const { text } = await ai.generateText({
-	model: "gpt-4o-mini",
-	instructions: "Use release-note style and active voice.",
-	prompt: "Draft a short release note for a model-provider SDK.",
-});
-```
 
 ### Stream Text
 
@@ -138,155 +114,15 @@ are single-consumer. Rate-limit retries may occur before the first text delta; a
 emitted, BYOK never restarts the request and risk duplicating text. Existing `generateText`
 behavior is unchanged.
 
-### Discover Models
-
-Use `listModels` during provider setup before a user has selected a model.
-
-```ts
-import { ByokProvider, listModels } from "@swartzrock/byok-runtime";
-
-const models = await listModels({
-	provider: ByokProvider.OpenAI,
-	apiKey: process.env.OPENAI_API_KEY!,
-});
-
-// [{ id: "gpt-4o-mini", label: "gpt-4o-mini" }, ...]
-```
-
-Model discovery returns portable `ByokModelOption` values with `id` and `label`. Provider-specific pricing, context length, and recommendation metadata belong in provider-specific APIs or the host application.
-
-### Test a Connection
-
-Use the Node runtime when an application needs connection testing, structured output, JSON response hints, CLI providers, or custom transports.
-
-Discover locally available provider candidates before asking a user to choose one:
-
-```ts
-import { findAvailableProviders } from "@swartzrock/byok-runtime/node";
-
-const providers = await findAvailableProviders({ env: process.env });
-```
-
-The ordered result checks local servers, installed AI CLIs, then standard cloud API-key variables. Discovery is lightweight; list models or test the selected provider before generation.
-
-```ts
-import { ByokProvider, createByokNodeProvider } from "@swartzrock/byok-runtime/node";
-
-const provider = createByokNodeProvider({
-	provider: ByokProvider.OpenAI,
-	apiKey: process.env.OPENAI_API_KEY!,
-	model: "gpt-4o-mini",
-});
-
-const status = await provider.testConnection();
-
-if (!status.ok) {
-	throw new Error(status.message);
-}
-```
-
-When supported, `status.models` contains model IDs returned during the connection test.
-
-Custom transports use one normalized request contract across every HTTP-backed provider:
-
-```ts
-import type { ByokTransport } from "@swartzrock/byok-runtime";
-
-const transport = Object.assign(
-	async (request: Request) => {
-		// Bridge the normalized Request to the trusted host's HTTP API.
-		return fetch(request);
-	},
-	{ supportsStreaming: true }
-) satisfies ByokTransport;
-```
-
-Pass it as `{ transport }` in client or provider dependencies. Declare `supportsStreaming: true` only when the host returns progressive response bodies; otherwise BYOK reports streamed output as buffered delivery.
-
-### Generate Structured Objects
-
-Provider runtimes that expose `generateObject` accept a Zod schema and optional provider-native instructions. Ollama and local CLI providers are text-only.
-
-```ts
-import { z } from "zod/v3";
-
-const schema = z.object({
-	title: z.string(),
-	risks: z.array(z.string()),
-});
-
-if (!provider.generateObject) {
-	throw new Error(`${provider.label} does not support structured objects.`);
-}
-
-const report = await provider.generateObject({
-	instructions: "Remain faithful to the supplied source material.",
-	prompt: "Return the main risks of storing API keys in plaintext.",
-	schema,
-});
-```
-
-`ByokObjectGenerationInput<T>.instructions` has the same separation and whitespace-preserving semantics as text generation. It is never folded into the user prompt, and structured-output repair attempts retain the original instructions.
-
-### Use Local Models
-
-Ollama defaults to `http://localhost:11434`:
-
-```ts
-import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
-
-const { text } = await generateText({
-	provider: ByokProvider.Ollama,
-	model: "llama3.1:8b",
-	prompt: "Write one sentence about local model inference.",
-});
-```
-
-LM Studio defaults to `http://localhost:1234/v1`. Both providers accept an explicit `http:` or `https:` URL when the server is listening elsewhere.
-
-### Use Local CLI Providers
-
-CLI providers run authenticated local commands and must be imported from the Node subpath.
-
-```ts
-import { ByokProvider, createByokNodeProvider } from "@swartzrock/byok-runtime/node";
-
-const provider = createByokNodeProvider({
-	provider: ByokProvider.ClaudeCli,
-	command: "claude",
-	model: "sonnet",
-});
-
-const { text } = await provider.generateText({
-	instructions: "Write for an on-call engineer. Preserve error codes exactly.",
-	prompt: "Summarize this backend job failure in one paragraph.",
-});
-```
-
-Only expose CLI providers in environments where users expect local process execution.
+For reusable credentials, model discovery, connection testing, structured objects, local model servers, and local CLI providers, see the [API reference](./API.md).
 
 ## Credentials and Security
 
-Explicit `apiKey` values are recommended for host applications because the host remains responsible for credential collection and storage. Trusted scripts can opt into environment-backed credentials:
+Host applications own credential collection and storage; BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. Explicit `apiKey` values are recommended — trusted scripts can opt into environment-backed credentials instead (see [env-backed credentials](./API.md#env-backed-credentials) for supported variable names).
 
-```ts
-import { ByokProvider, generateText } from "@swartzrock/byok-runtime";
+`instructions` and `prompt` are ordinary caller-provided model content, not credentials; hosts should apply their normal content-handling and privacy policies to both. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
 
-const { text } = await generateText({
-	provider: ByokProvider.OpenAI,
-	credential: { source: "env", env: process.env },
-	model: "gpt-4o-mini",
-	prompt: "Explain env-backed credentials in one sentence.",
-});
-```
-
-Supported names are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, and `DEEPINFRA_TOKEN`. Google checks `GOOGLE_API_KEY` before `GEMINI_API_KEY`.
-
-Callers can inspect the flat `BYOK_API_KEY_ENV_VARS` list or the provider-keyed `BYOK_PROVIDER_API_KEY_ENV_VARS` map through the main package entrypoint.
-
-BYOK Runtime does not read `process.env` on its own, parse `.env` files, persist credentials, or log credential values. `instructions` and `prompt` are ordinary caller-provided model content, not credentials; hosts should apply their normal content-handling and privacy policies to both. See the [security policy](https://github.com/swartzrock/byok-runtime/blob/main/SECURITY.md) for reporting instructions.
-
-Hosts should pass the current persisted BYOK subtree through `parseByokStoredSettings(unknown)` before use. The parser supplies safe defaults and filters malformed provider settings, model collections, and verification snapshots. Storage, encryption, and host-specific legacy migrations remain host responsibilities.
+Hosts should pass the current persisted BYOK subtree through `parseByokStoredSettings(unknown)` before use — see [Storage And Setup State](./API.md#storage-and-setup-state).
 
 ## Entry Points
 

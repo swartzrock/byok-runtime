@@ -26,6 +26,8 @@ describe("findAvailableProviders", () => {
 					MISTRAL_API_KEY: "mistral-test",
 					DEEPSEEK_API_KEY: "deepseek-test",
 					DEEPINFRA_TOKEN: "deepinfra-test",
+					TOGETHER_API_KEY: "together-test",
+					FIREWORKS_API_KEY: "fireworks-test",
 				},
 			},
 			{ transport, commandExists }
@@ -45,6 +47,8 @@ describe("findAvailableProviders", () => {
 			"mistral",
 			"deepseek",
 			"deepinfra",
+			"together",
+			"fireworks",
 		]);
 		expect(transport).toHaveBeenCalledTimes(2);
 		expect(urls).toEqual(["http://127.0.0.1:11434/api/tags", "http://127.0.0.1:1234/v1/models"]);

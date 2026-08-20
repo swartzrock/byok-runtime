@@ -11,6 +11,8 @@ export enum ByokProvider {
 	Mistral = "mistral",
 	DeepSeek = "deepseek",
 	DeepInfra = "deepinfra",
+	Together = "together",
+	Fireworks = "fireworks",
 	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
@@ -27,7 +29,9 @@ export type ByokCloudProviderId =
 	| "groq"
 	| "mistral"
 	| "deepseek"
-	| "deepinfra";
+	| "deepinfra"
+	| "together"
+	| "fireworks";
 
 export type ByokOllamaProviderId = "ollama";
 

@@ -157,6 +157,8 @@ const groqEnvVars: readonly ["GROQ_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.gr
 const mistralEnvVars: readonly ["MISTRAL_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.mistral;
 const deepSeekEnvVars: readonly ["DEEPSEEK_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepseek;
 const deepInfraEnvVars: readonly ["DEEPINFRA_TOKEN"] = BYOK_PROVIDER_API_KEY_ENV_VARS.deepinfra;
+const togetherEnvVars: readonly ["TOGETHER_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.together;
+const fireworksEnvVars: readonly ["FIREWORKS_API_KEY"] = BYOK_PROVIDER_API_KEY_ENV_VARS.fireworks;
 const providerIds: readonly [
 	"anthropic",
 	"openai",
@@ -167,6 +169,8 @@ const providerIds: readonly [
 	"mistral",
 	"deepseek",
 	"deepinfra",
+	"together",
+	"fireworks",
 	"ollama",
 	"lm-studio",
 	"codex-cli",
@@ -193,4 +197,6 @@ void groqEnvVars;
 void mistralEnvVars;
 void deepSeekEnvVars;
 void deepInfraEnvVars;
+void togetherEnvVars;
+void fireworksEnvVars;
 void providerIds;

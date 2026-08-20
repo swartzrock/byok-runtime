@@ -26,6 +26,8 @@ const CLOUD_PROVIDERS = [
 	"mistral",
 	"deepseek",
 	"deepinfra",
+	"together",
+	"fireworks",
 ] as const satisfies readonly ByokCloudProviderId[];
 
 export interface FindAvailableProvidersOptions {

@@ -24,6 +24,8 @@ function provider(opts: {
 		| "mistral"
 		| "deepseek"
 		| "deepinfra"
+		| "together"
+		| "fireworks"
 		| "lm-studio";
 	label?: string;
 	vendor?: string;
@@ -109,6 +111,8 @@ describe("OpenAiCompatibleProvider", () => {
 		["mistral", "Mistral", "Mistral"],
 		["deepseek", "DeepSeek", "DeepSeek"],
 		["deepinfra", "DeepInfra", "DeepInfra"],
+		["together", "Together AI", "Together AI"],
+		["fireworks", "Fireworks AI", "Fireworks AI"],
 		["lm-studio", "LM Studio", "LM Studio"],
 	] as const)("exposes provider metadata for %s", (id, label, vendor) => {
 		const p = provider({ id, label, vendor });

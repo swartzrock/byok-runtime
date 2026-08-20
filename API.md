@@ -166,7 +166,7 @@ const openaiKey = resolveByokEnvCredential(ByokProvider.OpenAI, {
 });
 ```
 
-`BYOK_API_KEY_ENV_VARS` contains the supported names as a flat, stably ordered list for callers that need to inspect or filter environment keys. `BYOK_PROVIDER_API_KEY_ENV_VARS` groups the same names by cloud provider and preserves credential fallback order: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, OpenRouter `OPENROUTER_API_KEY`, Groq `GROQ_API_KEY`, Mistral `MISTRAL_API_KEY`, DeepSeek `DEEPSEEK_API_KEY`, and DeepInfra `DEEPINFRA_TOKEN`.
+`BYOK_API_KEY_ENV_VARS` contains the supported names as a flat, stably ordered list for callers that need to inspect or filter environment keys. `BYOK_PROVIDER_API_KEY_ENV_VARS` groups the same names by cloud provider and preserves credential fallback order: Anthropic `ANTHROPIC_API_KEY`, OpenAI `OPENAI_API_KEY`, Google `GOOGLE_API_KEY` then `GEMINI_API_KEY`, xAI `XAI_API_KEY`, OpenRouter `OPENROUTER_API_KEY`, Groq `GROQ_API_KEY`, Mistral `MISTRAL_API_KEY`, DeepSeek `DEEPSEEK_API_KEY`, DeepInfra `DEEPINFRA_TOKEN`, Together AI `TOGETHER_API_KEY`, and Fireworks AI `FIREWORKS_API_KEY`.
 
 ## Node Runtime
 
@@ -264,6 +264,8 @@ enum ByokProvider {
 	Mistral = "mistral",
 	DeepSeek = "deepseek",
 	DeepInfra = "deepinfra",
+	Together = "together",
+	Fireworks = "fireworks",
 	LmStudio = "lm-studio",
 	CodexCli = "codex-cli",
 	ClaudeCli = "claude-cli",
@@ -274,16 +276,16 @@ enum ByokProvider {
 
 `BYOK_PROVIDER_IDS` contains the supported provider IDs in stable order. Host applications own provider presentation, form fields, and settings copy.
 
-Groq, Mistral, DeepSeek, and DeepInfra use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Support does not extend to every OpenAI API or provider-specific capability.
+Groq, Mistral, DeepSeek, DeepInfra, Together AI, and Fireworks AI use BYOK's existing OpenAI-compatible chat-completions and `/models` subset. Support does not extend to every OpenAI API or provider-specific capability.
 
 ### Instruction Channels
 
-| Providers                                                                                 | Instruction channel                               |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, LM Studio | OpenAI-compatible `system` message                |
-| Ollama                                                                                    | Native `system` request field                     |
-| Claude CLI                                                                                | `--append-system-prompt` (keeps Claude's default) |
-| Codex CLI                                                                                 | Per-run `developer_instructions` config           |
+| Providers                                                                                                            | Instruction channel                               |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Anthropic, OpenAI, Google, xAI, OpenRouter, Groq, Mistral, DeepSeek, DeepInfra, Together AI, Fireworks AI, LM Studio | OpenAI-compatible `system` message                |
+| Ollama                                                                                                               | Native `system` request field                     |
+| Claude CLI                                                                                                           | `--append-system-prompt` (keeps Claude's default) |
+| Codex CLI                                                                                                            | Per-run `developer_instructions` config           |
 
 Every built-in text provider supports a separate instruction channel, and providers exposing `generateObject` use that same channel. Provider adapters must not concatenate instructions into the user prompt, including generated schema or repair text. Object-generation repair attempts retain the original instructions. If a future adapter cannot represent instructions separately, it must throw `ByokProviderError` only when `instructions` is supplied; prompt-only calls remain unchanged.
 
