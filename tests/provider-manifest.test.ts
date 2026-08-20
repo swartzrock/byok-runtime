@@ -58,7 +58,7 @@ describe("provider manifest", () => {
 				expect(entry.runtime.baseURL).toMatch(/^https:\/\//);
 				expect(["bearer", "anthropic-api-key"]).toContain(entry.runtime.auth);
 				expect(["default", "name-fallback"]).toContain(entry.runtime.modelNormalization);
-				expect(entry.runtime.modelListing ?? "openai").toMatch(/^(openai|manual)$/);
+				expect(entry.runtime.modelListing ?? "openai").toMatch(/^(direct|openai|manual)$/);
 				continue;
 			}
 

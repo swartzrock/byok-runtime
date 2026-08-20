@@ -305,6 +305,27 @@ describe("createByokProvider", () => {
 		}
 	);
 
+	it("lists Together models from its top-level array response", async () => {
+		const runtime = createByokProvider(
+			{
+				provider: "together",
+				apiKey: "key",
+				model: "moonshotai/Kimi-K3",
+			},
+			{
+				transport: async () =>
+					new Response(JSON.stringify([{ id: "moonshotai/Kimi-K3", display_name: "Kimi K3" }]), {
+						status: 200,
+						headers: { "content-type": "application/json" },
+					}),
+			}
+		);
+
+		await expect(runtime.listModels()).resolves.toEqual([
+			{ id: "moonshotai/Kimi-K3", label: "Kimi K3" },
+		]);
+	});
+
 	it("requires Fireworks model IDs to be selected manually", async () => {
 		const transport = vi.fn<ByokTransport>(async () => new Response("unexpected request"));
 		const runtime = createByokProvider(

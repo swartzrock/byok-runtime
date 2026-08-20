@@ -11,7 +11,7 @@ interface CloudRuntimeManifest {
 	baseURL: string;
 	auth: "bearer" | "anthropic-api-key";
 	modelNormalization: "default" | "name-fallback";
-	modelListing?: "manual";
+	modelListing?: "direct" | "manual";
 	nativeTextStreaming: boolean;
 }
 
@@ -163,6 +163,7 @@ export const BYOK_PROVIDER_MANIFEST = [
 			baseURL: "https://api.together.ai/v1",
 			auth: "bearer",
 			modelNormalization: "default",
+			modelListing: "direct",
 			nativeTextStreaming: true,
 		},
 	},

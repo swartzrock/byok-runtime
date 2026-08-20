@@ -38,6 +38,7 @@ export interface OpenAiCompatibleProviderConfig {
 	generator?: CloudObjectGenerator;
 	textGenerator?: CloudTextGenerator;
 	listModelsImpl?: () => Promise<ByokModelOption[]>;
+	useDirectModelListing?: boolean;
 	normalizeModel?: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 	requestHeaders?: (apiKey: string) => Record<string, string>;
 	requiresNetwork?: boolean;
@@ -212,6 +213,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 	private readonly objectGenerator?: CloudObjectGenerator;
 	private readonly textGenerator?: CloudTextGenerator;
 	private readonly listModelsImpl?: () => Promise<ByokModelOption[]>;
+	private readonly useDirectModelListing: boolean;
 	private readonly normalizeModel: (entry: OpenAiCompatibleModel) => ByokModelOption | null;
 	private readonly requestHeaders?: (apiKey: string) => Record<string, string>;
 	private readonly nativeTextStreaming: boolean;
@@ -235,6 +237,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 		this.objectGenerator = config.generator;
 		this.textGenerator = config.textGenerator;
 		this.listModelsImpl = config.listModelsImpl;
+		this.useDirectModelListing = config.useDirectModelListing ?? false;
 		this.normalizeModel = config.normalizeModel ?? normalizeModel;
 		this.requestHeaders = config.requestHeaders;
 		this.nativeTextStreaming = config.nativeTextStreaming ?? false;
@@ -392,11 +395,14 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
 	async listModels(): Promise<ByokModelOption[]> {
 		if (this.listModelsImpl) return this.listModelsImpl();
-		if (this.requestHeaders) {
-			const body = await this.requestJson<{ data?: OpenAiCompatibleModel[] }>("/models", {
+		if (this.requestHeaders || this.useDirectModelListing) {
+			const body = await this.requestJson<
+				{ data?: OpenAiCompatibleModel[] } | OpenAiCompatibleModel[]
+			>("/models", {
 				method: "GET",
 			});
-			return (body.data ?? [])
+			const models = Array.isArray(body) ? body : (body.data ?? []);
+			return models
 				.map((entry) => this.normalizeModel(entry))
 				.filter((entry): entry is ByokModelOption => entry !== null);
 		}
