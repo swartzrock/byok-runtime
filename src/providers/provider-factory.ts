@@ -54,6 +54,7 @@ function createCloudProvider(
 ): ByokProviderRuntime {
 	const { transport } = resolveByokTransport(deps);
 	const { runtime } = BYOK_CLOUD_PROVIDER_MANIFEST[config.provider];
+	const modelListing = "modelListing" in runtime ? runtime.modelListing : undefined;
 	return new OpenAiCompatibleProvider({
 		id: config.provider,
 		label: runtime.label,
@@ -64,8 +65,7 @@ function createCloudProvider(
 		fetchImpl: fetchFromTransport(transport),
 		requestHeaders: requestHeaders(runtime.auth),
 		normalizeModel: normalizeModel(runtime.modelNormalization),
-		listModelsImpl: runtime.modelListing === "manual" ? async () => [] : undefined,
-		useDirectModelListing: runtime.modelListing === "direct",
+		useDirectModelListing: modelListing === "direct",
 		nativeTextStreaming: runtime.nativeTextStreaming && transport.supportsStreaming === true,
 	});
 }

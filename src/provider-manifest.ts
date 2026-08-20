@@ -11,7 +11,7 @@ interface CloudRuntimeManifest {
 	baseURL: string;
 	auth: "bearer" | "anthropic-api-key";
 	modelNormalization: "default" | "name-fallback";
-	modelListing?: "direct" | "manual";
+	modelListing?: "direct";
 	nativeTextStreaming: boolean;
 }
 
